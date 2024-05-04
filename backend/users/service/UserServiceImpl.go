@@ -3,9 +3,10 @@ package service
 import (
 	"database/sql"
 	"errors"
-	"goalify/models"
+	"goalify/entities"
 	"goalify/users/stores"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -57,14 +58,14 @@ func generateRefreshToken() uuid.UUID {
 	return uuid.New()
 }
 
-func userToUserDTO(user models.User) models.UserDTO {
+func userToUserDTO(user entities.User) entities.UserDTO {
 	token, err := generateJWTToken(user.Id)
 	if err != nil {
 		// handle error
 		panic(err)
 	}
 
-	return models.UserDTO{
+	return entities.UserDTO{
 		Email:              user.Email,
 		AccessToken:        token,
 		Xp:                 user.Xp,
@@ -76,53 +77,55 @@ func userToUserDTO(user models.User) models.UserDTO {
 	}
 }
 
-func (s *UserServiceImpl) SignUp(email, password string) (models.UserDTO, error) {
+func (s *UserServiceImpl) SignUp(email, password string) (entities.UserDTO, error) {
 	_, err := s.userStore.GetUserByEmail(email)
 	if err == nil || err != sql.ErrNoRows {
-		return models.UserDTO{}, err
+		return entities.UserDTO{}, err
 	}
 
-	user, err := s.userStore.CreateUser(email, password)
+	cleanedEmail := strings.TrimSpace(email)
+	cleanedEmail = strings.ToLower(cleanedEmail)
+	user, err := s.userStore.CreateUser(cleanedEmail, password)
 	if err != nil {
-		return models.UserDTO{}, err
+		return entities.UserDTO{}, err
 	}
 	return userDTOReturnVal(user, err)
 }
 
-func (s *UserServiceImpl) Refresh(userId, refreshToken string) (models.UserDTO, error) {
+func (s *UserServiceImpl) Refresh(userId, refreshToken string) (entities.UserDTO, error) {
 	user, err := s.userStore.GetUserById(userId)
 	if err != nil {
-		return models.UserDTO{}, err
+		return entities.UserDTO{}, err
 	}
 	if user.RefreshToken.String() != refreshToken {
-		return models.UserDTO{}, errors.New("invalid refresh token")
+		return entities.UserDTO{}, errors.New("invalid refresh token")
 	}
 
 	if user.RefreshTokenExpiry.Before(time.Now()) {
-		return models.UserDTO{}, errors.New("refresh token expired")
+		return entities.UserDTO{}, errors.New("refresh token expired")
 	}
 
 	newRefreshToken := generateRefreshToken()
 	user, err = s.userStore.UpdateRefreshToken(user.Id.String(), newRefreshToken.String())
 	if err != nil {
-		return models.UserDTO{}, err
+		return entities.UserDTO{}, err
 	}
 
 	return userDTOReturnVal(user, err)
 }
 
-func userDTOReturnVal(user models.User, err error) (models.UserDTO, error) {
+func userDTOReturnVal(user entities.User, err error) (entities.UserDTO, error) {
 	return userToUserDTO(user), nil
 }
 
-func (s *UserServiceImpl) Login(email, password string) (models.UserDTO, error) {
+func (s *UserServiceImpl) Login(email, password string) (entities.UserDTO, error) {
 	user, err := s.userStore.GetUserByEmail(email)
 	if err != nil {
-		return models.UserDTO{}, err
+		return entities.UserDTO{}, err
 	}
 
 	if user.Password != password {
-		return models.UserDTO{}, errors.New("invalid password")
+		return entities.UserDTO{}, errors.New("invalid password")
 	}
 
 	return userDTOReturnVal(user, err)
