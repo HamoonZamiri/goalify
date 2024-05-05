@@ -7,6 +7,8 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+const DEFAULT_LEVEL = 1
+
 type UserStoreImpl struct {
 	db *sqlx.DB
 }
@@ -16,10 +18,11 @@ func NewUserStore(db *sqlx.DB) *UserStoreImpl {
 }
 
 func (s *UserStoreImpl) CreateUser(email string, password string) (entities.User, error) {
-	query := `INSERT INTO users (email, password) VALUES ($1, $2) RETURNING *`
+	query := `INSERT INTO users (email, password, refresh_token_expiry, level_id) VALUES ($1, $2, $3, $4) RETURNING *`
 
 	var user entities.User
-	err := s.db.QueryRowx(query, email, password).StructScan(&user)
+	expiry := time.Now().Add(time.Hour * 72)
+	err := s.db.QueryRowx(query, email, password, expiry, DEFAULT_LEVEL).StructScan(&user)
 	if err != nil {
 		return user, err
 	}
