@@ -3,6 +3,7 @@ package service
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"goalify/entities"
 	"goalify/users/stores"
 	"os"
@@ -27,7 +28,7 @@ func generateJWTToken(userId uuid.UUID) (string, error) {
 		"exp":    time.Now().Add(time.Hour * 1).Unix(),
 	})
 
-	tokenString, err := token.SignedString(os.Getenv("JWT_SECRET"))
+	tokenString, err := token.SignedString([]byte(os.Getenv("JWT_SECRET")))
 	if err != nil {
 		return "", err
 	}
@@ -79,7 +80,11 @@ func userToUserDTO(user entities.User) entities.UserDTO {
 
 func (s *UserServiceImpl) SignUp(email, password string) (entities.UserDTO, error) {
 	_, err := s.userStore.GetUserByEmail(email)
-	if err == nil || err != sql.ErrNoRows {
+	if err == nil {
+		return entities.UserDTO{}, fmt.Errorf("user with email %s already exists", email)
+	}
+
+	if err != sql.ErrNoRows {
 		return entities.UserDTO{}, err
 	}
 
