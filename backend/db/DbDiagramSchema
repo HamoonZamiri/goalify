@@ -1,0 +1,119 @@
+// dbdiagram.io DBML file
+// replicate the schema below on dbdiagram.io to produce the same
+// database diagram found in README.md
+// Docs: https://dbml.dbdiagram.io/docs
+enum item_type {
+  common
+  rare
+  epic
+  legendary
+}
+
+Table users {
+  id uuid [primary key, default: `gen_random_uuid()`]
+  email varchar [not null, unique]
+  password varchar [not null]
+  xp integer [default: 0]
+  level_id integer [ref: > levels.id]
+  cash_available integer [default: 0]
+  refresh_token uuid [default: `gen_random_uuid()`]
+  refresh_token_expiry timestamp [not null]  
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+}
+
+Table levels {
+  id integer [primary key]
+  level_up_xp integer [not null]
+  cash_reward integer [not null]
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+}
+
+Table chest_items {
+  id uuid [pk]
+  image_url varchar
+  title varchar [not null]
+  rarity item_type [not null]
+  price integer [null]
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+}
+
+enum chest_type {
+  bronze
+  silver
+  gold
+}
+
+Table chests {
+  id uuid [pk]
+  type chest_type [not null]
+  description text [not null]
+  price integer [not null]
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+}
+
+Table chest_item_drop_rates {
+  id uuid [pk]
+  item_id uuid [ref: > chest_items.id]
+  chest_id uuid [ref: > chests.id]
+  drop_rate float [not null]
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+}
+
+enum item_status {
+  equipped
+  not_equipped
+}
+
+Table user_items {
+  id uuid [pk]
+  user_id uuid [ref: > users.id]
+  item_id uuid [ref: > chest_items.id]
+  status item_status [default: "not_equipped"]
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+}
+
+enum chest_status {
+  opened
+  not_opened
+}
+Table user_chests {
+  id uuid [pk]
+  user_id uuid [ref: > users.id]
+  chest_id uuid [ref: > chests.id]
+  quantity_owned integer [default: 0]
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+}
+
+Table goal_categories {
+  id uuid [pk, default: `gen_random_uuid()`]
+  title varchar [not null]
+  xp_per_goal integer [not null]
+  user_id uuid [ref: > users.id]
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+}
+
+enum goal_status {
+  complete
+  not_complete
+}
+
+Table goals {
+  id uuid [pk, default: `gen_random_uuid()`]
+  title varchar [not null]
+  description varchar [default: ""]
+  user_id uuid [ref: > users.id]
+  category_id uuid [ref: > goal_categories.id]
+  status goal_status [default: "not_complete"]
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+}
+
+// references
