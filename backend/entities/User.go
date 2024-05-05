@@ -8,6 +8,8 @@ import (
 
 type User struct {
 	RefreshTokenExpiry time.Time `db:"refresh_token_expiry" json:"refresh_token_expiry"`
+	CreatedAt          time.Time `db:"created_at" json:"created_at"`
+	UpdatedAt          time.Time `db:"updated_at" json:"updated_at"`
 	Email              string    `db:"email" json:"email"`
 	Password           string    `db:"password"`
 	Xp                 int       `db:"xp" json:"xp"`
@@ -19,6 +21,8 @@ type User struct {
 
 type UserDTO struct {
 	RefreshTokenExpiry time.Time `db:"refresh_token_expiry" json:"refresh_token_expiry"`
+	CreatedAt          time.Time `db:"created_at" json:"created_at"`
+	UpdatedAt          time.Time `db:"updated_at" json:"updated_at"`
 	Email              string    `db:"email" json:"email"`
 	AccessToken        string    `json:"access_token"`
 	Xp                 int       `db:"xp" json:"xp"`
