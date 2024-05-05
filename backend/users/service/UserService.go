@@ -1,7 +1,9 @@
 package service
 
+import "goalify/entities"
+
 type UserService interface {
-	SignUp(email, password string) error
-	Login(email, password string) (string, error)
-	Refresh(email, refreshToken string) (string, error)
+	SignUp(email, password string) (entities.UserDTO, error)
+	Login(email, password string) (entities.UserDTO, error)
+	Refresh(email, refreshToken string) (entities.UserDTO, error)
 }
