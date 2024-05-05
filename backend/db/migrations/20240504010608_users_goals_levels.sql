@@ -42,6 +42,9 @@ CREATE TABLE goals (
     updated_at TIMESTAMP DEFAULT now()
 );
 
+-- Insert Default Levels
+INSERT INTO levels (id, level_up_xp, cash_reward) VALUES (1, 100, 10);
+
 -- +goose Down
 DROP TABLE goals;
 DROP TABLE goal_categories;
