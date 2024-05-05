@@ -8,11 +8,10 @@ import (
 )
 
 func New(dbname string) (*sqlx.DB, error) {
-	connStr := fmt.Sprintf("user=postgres dbname=%s sslmode=disable", dbname)
+	connStr := fmt.Sprintf("user=goalify password=goalify dbname=%s sslmode=disable", dbname)
 	db, err := sqlx.Connect("postgres", connStr)
 	if err != nil {
 		return nil, err
 	}
-
 	return db, nil
 }
