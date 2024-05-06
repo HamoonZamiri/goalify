@@ -7,9 +7,9 @@ services:
       POSTGRES_USER: goalify
       POSTGRES_PASSWORD: goalify
     volumes:
-        - /postgres:/var/lib/goalify/data
+      - ${VOLUME_LOCATION}:/var/lib/goalify/data
     ports:
-        - "5432:5432"
+      - "5432:5432"
 
   pgadmin:
     container_name: pgadmin
@@ -19,4 +19,5 @@ services:
       PGADMIN_DEFAULT_EMAIL: goalify@goalify.com
       PGADMIN_DEFAULT_PASSWORD: goalify
     ports:
-        - "5050:80"
+      - "5050:80"
+
