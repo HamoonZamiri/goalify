@@ -12,6 +12,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type UserServiceImpl struct {
@@ -90,7 +91,13 @@ func (s *UserServiceImpl) SignUp(email, password string) (entities.UserDTO, erro
 
 	cleanedEmail := strings.TrimSpace(email)
 	cleanedEmail = strings.ToLower(cleanedEmail)
-	user, err := s.userStore.CreateUser(cleanedEmail, password)
+
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return entities.UserDTO{}, err
+	}
+
+	user, err := s.userStore.CreateUser(cleanedEmail, string(hashedPassword))
 	if err != nil {
 		return entities.UserDTO{}, err
 	}
@@ -129,7 +136,7 @@ func (s *UserServiceImpl) Login(email, password string) (entities.UserDTO, error
 		return entities.UserDTO{}, err
 	}
 
-	if user.Password != password {
+	if bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)) != nil {
 		return entities.UserDTO{}, errors.New("invalid password")
 	}
 
