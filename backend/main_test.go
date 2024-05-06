@@ -3,7 +3,7 @@ package main_test
 import (
 	"bytes"
 	"encoding/json"
-	"goalify"
+  "goalify"
 	"goalify/db"
 	"goalify/entities"
 	"goalify/users/handler"
@@ -32,9 +32,9 @@ func TestHealth(t *testing.T) {
 func TestSignup(t *testing.T) {
 	reqBody := handler.SignupRequest{Email: "user@mail.com", Password: "password"}
 	stringifiedBody, err := json.Marshal(reqBody)
-  assert.Nil(t, err)
+	assert.Nil(t, err)
 
-	res, err := http.Post(BASE_URL + "/api/users/signup", "application/json", bytes.NewReader(stringifiedBody))
+	res, err := http.Post(BASE_URL+"/api/users/signup", "application/json", bytes.NewReader(stringifiedBody))
 	assert.Nil(t, err)
 
 	assert.Equal(t, 200, res.StatusCode)
@@ -49,23 +49,32 @@ func TestSignup(t *testing.T) {
 }
 
 func TestSignupEmailExists(t *testing.T) {
-  reqBody := handler.SignupRequest{Email: "user@mail.com", Password: "password"}
-  stringifiedBody, err := json.Marshal(reqBody)
-  assert.Nil(t, err)
-  
-  res, _ := http.Post(BASE_URL + "/api/users/signup", "application/json", bytes.NewReader(stringifiedBody))
-  assert.Equal(t, res.StatusCode, http.StatusBadRequest)
+	reqBody := handler.SignupRequest{Email: "user@mail.com", Password: "password"}
+	stringifiedBody, err := json.Marshal(reqBody)
+	assert.Nil(t, err)
+
+	res, _ := http.Post(BASE_URL+"/api/users/signup", "application/json", bytes.NewReader(stringifiedBody))
+	assert.Equal(t, res.StatusCode, http.StatusBadRequest)
+}
+
+func TestLogin(t *testing.T) {
+	reqBody := handler.LoginRequest{Email: "user@mail.com", Password: "password"}
+	stringifiedBody, err := json.Marshal(reqBody)
+	assert.Nil(t, err)
+
+	res, _ := http.Post(BASE_URL+"/api/users/login", "application/json", bytes.NewReader(stringifiedBody))
+	assert.Equal(t, res.StatusCode, http.StatusOK)
 }
 
 func TestMain(m *testing.M) {
-  db, err := db.New("goalify")
-  if err != nil {
-    panic(err)
-  }
-  setup()
-  code := m.Run()
+	db, err := db.New("goalify")
+	if err != nil {
+		panic(err)
+	}
+	setup()
+	code := m.Run()
 
-  query := `DELETE from users;`
-  db.MustExec(query)
-  os.Exit(code)
+	query := `DELETE from users;`
+	db.MustExec(query)
+	os.Exit(code)
 }

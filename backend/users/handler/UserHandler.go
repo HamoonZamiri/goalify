@@ -12,6 +12,8 @@ type SignupRequest struct {
 	Password string `json:"password"`
 }
 
+type LoginRequest = SignupRequest
+
 type UserHandler struct {
 	userService service.UserService
 }
@@ -33,6 +35,24 @@ func (h *UserHandler) HandleSignup(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+	if err := jsonutil.Encode(w, r, http.StatusOK, user); err != nil {
+		slog.Error("json encode: %w", err)
+		return
+	}
+}
+
+func (h *UserHandler) HandleLogin(w http.ResponseWriter, r *http.Request) {
+	decoded, err := jsonutil.Decode[LoginRequest](r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	user, err := h.userService.Login(decoded.Email, decoded.Password)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+	}
+
 	if err := jsonutil.Encode(w, r, http.StatusOK, user); err != nil {
 		slog.Error("json encode: %w", err)
 		return

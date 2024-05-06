@@ -18,6 +18,7 @@ func NewServer(userHandler *handler.UserHandler) http.Handler {
 
 	// users domain
 	mux.HandleFunc("POST /api/users/signup", userHandler.HandleSignup)
+	mux.HandleFunc("POST /api/users/login", userHandler.HandleLogin)
 
 	return mux
 }
