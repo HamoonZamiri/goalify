@@ -50,3 +50,4 @@ DROP TABLE goals;
 DROP TABLE goal_categories;
 DROP TABLE users;
 DROP TABLE levels;
+DROP TYPE goal_status;
