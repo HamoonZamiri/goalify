@@ -2,6 +2,7 @@ package handler
 
 import (
 	"goalify/jsonutil"
+	"goalify/responses"
 	"goalify/users/service"
 	"log/slog"
 	"net/http"
@@ -35,7 +36,9 @@ func (h *UserHandler) HandleSignup(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	if err := jsonutil.Encode(w, r, http.StatusOK, user); err != nil {
+
+	res := responses.New(user, "user created")
+	if err := jsonutil.Encode(w, r, http.StatusOK, *res); err != nil {
 		slog.Error("json encode: %w", err)
 		return
 	}

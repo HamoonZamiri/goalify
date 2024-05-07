@@ -6,6 +6,7 @@ import (
   "goalify"
 	"goalify/db"
 	"goalify/entities"
+	"goalify/responses"
 	"goalify/users/handler"
 	"io"
 	"net/http"
@@ -38,14 +39,14 @@ func TestSignup(t *testing.T) {
 	assert.Nil(t, err)
 
 	assert.Equal(t, 200, res.StatusCode)
-	var user entities.UserDTO
+	var serverResponse responses.ServerResponse[entities.User]
 
 	defer res.Body.Close()
 	body, err := io.ReadAll(res.Body)
 	assert.Nil(t, err)
 
-	json.Unmarshal(body, &user)
-	assert.Equal(t, "user@mail.com", user.Email)
+	json.Unmarshal(body, &serverResponse)
+	assert.Equal(t, "user@mail.com", serverResponse.Data.Email)
 }
 
 func TestSignupEmailExists(t *testing.T) {
