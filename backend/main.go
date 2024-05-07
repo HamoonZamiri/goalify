@@ -12,13 +12,14 @@ import (
 
 func NewServer(userHandler *handler.UserHandler) http.Handler {
 	mux := http.NewServeMux()
-	mux.HandleFunc("/health", func(w http.ResponseWriter, _ *http.Request) {
+	mux.HandleFunc("GET /health", func(w http.ResponseWriter, _ *http.Request) {
 		w.Write([]byte("Hello\n"))
 	})
 
 	// users domain
 	mux.HandleFunc("POST /api/users/signup", userHandler.HandleSignup)
 	mux.HandleFunc("POST /api/users/login", userHandler.HandleLogin)
+	mux.HandleFunc("POST /api/users/refresh", userHandler.HandleRefresh)
 
 	return mux
 }

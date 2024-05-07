@@ -15,6 +15,11 @@ type SignupRequest struct {
 
 type LoginRequest = SignupRequest
 
+type RefreshRequest struct {
+	UserId       string `json:"user_id"`
+	RefreshToken string `json:"refresh_token"`
+}
+
 type UserHandler struct {
 	userService service.UserService
 }
@@ -40,6 +45,7 @@ func (h *UserHandler) HandleSignup(w http.ResponseWriter, r *http.Request) {
 	res := responses.New(user, "user created")
 	if err := jsonutil.Encode(w, r, http.StatusOK, *res); err != nil {
 		slog.Error("json encode: %w", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 }
@@ -54,9 +60,31 @@ func (h *UserHandler) HandleLogin(w http.ResponseWriter, r *http.Request) {
 	user, err := h.userService.Login(decoded.Email, decoded.Password)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
 
 	if err := jsonutil.Encode(w, r, http.StatusOK, user); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		slog.Error("json encode: %w", err)
+		return
+	}
+}
+
+func (h *UserHandler) HandleRefresh(w http.ResponseWriter, r *http.Request) {
+	decoded, err := jsonutil.Decode[RefreshRequest](r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	user, err := h.userService.Refresh(decoded.UserId, decoded.RefreshToken)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if err := jsonutil.Encode(w, r, http.StatusOK, user); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		slog.Error("json encode: %w", err)
 		return
 	}

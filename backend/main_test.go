@@ -3,7 +3,8 @@ package main_test
 import (
 	"bytes"
 	"encoding/json"
-  "goalify"
+	"fmt"
+	"goalify"
 	"goalify/db"
 	"goalify/entities"
 	"goalify/responses"
@@ -18,6 +19,8 @@ import (
 )
 
 const BASE_URL = "http://localhost:8080"
+var refreshToken string
+var userId string
 
 func setup() {
 	go main.Run()
@@ -39,7 +42,7 @@ func TestSignup(t *testing.T) {
 	assert.Nil(t, err)
 
 	assert.Equal(t, 200, res.StatusCode)
-	var serverResponse responses.ServerResponse[entities.User]
+	var serverResponse responses.ServerResponse[entities.UserDTO]
 
 	defer res.Body.Close()
 	body, err := io.ReadAll(res.Body)
@@ -47,6 +50,8 @@ func TestSignup(t *testing.T) {
 
 	json.Unmarshal(body, &serverResponse)
 	assert.Equal(t, "user@mail.com", serverResponse.Data.Email)
+  refreshToken = serverResponse.Data.RefreshToken.String()
+  userId = serverResponse.Data.Id.String()
 }
 
 func TestSignupEmailExists(t *testing.T) {
@@ -65,6 +70,49 @@ func TestLogin(t *testing.T) {
 
 	res, _ := http.Post(BASE_URL+"/api/users/login", "application/json", bytes.NewReader(stringifiedBody))
 	assert.Equal(t, res.StatusCode, http.StatusOK)
+}
+
+func TestLoginIncorrectPassword(t *testing.T) {
+	reqBody := handler.LoginRequest{Email: "user@mail.com", Password: "sword"}
+	stringifiedBody, err := json.Marshal(reqBody)
+	assert.Nil(t, err)
+
+	res, _ := http.Post(BASE_URL+"/api/users/login", "application/json", bytes.NewReader(stringifiedBody))
+	assert.Equal(t, res.StatusCode, http.StatusBadRequest)
+}
+
+func TestRefresh(t *testing.T) {
+  prevToken := refreshToken
+  reqBody := handler.RefreshRequest{UserId: userId, RefreshToken: prevToken}
+  stringifiedBody, err := json.Marshal(reqBody)
+  assert.Nil(t, err)
+
+  url := fmt.Sprintf("%s/api/users/refresh", BASE_URL)
+  res, err := http.Post(url, "application/json",  bytes.NewReader(stringifiedBody))
+  assert.Nil(t, err)
+
+  var serverResponse responses.ServerResponse[entities.UserDTO]
+
+  body, err := io.ReadAll(res.Body)
+  assert.Nil(t, err)
+
+  err = json.Unmarshal(body, &serverResponse)
+  assert.Nil(t, err)
+
+  assert.Equal(t, http.StatusOK, res.StatusCode)
+  assert.NotEqual(t, prevToken, serverResponse.Data.RefreshToken.String())
+}
+
+func TestIncorrectRefresh(t *testing.T) {
+  reqBody := handler.RefreshRequest{UserId: userId, RefreshToken: "invalid"}
+  stringifiedBody, err := json.Marshal(reqBody)
+  assert.Nil(t, err)
+
+  url := fmt.Sprintf("%s/api/users/refresh", BASE_URL)
+  res, err := http.Post(url, "application/json",  bytes.NewReader(stringifiedBody))
+  assert.Nil(t, err)
+
+  assert.Equal(t, http.StatusBadRequest, res.StatusCode)
 }
 
 func TestMain(m *testing.M) {
