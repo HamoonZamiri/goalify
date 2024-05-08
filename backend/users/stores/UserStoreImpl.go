@@ -65,3 +65,8 @@ func (s *UserStoreImpl) GetUserById(id string) (entities.User, error) {
 	}
 	return user, nil
 }
+
+func (s *UserStoreImpl) DeleteUserById(id string) error {
+	_, err := s.db.Exec("DELETE FROM users WHERE id = $1", id)
+	return err
+}

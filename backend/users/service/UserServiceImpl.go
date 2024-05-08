@@ -142,3 +142,7 @@ func (s *UserServiceImpl) Login(email, password string) (entities.UserDTO, error
 
 	return userDTOReturnVal(user, err)
 }
+
+func (s *UserServiceImpl) DeleteUserById(id string) error {
+	return s.userStore.DeleteUserById(id)
+}
