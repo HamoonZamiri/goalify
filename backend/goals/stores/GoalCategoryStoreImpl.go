@@ -17,27 +17,27 @@ func NewGoalCategoryStore(db *sqlx.DB) *GoalCategoryStoreImpl {
 	return &GoalCategoryStoreImpl{db: db}
 }
 
-func (s *GoalCategoryStoreImpl) UpdateGoalCategory(categoryId uuid.UUID, goalId uuid.UUID) (entities.GoalCategory, error) {
+func (s *GoalCategoryStoreImpl) UpdateGoalCategory(categoryId uuid.UUID, goalId uuid.UUID) (*entities.GoalCategory, error) {
 	var goalCategory entities.GoalCategory
 	err := s.db.QueryRowx("UPDATE goals SET category_id = $1 WHERE id = $2 RETURNING *", categoryId, goalId).StructScan(&goalCategory)
 	if err != nil {
-		return goalCategory, err
+		return nil, err
 	}
-	return goalCategory, err
+	return &goalCategory, err
 }
 
-func (s *GoalCategoryStoreImpl) CreateGoalCategory(title string, xpPerGoal int, userId uuid.UUID) (entities.GoalCategory, error) {
+func (s *GoalCategoryStoreImpl) CreateGoalCategory(title string, xpPerGoal int, userId uuid.UUID) (*entities.GoalCategory, error) {
 	query := `INSERT INTO goal_categories (title, xp_per_goal, user_id) 
   VALUES ($1, $2, $3) RETURNING *`
 	var goalCategory entities.GoalCategory
 	err := s.db.QueryRowx(query, title, xpPerGoal, userId).StructScan(goalCategory)
 	if err != nil {
-		return goalCategory, err
+		return nil, err
 	}
-	return goalCategory, err
+	return &goalCategory, err
 }
 
-func (s *GoalCategoryStoreImpl) GetCategoriesByUserId(userId uuid.UUID) ([]entities.GoalCategory, error) {
+func (s *GoalCategoryStoreImpl) GetGoalCategoriesByUserId(userId uuid.UUID) ([]*entities.GoalCategory, error) {
 	query := `SELECT gc.id, gc.title, gc.xp_per_goal, gc.user_id, g.id as goal_id, 
   g.title as goal_title, g.description, g.status
   FROM goal_categories gc 
@@ -45,8 +45,8 @@ func (s *GoalCategoryStoreImpl) GetCategoriesByUserId(userId uuid.UUID) ([]entit
   ON gc.id = g.category_id 
   WHERE gc.user_id = $1`
 
-	var categories []entities.GoalCategory
-	categoryMap := make(map[uuid.UUID]entities.GoalCategory)
+	var categories []*entities.GoalCategory
+	categoryMap := make(map[uuid.UUID]*entities.GoalCategory)
 	rows, err := s.db.Queryx(query, userId)
 	if err != nil {
 		return nil, err
@@ -65,34 +65,33 @@ func (s *GoalCategoryStoreImpl) GetCategoriesByUserId(userId uuid.UUID) ([]entit
 	return categories, nil
 }
 
-func (s *GoalCategoryStoreImpl) GetGoalCategoryById(categoryId uuid.UUID) (entities.GoalCategory, error) {
+func (s *GoalCategoryStoreImpl) GetGoalCategoryById(categoryId uuid.UUID) (*entities.GoalCategory, error) {
 	query := `SELECT gc.id, gc.title, gc.xp_per_goal, gc.user_id, g.id as goal_id, 
   g.title as goal_title, g.description, g.status
   FROM goal_categories gc JOIN goals g 
   ON gc.id = g.category_id 
   WHERE gc.id = $1`
 
-	categoryMap := make(map[uuid.UUID]entities.GoalCategory)
+	categoryMap := make(map[uuid.UUID]*entities.GoalCategory)
 
 	rows, err := s.db.Queryx(query, categoryId)
 	if err != nil {
-		return entities.GoalCategory{}, err
+		return nil, err
 	}
 
 	err = mapGoalCategoryRows(rows, categoryMap)
 	if err != nil {
-		slog.Error("Error mapping joint goals and categories", "error", err)
-		return entities.GoalCategory{}, err
+		return nil, err
 	}
 
 	if len(categoryMap) == 0 {
-		return entities.GoalCategory{}, errors.New("category not found")
+		return nil, errors.New("category not found")
 	}
 
 	return categoryMap[categoryId], nil
 }
 
-func mapGoalCategoryRows(rows *sqlx.Rows, categoryMap map[uuid.UUID]entities.GoalCategory) error {
+func mapGoalCategoryRows(rows *sqlx.Rows, categoryMap map[uuid.UUID]*entities.GoalCategory) error {
 	for rows.Next() {
 		var (
 			id          uuid.UUID
@@ -124,11 +123,11 @@ func mapGoalCategoryRows(rows *sqlx.Rows, categoryMap map[uuid.UUID]entities.Goa
 				Title:       title,
 				Xp_per_goal: xp_per_goal,
 				UserId:      user_id,
-				Goals:       []entities.Goal{goal},
+				Goals:       []*entities.Goal{&goal},
 			}
-			categoryMap[id] = newCategory
+			categoryMap[id] = &newCategory
 		} else {
-			category.Goals = append(category.Goals, goal)
+			category.Goals = append(category.Goals, &goal)
 		}
 	}
 	return nil
