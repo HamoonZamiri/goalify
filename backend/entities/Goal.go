@@ -13,7 +13,7 @@ type Goal struct {
 
 type GoalCategory struct {
 	Title       string    `db:"title" json:"title"`
-	Goals       []Goal    `json:"goals"`
+	Goals       []*Goal   `json:"goals"`
 	Xp_per_goal int       `db:"xp_per_goal" json:"xp_per_goal"`
 	Id          uuid.UUID `db:"id" json:"id"`
 	UserId      uuid.UUID `db:"user_id" json:"user_id"`
