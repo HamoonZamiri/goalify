@@ -62,14 +62,14 @@ func generateRefreshToken() uuid.UUID {
 	return uuid.New()
 }
 
-func userToUserDTO(user entities.User) entities.UserDTO {
+func userToUserDTO(user *entities.User) *entities.UserDTO {
 	token, err := generateJWTToken(user.Id)
 	if err != nil {
 		// handle error
 		panic(err)
 	}
 
-	return entities.UserDTO{
+	return &entities.UserDTO{
 		Email:              user.Email,
 		AccessToken:        token,
 		Xp:                 user.Xp,
@@ -81,78 +81,78 @@ func userToUserDTO(user entities.User) entities.UserDTO {
 	}
 }
 
-func (s *UserServiceImpl) SignUp(email, password string) (entities.UserDTO, error) {
+func (s *UserServiceImpl) SignUp(email, password string) (*entities.UserDTO, error) {
 	_, err := s.userStore.GetUserByEmail(email)
 	if err == nil {
-		return entities.UserDTO{}, fmt.Errorf("%w: user with email %s already exists", svcerror.ErrBadRequest, email)
+		return nil, fmt.Errorf("%w: user with email %s already exists", svcerror.ErrBadRequest, email)
 	}
 
 	if err != sql.ErrNoRows {
-		return entities.UserDTO{}, err
+		return nil, err
 	}
 
 	cleanedEmail := strings.TrimSpace(email)
 	cleanedEmail = strings.ToLower(cleanedEmail)
 	if cleanedEmail == "" {
-		return entities.UserDTO{}, fmt.Errorf("%w: email cannot be empty", svcerror.ErrBadRequest)
+		return nil, fmt.Errorf("%w: email cannot be empty", svcerror.ErrBadRequest)
 	}
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		slog.Error("error hashing password", "err", err.Error())
-		return entities.UserDTO{}, fmt.Errorf("%w: error hashing password", svcerror.ErrInternalServer)
+		return nil, fmt.Errorf("%w: error hashing password", svcerror.ErrInternalServer)
 	}
 
 	user, err := s.userStore.CreateUser(cleanedEmail, string(hashedPassword))
 	if err != nil {
 		slog.Error("error creating user", "err", err.Error())
-		return entities.UserDTO{}, fmt.Errorf("%w: error creating user", svcerror.ErrInternalServer)
+		return nil, fmt.Errorf("%w: error creating user", svcerror.ErrInternalServer)
 	}
 	return userDTOReturnVal(user, err)
 }
 
-func (s *UserServiceImpl) Refresh(userId, refreshToken string) (entities.UserDTO, error) {
+func (s *UserServiceImpl) Refresh(userId, refreshToken string) (*entities.UserDTO, error) {
 	user, err := s.userStore.GetUserById(userId)
 	if err == sql.ErrNoRows {
-		return entities.UserDTO{}, fmt.Errorf("%w: error finding user", svcerror.ErrNotFound)
+		return nil, fmt.Errorf("%w: error finding user", svcerror.ErrNotFound)
 	} else if err != nil {
 		slog.Error("error getting user", "err", err.Error())
-		return entities.UserDTO{}, fmt.Errorf("%w: error getting user", svcerror.ErrInternalServer)
+		return nil, fmt.Errorf("%w: error getting user", svcerror.ErrInternalServer)
 	}
 
 	if user.RefreshToken.String() != refreshToken {
-		return entities.UserDTO{}, fmt.Errorf("%w: invalid refresh token", svcerror.ErrBadRequest)
+		return nil, fmt.Errorf("%w: invalid refresh token", svcerror.ErrBadRequest)
 	}
 
 	if user.RefreshTokenExpiry.Before(time.Now()) {
-		return entities.UserDTO{}, fmt.Errorf("%w: refresh token expired", svcerror.ErrBadRequest)
+		return nil, fmt.Errorf("%w: refresh token expired", svcerror.ErrBadRequest)
 	}
 
 	newRefreshToken := generateRefreshToken()
 	user, err = s.userStore.UpdateRefreshToken(user.Id.String(), newRefreshToken.String())
 	if err != nil {
 		slog.Error("error updating refresh token", "err", err.Error())
-		return entities.UserDTO{}, fmt.Errorf("%w: error updating refresh token", svcerror.ErrInternalServer)
+		return nil, fmt.Errorf("%w: error updating refresh token", svcerror.ErrInternalServer)
 	}
 
 	return userDTOReturnVal(user, err)
 }
 
-func userDTOReturnVal(user entities.User, err error) (entities.UserDTO, error) {
+func userDTOReturnVal(user *entities.User, err error) (*entities.UserDTO, error) {
 	return userToUserDTO(user), nil
 }
 
-func (s *UserServiceImpl) Login(email, password string) (entities.UserDTO, error) {
+func (s *UserServiceImpl) Login(email, password string) (*entities.UserDTO, error) {
 	user, err := s.userStore.GetUserByEmail(email)
 	if err == sql.ErrNoRows {
-		return entities.UserDTO{}, fmt.Errorf("%w: user with email %s not found", svcerror.ErrNotFound, email)
+		return nil, fmt.Errorf("%w: user with email %s not found", svcerror.ErrNotFound, email)
 	} else if err != nil {
 		slog.Error("error getting user", "err", err.Error())
-		return entities.UserDTO{}, fmt.Errorf("%w: error getting user", svcerror.ErrInternalServer)
+		return nil, fmt.Errorf("%w: error getting user", svcerror.ErrInternalServer)
 	}
 
 	if bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)) != nil {
-		return entities.UserDTO{}, fmt.Errorf("%w: invalid password", svcerror.ErrBadRequest)
+		return nil, fmt.Errorf("%w: invalid password", svcerror.ErrBadRequest)
 	}
 
 	return userDTOReturnVal(user, err)
