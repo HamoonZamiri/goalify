@@ -84,11 +84,14 @@ func userToUserDTO(user *entities.User) *entities.UserDTO {
 func (s *UserServiceImpl) SignUp(email, password string) (*entities.UserDTO, error) {
 	_, err := s.userStore.GetUserByEmail(email)
 	if err == nil {
-		return nil, fmt.Errorf("%w: user with email %s already exists", svcerror.ErrBadRequest, email)
+		err := fmt.Errorf("%w: user with email %s already exists", svcerror.ErrBadRequest, email)
+		slog.Error(err.Error())
+		return nil, err
 	}
 
 	if err != sql.ErrNoRows {
-		return nil, err
+		slog.Error("error getting user", "err", err.Error())
+		return nil, fmt.Errorf("%w: internal error signing up user", svcerror.ErrInternalServer)
 	}
 
 	cleanedEmail := strings.TrimSpace(email)
