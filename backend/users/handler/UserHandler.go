@@ -2,6 +2,7 @@ package handler
 
 import (
 	"errors"
+	"fmt"
 	"goalify/jsonutil"
 	"goalify/responses"
 	"goalify/svcerror"
@@ -30,6 +31,13 @@ func getErrorCode(err error) int {
 
 func (h *UserHandler) HandleSignup(w http.ResponseWriter, r *http.Request) {
 	decoded, problems, err := jsonutil.DecodeValid[SignupRequest](r)
+	if err != nil {
+		slog.Error("json decode: ", "err", err)
+		apiErr := responses.NewAPIError(err.Error(), nil)
+		jsonutil.Encode(w, r, http.StatusBadRequest, apiErr)
+		return
+	}
+
 	if len(problems) > 0 {
 		apiErr := responses.NewAPIError(err.Error(), problems)
 		jsonutil.Encode(w, r, http.StatusBadRequest, apiErr)
@@ -40,11 +48,7 @@ func (h *UserHandler) HandleSignup(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		status := getErrorCode(err)
 		apiErr := responses.NewAPIError(err.Error(), nil)
-		err := jsonutil.Encode(w, r, status, apiErr)
-		if err != nil {
-			slog.Error("json encode: ", "err", err)
-			http.Error(w, "internal error", http.StatusInternalServerError)
-		}
+		jsonutil.Encode(w, r, status, apiErr)
 		return
 	}
 
@@ -52,21 +56,28 @@ func (h *UserHandler) HandleSignup(w http.ResponseWriter, r *http.Request) {
 	if err := jsonutil.Encode(w, r, http.StatusOK, *res); err != nil {
 		slog.Error("json encode: ", "err", err)
 		http.Error(w, "internal error", http.StatusInternalServerError)
-		return
 	}
 }
 
 func (h *UserHandler) HandleLogin(w http.ResponseWriter, r *http.Request) {
-	decoded, err := jsonutil.Decode[LoginRequest](r)
+	decoded, problems, err := jsonutil.DecodeValid[LoginRequest](r)
 	if err != nil {
 		slog.Error("json decode: ", "err", err)
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		apiErr := responses.NewAPIError("error decoding request body", nil)
+		jsonutil.Encode(w, r, http.StatusBadRequest, apiErr)
+		return
+	}
+
+	if len(problems) > 0 {
+		apiErr := responses.NewAPIError(err.Error(), problems)
+		jsonutil.Encode(w, r, http.StatusBadRequest, apiErr)
 		return
 	}
 
 	user, err := h.userService.Login(decoded.Email, decoded.Password)
 	if err != nil {
-		http.Error(w, err.Error(), getErrorCode(err))
+		apiErr := responses.NewAPIError(err.Error(), nil)
+		jsonutil.Encode(w, r, getErrorCode(err), apiErr)
 		return
 	}
 
@@ -80,13 +91,15 @@ func (h *UserHandler) HandleLogin(w http.ResponseWriter, r *http.Request) {
 func (h *UserHandler) HandleRefresh(w http.ResponseWriter, r *http.Request) {
 	decoded, err := jsonutil.Decode[RefreshRequest](r)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		apiErr := responses.NewAPIError(fmt.Errorf("error decoding request body: %w", err).Error(), nil)
+		jsonutil.Encode(w, r, getErrorCode(err), apiErr)
 		return
 	}
 
 	user, err := h.userService.Refresh(decoded.UserId, decoded.RefreshToken)
 	if err != nil {
-		http.Error(w, err.Error(), getErrorCode(err))
+		apiErr := responses.NewAPIError(err.Error(), nil)
+		jsonutil.Encode(w, r, getErrorCode(err), apiErr)
 		return
 	}
 
