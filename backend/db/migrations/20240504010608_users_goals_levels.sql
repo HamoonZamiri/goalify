@@ -9,8 +9,8 @@ CREATE TABLE levels  (
 
 CREATE TABLE users  (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    email VARCHAR NOT NULL UNIQUE,
-    password VARCHAR NOT NULL,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
     xp INTEGER DEFAULT 0,
     level_id SERIAL REFERENCES levels(id),
     cash_available INTEGER DEFAULT 0,
@@ -22,7 +22,7 @@ CREATE TABLE users  (
 
 CREATE TABLE goal_categories  (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    title VARCHAR NOT NULL,
+    title VARCHAR(255) NOT NULL,
     xp_per_goal INTEGER NOT NULL,
     user_id UUID REFERENCES users(id),
     created_at TIMESTAMP DEFAULT now(),
@@ -33,8 +33,8 @@ CREATE TYPE goal_status AS ENUM ('complete', 'not_complete');
 
 CREATE TABLE goals (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    title VARCHAR NOT NULL,
-    description VARCHAR DEFAULT '',
+    title VARCHAR(255) NOT NULL,
+    description VARCHAR(255) DEFAULT '',
     user_id UUID REFERENCES users(id),
     category_id UUID REFERENCES goal_categories(id),
     status goal_status DEFAULT 'not_complete',
