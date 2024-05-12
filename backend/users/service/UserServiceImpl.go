@@ -111,7 +111,7 @@ func (s *UserServiceImpl) SignUp(email, password string) (*entities.UserDTO, err
 		slog.Error("error creating user", "err", err.Error())
 		return nil, fmt.Errorf("%w: error creating user", svcerror.ErrInternalServer)
 	}
-	return userDTOReturnVal(user, err)
+	return userToUserDTO(user), nil
 }
 
 func (s *UserServiceImpl) Refresh(userId, refreshToken string) (*entities.UserDTO, error) {
@@ -138,10 +138,6 @@ func (s *UserServiceImpl) Refresh(userId, refreshToken string) (*entities.UserDT
 		return nil, fmt.Errorf("%w: error updating refresh token", svcerror.ErrInternalServer)
 	}
 
-	return userDTOReturnVal(user, err)
-}
-
-func userDTOReturnVal(user *entities.User, err error) (*entities.UserDTO, error) {
 	return userToUserDTO(user), nil
 }
 
@@ -158,7 +154,7 @@ func (s *UserServiceImpl) Login(email, password string) (*entities.UserDTO, erro
 		return nil, fmt.Errorf("%w: invalid password", svcerror.ErrBadRequest)
 	}
 
-	return userDTOReturnVal(user, err)
+	return userToUserDTO(user), nil
 }
 
 func (s *UserServiceImpl) DeleteUserById(id string) error {
