@@ -39,7 +39,7 @@ func (h *UserHandler) HandleSignup(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if len(problems) > 0 {
-		apiErr := responses.NewAPIError(err.Error(), problems)
+		apiErr := responses.NewAPIError("invalid request body", problems)
 		jsonutil.Encode(w, r, http.StatusBadRequest, apiErr)
 		return
 	}
@@ -69,7 +69,7 @@ func (h *UserHandler) HandleLogin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if len(problems) > 0 {
-		apiErr := responses.NewAPIError(err.Error(), problems)
+		apiErr := responses.NewAPIError("invalid request body", problems)
 		jsonutil.Encode(w, r, http.StatusBadRequest, apiErr)
 		return
 	}
