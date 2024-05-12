@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"goalify/entities"
 	"goalify/goals/stores"
+	"goalify/svcerror"
+	"log/slog"
 	"strings"
 
 	"github.com/google/uuid"
@@ -51,7 +53,12 @@ func (gs *GoalServiceImpl) CreateGoal(title, description string, userId, categor
 		return nil, errors.New("invalid uuid")
 	}
 
-	return gs.goalStore.CreateGoal(title, description, userId, categoryId)
+	createdGoal, err := gs.goalStore.CreateGoal(title, description, userId, categoryId)
+	if err != nil {
+		slog.Error("error creating goal", "err", err)
+		return nil, fmt.Errorf("%w: error creating goal", svcerror.ErrInternalServer)
+	}
+	return createdGoal, nil
 }
 
 func (gs *GoalServiceImpl) UpdateGoalStatus(status string, goalId, userId uuid.UUID) (*entities.Goal, error) {
