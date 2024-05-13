@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	main "goalify"
 	"goalify/db"
 	"goalify/entities"
 	gh "goalify/goals/handler"
@@ -132,6 +133,11 @@ func TestGoalCategoryCreate(t *testing.T) {
 	assert.Nil(t, err)
 
 	req.Header.Set("Authorization", "Bearer "+refreshToken)
+	req.Header.Set("Content-Type", "application/json")
+	res, err := http.DefaultClient.Do(req)
+
+	assert.Nil(t, err)
+	assert.Equal(t, http.StatusOK, res.StatusCode)
 }
 
 func TestMain(m *testing.M) {
