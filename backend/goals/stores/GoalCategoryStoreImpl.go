@@ -30,7 +30,7 @@ func (s *GoalCategoryStoreImpl) CreateGoalCategory(title string, xpPerGoal int, 
 	query := `INSERT INTO goal_categories (title, xp_per_goal, user_id) 
   VALUES ($1, $2, $3) RETURNING *`
 	var goalCategory entities.GoalCategory
-	err := s.db.QueryRowx(query, title, xpPerGoal, userId).StructScan(goalCategory)
+	err := s.db.QueryRowx(query, title, xpPerGoal, userId).StructScan(&goalCategory)
 	if err != nil {
 		return nil, err
 	}
