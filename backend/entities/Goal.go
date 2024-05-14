@@ -1,8 +1,14 @@
 package entities
 
-import "github.com/google/uuid"
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
 
 type Goal struct {
+	CreatedAt   time.Time `db:"created_at" json:"created_at"`
+	UpdatedAt   time.Time `db:"updated_at" json:"updated_at"`
 	Title       string    `db:"title" json:"title"`
 	Description string    `db:"description" json:"description"`
 	Status      string    `db:"status" json:"status"`
@@ -12,6 +18,8 @@ type Goal struct {
 }
 
 type GoalCategory struct {
+	CreatedAt   time.Time `db:"created_at" json:"created_at"`
+	UpdatedAt   time.Time `db:"updated_at" json:"updated_at"`
 	Title       string    `db:"title" json:"title"`
 	Goals       []*Goal   `json:"goals"`
 	Xp_per_goal int       `db:"xp_per_goal" json:"xp_per_goal"`
