@@ -132,7 +132,7 @@ func TestGoalCategoryCreate(t *testing.T) {
 	req, err := http.NewRequest("POST", url, bytes.NewReader(stringifiedBody))
 	assert.Nil(t, err)
 
-	req.Header.Set("Authorization", "Bearer "+refreshToken)
+	req.Header.Set("Authorization", "Bearer "+accessToken)
 	req.Header.Set("Content-Type", "application/json")
 	res, err := http.DefaultClient.Do(req)
 
@@ -148,7 +148,7 @@ func TestMain(m *testing.M) {
 	setup()
 	code := m.Run()
 
-	query := `DELETE from users;`
+	query := `DELETE from goal_categories; DELETE from goals; DELETE from users;`
 	db.MustExec(query)
 	os.Exit(code)
 }
