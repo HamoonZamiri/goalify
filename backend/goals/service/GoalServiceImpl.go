@@ -135,7 +135,12 @@ func (gs *GoalServiceImpl) CreateGoalCategory(title string, xpPerGoal int, userI
 	if isInvalidUUID(userId) {
 		return nil, errors.New("invalid uuid")
 	}
-	return gs.goalCategoryStore.CreateGoalCategory(title, xpPerGoal, userId)
+	cat, err := gs.goalCategoryStore.CreateGoalCategory(title, xpPerGoal, userId)
+	if err != nil {
+		slog.Error("error creating goal category", "err", err)
+		return nil, fmt.Errorf("%w: error creating goal category", svcerror.ErrInternalServer)
+	}
+	return cat, nil
 }
 
 func (gs *GoalServiceImpl) GetGoalCategoriesByUserId(userId uuid.UUID) ([]*entities.GoalCategory, error) {
