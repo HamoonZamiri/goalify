@@ -12,22 +12,23 @@ func AuthenticatedOnly(next http.HandlerFunc) http.Handler {
 	return http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
 			authstr := r.Header.Get("Authorization")
+			slog.Debug("header", "Authorization", authstr)
 			if authstr == "" {
-				http.Error(w, "unauthorized request", http.StatusUnauthorized)
+				http.Error(w, "empty header unauthorized request", http.StatusUnauthorized)
 				return
 			}
 
 			split := strings.Split(authstr, " ")
 			if len(split) != 2 {
-				http.Error(w, "unauthorized request", http.StatusUnauthorized)
+				http.Error(w, "malformed header: unauthorized request", http.StatusUnauthorized)
 				return
 			}
 
 			token := split[1]
 			id, err := service.VerifyToken(token)
 			if err != nil {
-				slog.Error("verify token: %w", err)
-				http.Error(w, "unauthorized request", http.StatusUnauthorized)
+				slog.Error("verify token: ", "err", err)
+				http.Error(w, "invalid access token: unauthorized request", http.StatusUnauthorized)
 				return
 			}
 
