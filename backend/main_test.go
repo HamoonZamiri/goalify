@@ -27,6 +27,18 @@ var (
 	userId       string
 )
 
+func MarshalServerResponse[T any](res *http.Response) (responses.ServerResponse[T], error) {
+	var serverResponse responses.ServerResponse[T]
+
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		return serverResponse, err
+	}
+
+	err = json.Unmarshal(body, &serverResponse)
+	return serverResponse, err
+}
+
 func setup() {
 	go main.Run()
 	time.Sleep(2 * time.Second)
@@ -47,14 +59,13 @@ func TestSignup(t *testing.T) {
 	assert.Nil(t, err)
 
 	assert.Equal(t, 200, res.StatusCode)
-	var serverResponse responses.ServerResponse[entities.UserDTO]
 
 	defer res.Body.Close()
-	body, err := io.ReadAll(res.Body)
-	assert.Nil(t, err)
 
-	json.Unmarshal(body, &serverResponse)
+	serverResponse, err := MarshalServerResponse[entities.UserDTO](res)
+	assert.Nil(t, err)
 	assert.Equal(t, "user@mail.com", serverResponse.Data.Email)
+
 	refreshToken = serverResponse.Data.RefreshToken.String()
 	userId = serverResponse.Data.Id.String()
 }
@@ -96,12 +107,7 @@ func TestRefresh(t *testing.T) {
 	res, err := http.Post(url, "application/json", bytes.NewReader(stringifiedBody))
 	assert.Nil(t, err)
 
-	var serverResponse responses.ServerResponse[entities.UserDTO]
-
-	body, err := io.ReadAll(res.Body)
-	assert.Nil(t, err)
-
-	err = json.Unmarshal(body, &serverResponse)
+	serverResponse, err := MarshalServerResponse[entities.UserDTO](res)
 	assert.Nil(t, err)
 
 	assert.Equal(t, http.StatusOK, res.StatusCode)
@@ -138,6 +144,11 @@ func TestGoalCategoryCreate(t *testing.T) {
 
 	assert.Nil(t, err)
 	assert.Equal(t, http.StatusOK, res.StatusCode)
+	gc, err := MarshalServerResponse[entities.GoalCategory](res)
+
+	assert.Nil(t, err)
+	assert.Equal(t, "goal cat", gc.Data.Title)
+	assert.Equal(t, 100, gc.Data.Xp_per_goal)
 }
 
 func TestMain(m *testing.M) {
