@@ -56,7 +56,8 @@ func (h *GoalHandler) HandleCreateGoalCategory(w http.ResponseWriter, r *http.Re
 		jsonutil.Encode(w, r, http.StatusInternalServerError, apiError)
 	}
 
-	if err := jsonutil.Encode(w, r, http.StatusOK, category); err != nil {
+	res := responses.New(category, "goal category created successfully")
+	if err := jsonutil.Encode(w, r, http.StatusOK, res); err != nil {
 		slog.Error("json encode: ", "err", err)
 		http.Error(w, "internal error", http.StatusInternalServerError)
 	}
