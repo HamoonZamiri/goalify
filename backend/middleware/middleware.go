@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"errors"
+	"goalify/responses"
 	"goalify/users/service"
 	"log/slog"
 	"net/http"
@@ -14,13 +15,13 @@ func AuthenticatedOnly(next http.HandlerFunc) http.Handler {
 			authstr := r.Header.Get("Authorization")
 			slog.Debug("header", "Authorization", authstr)
 			if authstr == "" {
-				http.Error(w, "empty header unauthorized request", http.StatusUnauthorized)
+				responses.SendAPIError(w, r, http.StatusUnauthorized, "empty header: unauthorized request", nil)
 				return
 			}
 
 			split := strings.Split(authstr, " ")
 			if len(split) != 2 {
-				http.Error(w, "malformed header: unauthorized request", http.StatusUnauthorized)
+				responses.SendAPIError(w, r, http.StatusUnauthorized, "malformed header: unauthorized request", nil)
 				return
 			}
 
@@ -28,7 +29,7 @@ func AuthenticatedOnly(next http.HandlerFunc) http.Handler {
 			id, err := service.VerifyToken(token)
 			if err != nil {
 				slog.Error("verify token: ", "err", err)
-				http.Error(w, "invalid access token: unauthorized request", http.StatusUnauthorized)
+				responses.SendAPIError(w, r, http.StatusUnauthorized, "invalid access token: unauthorized request", nil)
 				return
 			}
 
