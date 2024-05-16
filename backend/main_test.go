@@ -151,6 +151,55 @@ func TestGoalCategoryCreate(t *testing.T) {
 	assert.Equal(t, 100, gc.Data.Xp_per_goal)
 }
 
+func TestGetGoalCategories(t *testing.T) {
+	url := fmt.Sprintf("%s/api/goals/categories", BASE_URL)
+	req, err := http.NewRequest("GET", url, nil)
+	assert.Nil(t, err)
+	req.Header.Set("Authorization", "Bearer "+accessToken)
+	req.Header.Set("Content-Type", "application/json")
+	res, err := http.DefaultClient.Do(req)
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusOK, res.StatusCode)
+	resBody, err := MarshalServerResponse[[]entities.GoalCategory](res)
+	assert.Nil(t, err)
+
+	t.Log(resBody)
+
+	assert.Equal(t, 1, len(resBody.Data))
+}
+
+func printErrResponse(t *testing.T, res *http.Response) error {
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		return err
+	}
+
+	var errRes responses.APIError
+	err = json.Unmarshal(body, &errRes)
+	if err != nil {
+		return err
+	}
+
+	t.Logf("Error: %s", errRes.Message)
+	return nil
+}
+
+func printSuccessResponse[T any](t *testing.T, res *http.Response) error {
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		return err
+	}
+
+	var successRes responses.ServerResponse[T]
+	err = json.Unmarshal(body, &successRes)
+	if err != nil {
+		return err
+	}
+	t.Logf("Response: %v", successRes)
+	return nil
+}
+
 func TestMain(m *testing.M) {
 	db, err := db.New("goalify")
 	if err != nil {
