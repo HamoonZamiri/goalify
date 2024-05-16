@@ -125,16 +125,6 @@ func (gs *GoalServiceImpl) GetGoalById(goalId uuid.UUID) (*entities.Goal, error)
 }
 
 func (gs *GoalServiceImpl) CreateGoalCategory(title string, xpPerGoal int, userId uuid.UUID) (*entities.GoalCategory, error) {
-	if isEmptyField(title) {
-		return nil, errors.New("title cannot be empty")
-	}
-	if xpPerGoal <= 0 || xpPerGoal > XP_PER_GOAL_MAX {
-		return nil, fmt.Errorf("xp per goal must be between 1 and %d", XP_PER_GOAL_MAX)
-	}
-
-	if isInvalidUUID(userId) {
-		return nil, errors.New("invalid uuid")
-	}
 	cat, err := gs.goalCategoryStore.CreateGoalCategory(title, xpPerGoal, userId)
 	if err != nil {
 		slog.Error("error creating goal category", "err", err)
@@ -144,10 +134,15 @@ func (gs *GoalServiceImpl) CreateGoalCategory(title string, xpPerGoal int, userI
 }
 
 func (gs *GoalServiceImpl) GetGoalCategoriesByUserId(userId uuid.UUID) ([]*entities.GoalCategory, error) {
-	if isInvalidUUID(userId) {
-		return []*entities.GoalCategory{}, errors.New("invalid uuid")
+	categories, err := gs.goalCategoryStore.GetGoalCategoriesByUserId(userId)
+	if err == sql.ErrNoRows {
+		return []*entities.GoalCategory{}, nil
 	}
-	return gs.goalCategoryStore.GetGoalCategoriesByUserId(userId)
+	if err != nil {
+		slog.Error("get goal categories by user id", "err", err)
+		return nil, fmt.Errorf("%w: error fetching goal categories", svcerror.ErrInternalServer)
+	}
+	return categories, nil
 }
 
 func (gs *GoalServiceImpl) UpdateGoalCategory(categoryId, goalId, userId uuid.UUID) (*entities.GoalCategory, error) {
