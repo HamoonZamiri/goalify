@@ -1,6 +1,7 @@
 package stores
 
 import (
+	"database/sql"
 	"errors"
 	"goalify/entities"
 	"log/slog"
@@ -41,7 +42,7 @@ func (s *GoalCategoryStoreImpl) GetGoalCategoriesByUserId(userId uuid.UUID) ([]*
 	query := `SELECT gc.id, gc.title, gc.xp_per_goal, gc.user_id, g.id as goal_id, 
   g.title as goal_title, g.description, g.status
   FROM goal_categories gc 
-  JOIN goals g 
+  LEFT JOIN goals g 
   ON gc.id = g.category_id 
   WHERE gc.user_id = $1`
 
@@ -68,7 +69,7 @@ func (s *GoalCategoryStoreImpl) GetGoalCategoriesByUserId(userId uuid.UUID) ([]*
 func (s *GoalCategoryStoreImpl) GetGoalCategoryById(categoryId uuid.UUID) (*entities.GoalCategory, error) {
 	query := `SELECT gc.id, gc.title, gc.xp_per_goal, gc.user_id, g.id as goal_id, 
   g.title as goal_title, g.description, g.status
-  FROM goal_categories gc JOIN goals g 
+  FROM goal_categories gc LEFT JOIN goals g 
   ON gc.id = g.category_id 
   WHERE gc.id = $1`
 
@@ -93,41 +94,27 @@ func (s *GoalCategoryStoreImpl) GetGoalCategoryById(categoryId uuid.UUID) (*enti
 
 func mapGoalCategoryRows(rows *sqlx.Rows, categoryMap map[uuid.UUID]*entities.GoalCategory) error {
 	for rows.Next() {
-		var (
-			id          uuid.UUID
-			title       string
-			xp_per_goal int
-			user_id     uuid.UUID
-			goal_id     uuid.UUID
-			goal_title  string
-			description string
-			status      string
-		)
-		err := rows.Scan(&id, &title, &xp_per_goal, &user_id, &goal_id, &goal_title, &description, &status)
+		var gc entities.GoalCategory
+		var goalId, goalTitle, goalDescription, goalStatus sql.NullString
+
+		err := rows.Scan(&gc.Id, &gc.Title, &gc.Xp_per_goal, &gc.UserId, &goalId, &goalTitle, &goalDescription, &goalStatus)
 		if err != nil {
 			return err
 		}
 
-		goal := entities.Goal{
-			Id:          goal_id,
-			Title:       goal_title,
-			Description: description,
-			Status:      status,
-			UserId:      user_id,
-			CategoryId:  id,
+		if _, ok := categoryMap[gc.Id]; !ok {
+			gc.Goals = []*entities.Goal{}
+			categoryMap[gc.Id] = &gc
 		}
 
-		if category, ok := categoryMap[id]; !ok {
-			newCategory := entities.GoalCategory{
-				Id:          id,
-				Title:       title,
-				Xp_per_goal: xp_per_goal,
-				UserId:      user_id,
-				Goals:       []*entities.Goal{&goal},
+		if goalId.Valid {
+			goal := entities.Goal{
+				Id:          uuid.MustParse(goalId.String),
+				Title:       goalTitle.String,
+				Description: goalDescription.String,
+				Status:      goalStatus.String,
 			}
-			categoryMap[id] = &newCategory
-		} else {
-			category.Goals = append(category.Goals, &goal)
+			categoryMap[gc.Id].Goals = append(categoryMap[gc.Id].Goals, &goal)
 		}
 	}
 	return nil
