@@ -93,3 +93,40 @@ func (h *GoalHandler) HandleGetGoalCategoriesByUserId(w http.ResponseWriter, r *
 		responses.SendAPIError(w, r, http.StatusInternalServerError, "internal error encoding response", nil)
 	}
 }
+
+func (h *GoalHandler) HandleGetGoalCategoryById(w http.ResponseWriter, r *http.Request) {
+	userId, err := middleware.GetIdFromHeader(r)
+	if err != nil {
+		slog.Error("get goal category by id auth: ", "err", err)
+		responses.SendAPIError(w, r, http.StatusInternalServerError, err.Error(), nil)
+		return
+	}
+
+	parsedUUID, err := uuid.Parse(userId)
+	if err != nil {
+		slog.Error("parse user id: ", "err", err)
+		responses.SendAPIError(w, r, http.StatusInternalServerError, "error parsing user id", nil)
+		return
+	}
+
+	categoryId := r.PathValue("categoryId")
+	parsedCategoryId, err := uuid.Parse(categoryId)
+	if err != nil {
+		slog.Error("parse category id: ", "err", err)
+		responses.SendAPIError(w, r, http.StatusInternalServerError, "error parsing category id", nil)
+		return
+	}
+
+	cat, err := h.goalService.GetGoalCategoryById(parsedCategoryId, parsedUUID)
+	if err != nil {
+		slog.Error("get goal category by id: ", "err", err)
+		responses.SendAPIError(w, r, svcerror.GetErrorCode(err), err.Error(), nil)
+		return
+	}
+
+	res := responses.New(cat, "goal category retrieved successfully")
+	if err := jsonutil.Encode(w, r, http.StatusOK, res); err != nil {
+		slog.Error("json encode: ", "err", err)
+		responses.SendAPIError(w, r, http.StatusInternalServerError, "internal error encoding response", nil)
+	}
+}

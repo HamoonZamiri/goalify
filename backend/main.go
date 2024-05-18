@@ -28,6 +28,7 @@ func NewServer(userHandler *uh.UserHandler, goalHandler *gh.GoalHandler) http.Ha
 	mux.Handle("POST /api/goals/create", middleware.AuthenticatedOnly(goalHandler.HandleCreateGoal))
 	mux.Handle("POST /api/goals/categories", middleware.AuthenticatedOnly(goalHandler.HandleCreateGoalCategory))
 	mux.Handle("GET /api/goals/categories", middleware.AuthenticatedOnly(goalHandler.HandleGetGoalCategoriesByUserId))
+	mux.Handle("GET /api/goals/categories/{categoryId}", middleware.AuthenticatedOnly(goalHandler.HandleGetGoalCategoryById))
 	return mux
 }
 
