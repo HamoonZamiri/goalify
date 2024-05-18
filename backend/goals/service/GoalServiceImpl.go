@@ -164,9 +164,16 @@ func (gs *GoalServiceImpl) UpdateGoalCategory(categoryId, goalId, userId uuid.UU
 	return gs.goalCategoryStore.UpdateGoalCategory(categoryId, goalId)
 }
 
-func (gs *GoalServiceImpl) GetGoalCategoryById(categoryId uuid.UUID) (*entities.GoalCategory, error) {
-	if isInvalidUUID(categoryId) {
-		return nil, errors.New("invalid uuid category id")
+func (gs *GoalServiceImpl) GetGoalCategoryById(categoryId, userId uuid.UUID) (*entities.GoalCategory, error) {
+	gc, err := gs.goalCategoryStore.GetGoalCategoryById(categoryId)
+	if err != nil {
+		slog.Error("error fetching goal category", "err", err)
+		return nil, fmt.Errorf("%w: error fetching goal category", svcerror.ErrInternalServer)
 	}
-	return gs.goalCategoryStore.GetGoalCategoryById(categoryId)
+
+	if gc.UserId != userId {
+		return nil, fmt.Errorf("%w: user does not own this category", svcerror.ErrBadRequest)
+	}
+
+	return gc, nil
 }
