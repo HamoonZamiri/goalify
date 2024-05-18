@@ -16,12 +16,15 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
+	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
 )
 
 const BASE_URL = "http://localhost:8080"
 
 var (
+	dbx          *sqlx.DB
 	accessToken  string
 	refreshToken string
 	userId       string
@@ -169,6 +172,25 @@ func TestGetGoalCategories(t *testing.T) {
 	assert.Equal(t, 1, len(resBody.Data))
 }
 
+func TestGetGoalCategoryById(t *testing.T) {
+	gc := createTestGoalCategory(t, uuid.MustParse(userId))
+
+	url := fmt.Sprintf("%s/api/goals/categories/%s", BASE_URL, gc.Id)
+	req, err := http.NewRequest("GET", url, nil)
+	assert.Nil(t, err)
+	req.Header.Set("Authorization", "Bearer "+accessToken)
+	req.Header.Set("Content-Type", "application/json")
+	res, err := http.DefaultClient.Do(req)
+
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusOK, res.StatusCode)
+	resBody, err := MarshalServerResponse[entities.GoalCategory](res)
+	assert.Nil(t, err)
+
+	assert.Equal(t, gc.Id, resBody.Data.Id)
+}
+
 func printErrResponse(t *testing.T, res *http.Response) error {
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
@@ -200,15 +222,25 @@ func printSuccessResponse[T any](t *testing.T, res *http.Response) error {
 	return nil
 }
 
+func createTestGoalCategory(t *testing.T, userId uuid.UUID) *entities.GoalCategory {
+	query := `INSERT INTO goal_categories (title, xp_per_goal, user_id) 
+  VALUES ($1, $2, $3) RETURNING *`
+	var goalCategory entities.GoalCategory
+	dbx.QueryRowx(query, "test goal", 50, userId).StructScan(&goalCategory)
+	return &goalCategory
+}
+
 func TestMain(m *testing.M) {
-	db, err := db.New("goalify")
+	var err error
+	dbx, err = db.New("goalify")
 	if err != nil {
 		panic(err)
 	}
+
 	setup()
 	code := m.Run()
 
 	query := `DELETE from goal_categories; DELETE from goals; DELETE from users;`
-	db.MustExec(query)
+	dbx.MustExec(query)
 	os.Exit(code)
 }
