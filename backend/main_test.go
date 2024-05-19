@@ -193,7 +193,7 @@ func TestGetGoalCategoryById(t *testing.T) {
 
 func TestUpdateGoalCategoryById(t *testing.T) {
 	gc := createTestGoalCategory(t, "update goal category", uuid.MustParse(userId))
-	reqBody := map[string]any{"title": "updated title"}
+	reqBody := map[string]any{"title": "updated title", "xp_per_goal": 69}
 	url := fmt.Sprintf("%s/api/goals/categories/%s", BASE_URL, gc.Id)
 
 	stringifiedBody, err := json.Marshal(reqBody)
@@ -208,6 +208,11 @@ func TestUpdateGoalCategoryById(t *testing.T) {
 	assert.Nil(t, err)
 
 	assert.Equal(t, http.StatusOK, res.StatusCode)
+
+	resBody, err := UnmarshalServerResponse[entities.GoalCategory](res)
+	assert.Nil(t, err)
+	assert.Equal(t, "updated title", resBody.Data.Title)
+	assert.Equal(t, 69, resBody.Data.Xp_per_goal)
 }
 
 func printErrResponse(t *testing.T, res *http.Response) error {
