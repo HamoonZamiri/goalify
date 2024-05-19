@@ -130,3 +130,64 @@ func (h *GoalHandler) HandleGetGoalCategoryById(w http.ResponseWriter, r *http.R
 		responses.SendAPIError(w, r, http.StatusInternalServerError, "internal error encoding response", nil)
 	}
 }
+
+func (h *GoalHandler) HandleUpdateGoalCategoryById(w http.ResponseWriter, r *http.Request) {
+	userId, err := middleware.GetIdFromHeader(r)
+	if err != nil {
+		slog.Error("middleware.GetIdFromHeader: ", "err", err)
+		responses.SendAPIError(w, r, http.StatusInternalServerError, err.Error(), nil)
+		return
+	}
+
+	parsedUUID, err := uuid.Parse(userId)
+	if err != nil {
+		slog.Error("uuid.Parse: ", "err", err)
+		responses.SendAPIError(w, r, http.StatusInternalServerError, err.Error(), nil)
+		return
+	}
+
+	categoryId := r.PathValue("categoryId")
+	parsedCategoryId, err := uuid.Parse(categoryId)
+	if err != nil {
+		slog.Error("uuid.Parse: ", "err", err)
+		responses.SendAPIError(w, r, http.StatusInternalServerError, err.Error(), nil)
+		return
+	}
+
+	body, problems, err := jsonutil.DecodeValid[UpdateGoalCategoryRequest](r)
+	if len(problems) > 0 {
+		apiError := responses.NewAPIError("invalid request", problems)
+		jsonutil.Encode(w, r, http.StatusBadRequest, apiError)
+		return
+	}
+
+	if err != nil {
+		slog.Error("jsonutil.DecodeValid: ", "err", err)
+		responses.SendAPIError(w, r, http.StatusInternalServerError, err.Error(), nil)
+		return
+	}
+
+	updates := make(map[string]any)
+	if body.Title.IsPresent() {
+		updates["title"] = body.Title.ValueOrZero()
+	}
+
+	if body.XpPerGoal.IsPresent() {
+		updates["xp_per_goal"] = body.XpPerGoal.ValueOrZero()
+	}
+
+	if len(updates) == 0 {
+		responses.SendAPIError(w, r, http.StatusBadRequest, "no fields given to update", nil)
+		return
+	}
+
+	cat, err := h.goalService.UpdateGoalCategoryById(parsedCategoryId, updates, parsedUUID)
+	if err != nil {
+		slog.Error("UpdateGoalCategoryById: ", "err", err)
+		responses.SendAPIError(w, r, svcerror.GetErrorCode(err), err.Error(), nil)
+	}
+	if err := jsonutil.Encode(w, r, http.StatusOK, responses.New(cat, "goal category updated successfully")); err != nil {
+		slog.Error("jsonutil.Encode: ", "err", err)
+		responses.SendAPIError(w, r, http.StatusInternalServerError, err.Error(), nil)
+	}
+}

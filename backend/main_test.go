@@ -30,7 +30,7 @@ var (
 	userId       string
 )
 
-func MarshalServerResponse[T any](res *http.Response) (responses.ServerResponse[T], error) {
+func UnmarshalServerResponse[T any](res *http.Response) (responses.ServerResponse[T], error) {
 	var serverResponse responses.ServerResponse[T]
 
 	body, err := io.ReadAll(res.Body)
@@ -65,7 +65,7 @@ func TestSignup(t *testing.T) {
 
 	defer res.Body.Close()
 
-	serverResponse, err := MarshalServerResponse[entities.UserDTO](res)
+	serverResponse, err := UnmarshalServerResponse[entities.UserDTO](res)
 	assert.Nil(t, err)
 	assert.Equal(t, "user@mail.com", serverResponse.Data.Email)
 
@@ -110,7 +110,7 @@ func TestRefresh(t *testing.T) {
 	res, err := http.Post(url, "application/json", bytes.NewReader(stringifiedBody))
 	assert.Nil(t, err)
 
-	serverResponse, err := MarshalServerResponse[entities.UserDTO](res)
+	serverResponse, err := UnmarshalServerResponse[entities.UserDTO](res)
 	assert.Nil(t, err)
 
 	assert.Equal(t, http.StatusOK, res.StatusCode)
@@ -147,7 +147,7 @@ func TestGoalCategoryCreate(t *testing.T) {
 
 	assert.Nil(t, err)
 	assert.Equal(t, http.StatusOK, res.StatusCode)
-	gc, err := MarshalServerResponse[entities.GoalCategory](res)
+	gc, err := UnmarshalServerResponse[entities.GoalCategory](res)
 
 	assert.Nil(t, err)
 	assert.Equal(t, "goal cat", gc.Data.Title)
@@ -164,7 +164,7 @@ func TestGetGoalCategories(t *testing.T) {
 	assert.Nil(t, err)
 
 	assert.Equal(t, http.StatusOK, res.StatusCode)
-	resBody, err := MarshalServerResponse[[]entities.GoalCategory](res)
+	resBody, err := UnmarshalServerResponse[[]entities.GoalCategory](res)
 	assert.Nil(t, err)
 
 	t.Log(resBody)
@@ -173,7 +173,7 @@ func TestGetGoalCategories(t *testing.T) {
 }
 
 func TestGetGoalCategoryById(t *testing.T) {
-	gc := createTestGoalCategory(t, uuid.MustParse(userId))
+	gc := createTestGoalCategory(t, "create goal category", uuid.MustParse(userId))
 
 	url := fmt.Sprintf("%s/api/goals/categories/%s", BASE_URL, gc.Id)
 	req, err := http.NewRequest("GET", url, nil)
@@ -185,10 +185,29 @@ func TestGetGoalCategoryById(t *testing.T) {
 	assert.Nil(t, err)
 
 	assert.Equal(t, http.StatusOK, res.StatusCode)
-	resBody, err := MarshalServerResponse[entities.GoalCategory](res)
+	resBody, err := UnmarshalServerResponse[entities.GoalCategory](res)
 	assert.Nil(t, err)
 
 	assert.Equal(t, gc.Id, resBody.Data.Id)
+}
+
+func TestUpdateGoalCategoryById(t *testing.T) {
+	gc := createTestGoalCategory(t, "update goal category", uuid.MustParse(userId))
+	reqBody := map[string]any{"title": "updated title"}
+	url := fmt.Sprintf("%s/api/goals/categories/%s", BASE_URL, gc.Id)
+
+	stringifiedBody, err := json.Marshal(reqBody)
+	assert.Nil(t, err)
+
+	req, err := http.NewRequest("PUT", url, bytes.NewReader(stringifiedBody))
+	assert.Nil(t, err)
+
+	req.Header.Set("Authorization", "Bearer "+accessToken)
+	req.Header.Set("Content-Type", "application/json")
+	res, err := http.DefaultClient.Do(req)
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusOK, res.StatusCode)
 }
 
 func printErrResponse(t *testing.T, res *http.Response) error {
@@ -222,11 +241,11 @@ func printSuccessResponse[T any](t *testing.T, res *http.Response) error {
 	return nil
 }
 
-func createTestGoalCategory(t *testing.T, userId uuid.UUID) *entities.GoalCategory {
+func createTestGoalCategory(t *testing.T, title string, userId uuid.UUID) *entities.GoalCategory {
 	query := `INSERT INTO goal_categories (title, xp_per_goal, user_id) 
   VALUES ($1, $2, $3) RETURNING *`
 	var goalCategory entities.GoalCategory
-	dbx.QueryRowx(query, "test goal", 50, userId).StructScan(&goalCategory)
+	dbx.QueryRowx(query, title, 50, userId).StructScan(&goalCategory)
 	return &goalCategory
 }
 
