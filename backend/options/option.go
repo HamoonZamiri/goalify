@@ -27,6 +27,10 @@ func (o Option[T]) ValueOrZero() T {
 	return t
 }
 
+func (o Option[T]) IsPresent() bool {
+	return o.Valid
+}
+
 func (o Option[T]) MarshalJSON() ([]byte, error) {
 	if o.Valid {
 		return json.Marshal(o.Value)
