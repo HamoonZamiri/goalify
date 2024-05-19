@@ -4,9 +4,9 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"goalify/db"
 	"goalify/entities"
 	"log/slog"
-	"strings"
 
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
@@ -95,7 +95,7 @@ func (s *GoalCategoryStoreImpl) GetGoalCategoryById(categoryId uuid.UUID) (*enti
 }
 
 func (s *GoalCategoryStoreImpl) UpdateGoalCategoryById(categoryId uuid.UUID, updates map[string]any) (*entities.GoalCategory, error) {
-	query, args := buildUpdateQuery("goal_categories", updates, categoryId)
+	query, args := db.BuildUpdateQuery("goal_categories", updates, categoryId)
 	var gc entities.GoalCategory
 
 	err := s.db.QueryRowx(fmt.Sprintf("%s RETURNING *", query), args...).StructScan(&gc)
@@ -131,22 +131,4 @@ func mapGoalCategoryRows(rows *sqlx.Rows, categoryMap map[uuid.UUID]*entities.Go
 		}
 	}
 	return nil
-}
-
-func buildUpdateQuery(table string, updates map[string]any, id uuid.UUID) (string, []any) {
-	setClauses := []string{}
-	args := []any{}
-
-	i := 1
-
-	for column, value := range updates {
-		setClauses = append(setClauses, fmt.Sprintf("%s = $%d", column, i))
-		args = append(args, value)
-		i++
-	}
-
-	query := fmt.Sprintf("UPDATE %s SET %s WHERE id = $%d", table, strings.Join(setClauses, ", "), i)
-	args = append(args, id)
-
-	return query, args
 }
