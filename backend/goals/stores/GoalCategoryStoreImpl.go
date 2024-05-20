@@ -105,6 +105,15 @@ func (s *GoalCategoryStoreImpl) UpdateGoalCategoryById(categoryId uuid.UUID, upd
 	return &gc, nil
 }
 
+func (s *GoalCategoryStoreImpl) DeleteGoalCategoryById(categoryId uuid.UUID) error {
+	query := `DELETE FROM goal_categories WHERE id = $1`
+	_, err := s.db.Exec(query, categoryId)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func mapGoalCategoryRows(rows *sqlx.Rows, categoryMap map[uuid.UUID]*entities.GoalCategory) error {
 	for rows.Next() {
 		var gc entities.GoalCategory
