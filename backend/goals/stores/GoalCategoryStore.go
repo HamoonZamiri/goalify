@@ -12,4 +12,5 @@ type GoalCategoryStore interface {
 	UpdateGoalCategory(categoryId uuid.UUID, goalId uuid.UUID) (*entities.GoalCategory, error)
 	GetGoalCategoryById(categoryId uuid.UUID) (*entities.GoalCategory, error)
 	UpdateGoalCategoryById(categoryId uuid.UUID, updates map[string]any) (*entities.GoalCategory, error)
+	DeleteGoalCategoryById(categoryId uuid.UUID) error
 }

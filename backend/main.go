@@ -25,11 +25,15 @@ func NewServer(userHandler *uh.UserHandler, goalHandler *gh.GoalHandler) http.Ha
 	mux.HandleFunc("POST /api/users/login", userHandler.HandleLogin)
 	mux.HandleFunc("POST /api/users/refresh", userHandler.HandleRefresh)
 
+	// goals domain
 	mux.Handle("POST /api/goals/create", middleware.AuthenticatedOnly(goalHandler.HandleCreateGoal))
 	mux.Handle("POST /api/goals/categories", middleware.AuthenticatedOnly(goalHandler.HandleCreateGoalCategory))
 	mux.Handle("GET /api/goals/categories", middleware.AuthenticatedOnly(goalHandler.HandleGetGoalCategoriesByUserId))
 	mux.Handle("GET /api/goals/categories/{categoryId}", middleware.AuthenticatedOnly(goalHandler.HandleGetGoalCategoryById))
 	mux.Handle("PUT /api/goals/categories/{categoryId}", middleware.AuthenticatedOnly(goalHandler.HandleUpdateGoalCategoryById))
+	mux.Handle("DELETE /api/goals/categories/{categoryId}", middleware.AuthenticatedOnly(goalHandler.HandleDeleteGoalCategoryById))
+
+	mux.Handle("POST /api/goals", middleware.AuthenticatedOnly(goalHandler.HandleCreateGoal))
 	return mux
 }
 

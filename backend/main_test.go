@@ -167,8 +167,6 @@ func TestGetGoalCategories(t *testing.T) {
 	resBody, err := UnmarshalServerResponse[[]entities.GoalCategory](res)
 	assert.Nil(t, err)
 
-	t.Log(resBody)
-
 	assert.Equal(t, 1, len(resBody.Data))
 }
 
@@ -215,6 +213,49 @@ func TestUpdateGoalCategoryById(t *testing.T) {
 	assert.Equal(t, 69, resBody.Data.Xp_per_goal)
 }
 
+func TestDeleteGoalCategoryById(t *testing.T) {
+	cat := createTestGoalCategory(t, "delete goal category", uuid.MustParse(userId))
+
+	url := fmt.Sprintf("%s/api/goals/categories/%s", BASE_URL, cat.Id)
+	req, err := http.NewRequest("DELETE", url, nil)
+	assert.Nil(t, err)
+
+	req.Header.Set("Authorization", "Bearer "+accessToken)
+	req.Header.Set("Content-Type", "application/json")
+
+	res, err := http.DefaultClient.Do(req)
+	assert.Nil(t, err)
+	assert.Equal(t, http.StatusOK, res.StatusCode)
+}
+
+func TestCreateGoal(t *testing.T) {
+	cat := createTestGoalCategory(t, "create goal", uuid.MustParse(userId))
+	reqBody := map[string]any{
+		"title": "goal title", "description": "goal description", "category_id": cat.Id,
+		"user_id": userId,
+	}
+	stringifiedBody, err := json.Marshal(reqBody)
+	assert.Nil(t, err)
+
+	url := fmt.Sprintf("%s/api/goals", BASE_URL)
+	req, err := http.NewRequest("POST", url, bytes.NewReader(stringifiedBody))
+	assert.Nil(t, err)
+
+	req.Header.Set("Authorization", "Bearer "+accessToken)
+	req.Header.Set("Content-Type", "application/json")
+
+	res, err := http.DefaultClient.Do(req)
+	assert.Nil(t, err)
+	assert.Equal(t, http.StatusOK, res.StatusCode)
+
+	resBody, err := UnmarshalServerResponse[entities.Goal](res)
+	assert.Nil(t, err)
+	assert.Equal(t, cat.Id.String(), resBody.Data.CategoryId.String())
+	assert.Equal(t, userId, resBody.Data.UserId.String())
+	assert.Equal(t, "goal title", resBody.Data.Title)
+	assert.Equal(t, "goal description", resBody.Data.Description)
+}
+
 func printErrResponse(t *testing.T, res *http.Response) error {
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
@@ -227,7 +268,6 @@ func printErrResponse(t *testing.T, res *http.Response) error {
 		return err
 	}
 
-	t.Logf("Error: %s", errRes.Message)
 	return nil
 }
 
@@ -242,7 +282,6 @@ func printSuccessResponse[T any](t *testing.T, res *http.Response) error {
 	if err != nil {
 		return err
 	}
-	t.Logf("Response: %v", successRes)
 	return nil
 }
 
@@ -264,7 +303,7 @@ func TestMain(m *testing.M) {
 	setup()
 	code := m.Run()
 
-	query := `DELETE from goal_categories; DELETE from goals; DELETE from users;`
+	query := `DELETE from goals; DELETE FROM goal_categories; DELETE from users;`
 	dbx.MustExec(query)
 	os.Exit(code)
 }
