@@ -29,30 +29,7 @@ func NewGoalService(goalStore stores.GoalStore, goalCategoryStore stores.GoalCat
 	}
 }
 
-func isInvalidUUID(id uuid.UUID) bool {
-	return id == uuid.Nil || id.String() == ""
-}
-
-func isEmptyField(field string) bool {
-	return field == ""
-}
-
 func (gs *GoalServiceImpl) CreateGoal(title, description string, userId, categoryId uuid.UUID) (*entities.Goal, error) {
-	if isEmptyField(title) {
-		return nil, errors.New("title cannot be empty")
-	}
-	if isEmptyField(description) {
-		return nil, errors.New("description cannot be empty")
-	}
-
-	if isInvalidUUID(categoryId) {
-		return nil, errors.New("category id cannot be empty")
-	}
-
-	if isInvalidUUID(userId) {
-		return nil, errors.New("invalid uuid")
-	}
-
 	createdGoal, err := gs.goalStore.CreateGoal(title, description, userId, categoryId)
 	if err != nil {
 		slog.Error("error creating goal", "err", err)
@@ -106,10 +83,6 @@ func (gs *GoalServiceImpl) UpdateGoalTitle(title string, goalId, userId uuid.UUI
 }
 
 func (gs *GoalServiceImpl) UpdateGoalDescription(description string, goalId, userId uuid.UUID) (*entities.Goal, error) {
-	if isEmptyField(description) {
-		return nil, errors.New("description cannot be empty")
-	}
-
 	goal, err := gs.goalStore.GetGoalById(goalId)
 	if err != nil {
 		return nil, err
@@ -146,12 +119,6 @@ func (gs *GoalServiceImpl) GetGoalCategoriesByUserId(userId uuid.UUID) ([]*entit
 }
 
 func (gs *GoalServiceImpl) UpdateGoalCategory(categoryId, goalId, userId uuid.UUID) (*entities.GoalCategory, error) {
-	if isInvalidUUID(categoryId) {
-		return nil, errors.New("invalid uuid category id")
-	}
-	if isInvalidUUID(goalId) {
-		return nil, errors.New("invalid uuid goal id")
-	}
 	gc, err := gs.goalCategoryStore.GetGoalCategoryById(categoryId)
 	if err != nil {
 		return nil, err
@@ -193,4 +160,24 @@ func (gs *GoalServiceImpl) UpdateGoalCategoryById(categoryId uuid.UUID, updates 
 		return nil, fmt.Errorf("%w: error updating goal category", svcerror.ErrInternalServer)
 	}
 	return updatedCat, nil
+}
+
+func (gs *GoalServiceImpl) DeleteGoalCategoryById(categoryId, userId uuid.UUID) error {
+	cat, err := gs.goalCategoryStore.GetGoalCategoryById(categoryId)
+	if err != nil {
+		return fmt.Errorf("%w: error fetching goal category", svcerror.ErrInternalServer)
+	}
+	if cat.UserId != userId {
+		return fmt.Errorf("%w: user does not own this category", svcerror.ErrBadRequest)
+	}
+
+	err = gs.goalCategoryStore.DeleteGoalCategoryById(categoryId)
+	if err == sql.ErrNoRows {
+		return fmt.Errorf("%w: category not found", svcerror.ErrNotFound)
+	}
+	if err != nil {
+		slog.Error("DeleteGoalCategoryById", "err", err)
+		return fmt.Errorf("%w: error deleting goal category", svcerror.ErrInternalServer)
+	}
+	return nil
 }
