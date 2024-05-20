@@ -43,17 +43,9 @@ func (s *GoalStoreImpl) UpdateGoalStatus(goalId uuid.UUID, status string) (*enti
 func (s *GoalStoreImpl) GetGoalsByUserId(userId uuid.UUID) ([]*entities.Goal, error) {
 	var goals []*entities.Goal
 
-	rows, err := s.db.Queryx("SELECT * FROM goals WHERE user_id = $1", userId)
+	err := s.db.Select(&goals, "SELECT * FROM goals WHERE user_id = $1", userId)
 	if err != nil {
 		return nil, err
-	}
-	for rows.Next() {
-		var goal entities.Goal
-		err = rows.StructScan(&goal)
-		if err != nil {
-			return nil, err
-		}
-		goals = append(goals, &goal)
 	}
 	return goals, nil
 }
