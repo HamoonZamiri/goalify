@@ -182,7 +182,6 @@ func TestDeleteGoalCategoryById(t *testing.T) {
 	res, err := buildAndSendRequest("DELETE", fmt.Sprintf("%s/api/goals/categories/%s", BASE_URL, cat.Id), nil)
 	assert.Nil(t, err)
 
-	assert.Nil(t, err)
 	assert.Equal(t, http.StatusOK, res.StatusCode)
 }
 
@@ -205,8 +204,9 @@ func TestCreateGoal(t *testing.T) {
 }
 
 func buildAndSendRequest(method, url string, body map[string]any) (*http.Response, error) {
-	stringifiedBody, err := json.Marshal(body)
-	req, err := http.NewRequest(method, url, bytes.NewReader(stringifiedBody))
+	var buf bytes.Buffer
+	json.NewEncoder(&buf).Encode(body)
+	req, err := http.NewRequest(method, url, &buf)
 	if err != nil {
 		return nil, err
 	}
