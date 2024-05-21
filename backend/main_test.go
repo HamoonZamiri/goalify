@@ -7,7 +7,6 @@ import (
 	main "goalify"
 	"goalify/db"
 	"goalify/entities"
-	gh "goalify/goals/handler"
 	"goalify/responses"
 	"goalify/users/handler"
 	"io"
@@ -102,7 +101,7 @@ func TestLoginIncorrectPassword(t *testing.T) {
 
 func TestRefresh(t *testing.T) {
 	prevToken := refreshToken
-	reqBody := handler.RefreshRequest{UserId: userId, RefreshToken: prevToken}
+	reqBody := map[string]any{"user_id": userId, "refresh_token": refreshToken}
 	stringifiedBody, err := json.Marshal(reqBody)
 	assert.Nil(t, err)
 
@@ -121,46 +120,27 @@ func TestRefresh(t *testing.T) {
 }
 
 func TestIncorrectRefresh(t *testing.T) {
-	reqBody := handler.RefreshRequest{UserId: userId, RefreshToken: "invalid"}
-	stringifiedBody, err := json.Marshal(reqBody)
-	assert.Nil(t, err)
-
-	url := fmt.Sprintf("%s/api/users/refresh", BASE_URL)
-	res, err := http.Post(url, "application/json", bytes.NewReader(stringifiedBody))
+	reqBody := map[string]any{"user_id": userId, "refresh": "incorrect"}
+	res, err := buildAndSendRequest("POST", fmt.Sprintf("%s/api/users/refresh", BASE_URL), reqBody)
 	assert.Nil(t, err)
 
 	assert.Equal(t, http.StatusBadRequest, res.StatusCode)
 }
 
 func TestGoalCategoryCreate(t *testing.T) {
-	reqBody := gh.NewGoalCategoryRequest("goal cat", 100)
-	stringifiedBody, err := json.Marshal(reqBody)
-	assert.Nil(t, err)
-
-	url := fmt.Sprintf("%s/api/goals/categories", BASE_URL)
-	req, err := http.NewRequest("POST", url, bytes.NewReader(stringifiedBody))
-	assert.Nil(t, err)
-
-	req.Header.Set("Authorization", "Bearer "+accessToken)
-	req.Header.Set("Content-Type", "application/json")
-	res, err := http.DefaultClient.Do(req)
-
+	reqBody := map[string]any{"title": "goal cat", "xp_per_goal": 100}
+	res, err := buildAndSendRequest("POST", fmt.Sprintf("%s/api/goals/categories", BASE_URL), reqBody)
 	assert.Nil(t, err)
 	assert.Equal(t, http.StatusOK, res.StatusCode)
-	gc, err := UnmarshalServerResponse[entities.GoalCategory](res)
 
+	gc, err := UnmarshalServerResponse[entities.GoalCategory](res)
 	assert.Nil(t, err)
 	assert.Equal(t, "goal cat", gc.Data.Title)
 	assert.Equal(t, 100, gc.Data.Xp_per_goal)
 }
 
 func TestGetGoalCategories(t *testing.T) {
-	url := fmt.Sprintf("%s/api/goals/categories", BASE_URL)
-	req, err := http.NewRequest("GET", url, nil)
-	assert.Nil(t, err)
-	req.Header.Set("Authorization", "Bearer "+accessToken)
-	req.Header.Set("Content-Type", "application/json")
-	res, err := http.DefaultClient.Do(req)
+	res, err := buildAndSendRequest("GET", fmt.Sprintf("%s/api/goals/categories", BASE_URL), nil)
 	assert.Nil(t, err)
 
 	assert.Equal(t, http.StatusOK, res.StatusCode)
@@ -173,38 +153,21 @@ func TestGetGoalCategories(t *testing.T) {
 func TestGetGoalCategoryById(t *testing.T) {
 	gc := createTestGoalCategory(t, "create goal category", uuid.MustParse(userId))
 
-	url := fmt.Sprintf("%s/api/goals/categories/%s", BASE_URL, gc.Id)
-	req, err := http.NewRequest("GET", url, nil)
+	res, err := buildAndSendRequest("GET", fmt.Sprintf("%s/api/goals/categories/%s", BASE_URL, gc.Id), nil)
 	assert.Nil(t, err)
-	req.Header.Set("Authorization", "Bearer "+accessToken)
-	req.Header.Set("Content-Type", "application/json")
-	res, err := http.DefaultClient.Do(req)
-
-	assert.Nil(t, err)
-
 	assert.Equal(t, http.StatusOK, res.StatusCode)
+
 	resBody, err := UnmarshalServerResponse[entities.GoalCategory](res)
 	assert.Nil(t, err)
-
 	assert.Equal(t, gc.Id, resBody.Data.Id)
 }
 
 func TestUpdateGoalCategoryById(t *testing.T) {
 	gc := createTestGoalCategory(t, "update goal category", uuid.MustParse(userId))
+
 	reqBody := map[string]any{"title": "updated title", "xp_per_goal": 69}
-	url := fmt.Sprintf("%s/api/goals/categories/%s", BASE_URL, gc.Id)
-
-	stringifiedBody, err := json.Marshal(reqBody)
+	res, err := buildAndSendRequest("PUT", fmt.Sprintf("%s/api/goals/categories/%s", BASE_URL, gc.Id), reqBody)
 	assert.Nil(t, err)
-
-	req, err := http.NewRequest("PUT", url, bytes.NewReader(stringifiedBody))
-	assert.Nil(t, err)
-
-	req.Header.Set("Authorization", "Bearer "+accessToken)
-	req.Header.Set("Content-Type", "application/json")
-	res, err := http.DefaultClient.Do(req)
-	assert.Nil(t, err)
-
 	assert.Equal(t, http.StatusOK, res.StatusCode)
 
 	resBody, err := UnmarshalServerResponse[entities.GoalCategory](res)
@@ -216,14 +179,9 @@ func TestUpdateGoalCategoryById(t *testing.T) {
 func TestDeleteGoalCategoryById(t *testing.T) {
 	cat := createTestGoalCategory(t, "delete goal category", uuid.MustParse(userId))
 
-	url := fmt.Sprintf("%s/api/goals/categories/%s", BASE_URL, cat.Id)
-	req, err := http.NewRequest("DELETE", url, nil)
+	res, err := buildAndSendRequest("DELETE", fmt.Sprintf("%s/api/goals/categories/%s", BASE_URL, cat.Id), nil)
 	assert.Nil(t, err)
 
-	req.Header.Set("Authorization", "Bearer "+accessToken)
-	req.Header.Set("Content-Type", "application/json")
-
-	res, err := http.DefaultClient.Do(req)
 	assert.Nil(t, err)
 	assert.Equal(t, http.StatusOK, res.StatusCode)
 }
@@ -234,17 +192,7 @@ func TestCreateGoal(t *testing.T) {
 		"title": "goal title", "description": "goal description", "category_id": cat.Id,
 		"user_id": userId,
 	}
-	stringifiedBody, err := json.Marshal(reqBody)
-	assert.Nil(t, err)
-
-	url := fmt.Sprintf("%s/api/goals", BASE_URL)
-	req, err := http.NewRequest("POST", url, bytes.NewReader(stringifiedBody))
-	assert.Nil(t, err)
-
-	req.Header.Set("Authorization", "Bearer "+accessToken)
-	req.Header.Set("Content-Type", "application/json")
-
-	res, err := http.DefaultClient.Do(req)
+	res, err := buildAndSendRequest("POST", BASE_URL+"/api/goals", reqBody)
 	assert.Nil(t, err)
 	assert.Equal(t, http.StatusOK, res.StatusCode)
 
@@ -254,6 +202,21 @@ func TestCreateGoal(t *testing.T) {
 	assert.Equal(t, userId, resBody.Data.UserId.String())
 	assert.Equal(t, "goal title", resBody.Data.Title)
 	assert.Equal(t, "goal description", resBody.Data.Description)
+}
+
+func buildAndSendRequest(method, url string, body map[string]any) (*http.Response, error) {
+	stringifiedBody, err := json.Marshal(body)
+	req, err := http.NewRequest(method, url, bytes.NewReader(stringifiedBody))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Authorization", "Bearer "+accessToken)
+	req.Header.Set("Content-Type", "application/json")
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	return res, err
 }
 
 func printErrResponse(t *testing.T, res *http.Response) error {
