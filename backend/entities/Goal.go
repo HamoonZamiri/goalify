@@ -11,10 +11,11 @@ type Goal struct {
 	UpdatedAt   time.Time `db:"updated_at" json:"updated_at"`
 	Title       string    `db:"title" json:"title"`
 	Description string    `db:"description" json:"description"`
-	Status      string    `db:"status" json:"status"`
-	Id          uuid.UUID `db:"id" json:"id"`
-	UserId      uuid.UUID `db:"user_id" json:"user_id"`
-	CategoryId  uuid.UUID `db:"category_id" json:"category_id"`
+	// status can be "complete" | "not_complete"
+	Status     string    `db:"status" json:"status"`
+	Id         uuid.UUID `db:"id" json:"id"`
+	UserId     uuid.UUID `db:"user_id" json:"user_id"`
+	CategoryId uuid.UUID `db:"category_id" json:"category_id"`
 }
 
 type GoalCategory struct {
