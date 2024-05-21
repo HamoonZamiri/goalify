@@ -1,6 +1,8 @@
 package stores
 
 import (
+	"fmt"
+	"goalify/db"
 	"goalify/entities"
 
 	"github.com/google/uuid"
@@ -76,6 +78,17 @@ func (s *GoalStoreImpl) GetGoalById(goalId uuid.UUID) (*entities.Goal, error) {
 	var goal entities.Goal
 
 	err := s.db.Get(&goal, "SELECT * FROM goals WHERE id = $1", goalId)
+	if err != nil {
+		return nil, err
+	}
+	return &goal, nil
+}
+
+func (s *GoalStoreImpl) UpdateGoalById(goalId uuid.UUID, updates map[string]interface{}) (*entities.Goal, error) {
+	query, args := db.BuildUpdateQuery("goals", updates, goalId)
+
+	var goal entities.Goal
+	err := s.db.QueryRowx(fmt.Sprintf("%s RETURNING *", query), args...).StructScan(&goal)
 	if err != nil {
 		return nil, err
 	}

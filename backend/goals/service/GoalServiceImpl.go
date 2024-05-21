@@ -181,3 +181,20 @@ func (gs *GoalServiceImpl) DeleteGoalCategoryById(categoryId, userId uuid.UUID) 
 	}
 	return nil
 }
+
+func (gs *GoalServiceImpl) UpdateGoalById(goalId uuid.UUID, updates map[string]interface{}, userId uuid.UUID) (*entities.Goal, error) {
+	goal, err := gs.goalStore.GetGoalById(goalId)
+	if err != nil {
+		return nil, err
+	}
+	if goal.UserId != userId {
+		return nil, fmt.Errorf("%w: user does not own this goal", svcerror.ErrBadRequest)
+	}
+
+	updatedGoal, err := gs.goalStore.UpdateGoalById(goalId, updates)
+	if err != nil {
+		slog.Error("UpdateGoalById(service layer): ", "err", err)
+		return nil, fmt.Errorf("%w: error updating goal", svcerror.ErrInternalServer)
+	}
+	return updatedGoal, nil
+}
