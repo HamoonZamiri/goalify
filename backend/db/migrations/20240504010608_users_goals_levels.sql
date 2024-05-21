@@ -36,7 +36,7 @@ CREATE TABLE goals (
     title VARCHAR(255) NOT NULL,
     description VARCHAR(255) DEFAULT '',
     user_id UUID REFERENCES users(id),
-    category_id UUID REFERENCES goal_categories(id),
+    category_id UUID REFERENCES goal_categories(id) ON DELETE CASCADE,
     status goal_status DEFAULT 'not_complete',
     created_at TIMESTAMP DEFAULT now(),
     updated_at TIMESTAMP DEFAULT now()
