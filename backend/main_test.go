@@ -293,6 +293,14 @@ func createTestGoalCategory(t *testing.T, title string, userId uuid.UUID) *entit
 	return &goalCategory
 }
 
+func createTestGoal(t *testing.T, title, description string, categoryId, userId uuid.UUID) *entities.Goal {
+	query := `INSERT INTO goals (title, description, user_id, category_id)
+  VALUES ($1, $2, $3, $4) RETURNING *`
+	var goal entities.Goal
+	dbx.QueryRowx(query, title, description, userId, categoryId).StructScan(&goal)
+	return &goal
+}
+
 func TestMain(m *testing.M) {
 	var err error
 	dbx, err = db.New("goalify")
