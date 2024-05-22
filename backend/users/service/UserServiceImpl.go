@@ -158,5 +158,25 @@ func (s *UserServiceImpl) Login(email, password string) (*entities.UserDTO, erro
 }
 
 func (s *UserServiceImpl) DeleteUserById(id string) error {
-	return s.userStore.DeleteUserById(id)
+	err := s.userStore.DeleteUserById(id)
+	if err == sql.ErrNoRows {
+		return fmt.Errorf("%w: user not found", svcerror.ErrNotFound)
+	}
+	if err != nil {
+		slog.Error("DeleteUserById: ", "err", err.Error())
+		return fmt.Errorf("%w: error deleting user", svcerror.ErrInternalServer)
+	}
+	return nil
+}
+
+func (s *UserServiceImpl) UpdateUserById(id uuid.UUID, updates map[string]interface{}) (*entities.UserDTO, error) {
+	user, err := s.userStore.UpdateUserById(id, updates)
+	if err == sql.ErrNoRows {
+		return nil, fmt.Errorf("%w: user not found", svcerror.ErrNotFound)
+	}
+	if err != nil {
+		slog.Error("UpdateUserById: ", "err", err.Error())
+		return nil, fmt.Errorf("%w: error updating user", svcerror.ErrInternalServer)
+	}
+	return userToUserDTO(user), nil
 }

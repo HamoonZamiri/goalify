@@ -1,9 +1,11 @@
 package stores
 
 import (
+	"goalify/db"
 	"goalify/entities"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -69,4 +71,17 @@ func (s *UserStoreImpl) GetUserById(id string) (*entities.User, error) {
 func (s *UserStoreImpl) DeleteUserById(id string) error {
 	_, err := s.db.Exec("DELETE FROM users WHERE id = $1", id)
 	return err
+}
+
+func (s *UserStoreImpl) UpdateUserById(id uuid.UUID, updates map[string]any) (*entities.User, error) {
+	query, args := db.BuildUpdateQuery("users", updates, id)
+	query = query + " RETURNING *"
+
+	var user entities.User
+	err := s.db.QueryRowx(query, args...).StructScan(&user)
+	if err != nil {
+		return nil, err
+	}
+
+	return &user, nil
 }

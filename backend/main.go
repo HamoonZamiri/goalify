@@ -24,6 +24,7 @@ func NewServer(userHandler *uh.UserHandler, goalHandler *gh.GoalHandler) http.Ha
 	mux.HandleFunc("POST /api/users/signup", userHandler.HandleSignup)
 	mux.HandleFunc("POST /api/users/login", userHandler.HandleLogin)
 	mux.HandleFunc("POST /api/users/refresh", userHandler.HandleRefresh)
+	mux.Handle(http.MethodPut+" /api/users", middleware.AuthenticatedOnly(userHandler.HandleUpdateUserById))
 
 	// goals domain
 	mux.Handle("POST /api/goals/create", middleware.AuthenticatedOnly(goalHandler.HandleCreateGoal))

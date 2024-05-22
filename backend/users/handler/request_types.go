@@ -1,6 +1,9 @@
 package handler
 
-import "strings"
+import (
+	"goalify/options"
+	"strings"
+)
 
 type SignupRequest struct {
 	Email    string `json:"email"`
@@ -15,6 +18,12 @@ type LoginRequest struct {
 type RefreshRequest struct {
 	UserId       string `json:"user_id"`
 	RefreshToken string `json:"refresh_token"`
+}
+
+type UpdateRequest struct {
+	Xp            options.Option[int] `json:"xp"`
+	LevelId       options.Option[int] `json:"level_id"`
+	CashAvailable options.Option[int] `json:"cash_available"`
 }
 
 const (
@@ -59,6 +68,21 @@ func (r LoginRequest) Valid() map[string]string {
 
 	ValidateEmail(problems, r.Email)
 	ValidatePassword(problems, r.Password)
+
+	return problems
+}
+
+func checkNonNegativeIntField(problems map[string]string, fieldName string, val options.Option[int]) {
+	if val.IsPresent() && val.ValueOrZero() < 0 {
+		problems[fieldName] = fieldName + " must be non-negative"
+	}
+}
+
+func (r UpdateRequest) Valid() map[string]string {
+	problems := make(map[string]string)
+	checkNonNegativeIntField(problems, "xp", r.Xp)
+	checkNonNegativeIntField(problems, "level_id", r.LevelId)
+	checkNonNegativeIntField(problems, "cash_available", r.CashAvailable)
 
 	return problems
 }

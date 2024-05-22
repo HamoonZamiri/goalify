@@ -3,11 +3,14 @@ package handler
 import (
 	"fmt"
 	"goalify/jsonutil"
+	"goalify/middleware"
 	"goalify/responses"
 	"goalify/svcerror"
 	"goalify/users/service"
 	"log/slog"
 	"net/http"
+
+	"github.com/google/uuid"
 )
 
 type UserHandler struct {
@@ -97,6 +100,54 @@ func (h *UserHandler) HandleRefresh(w http.ResponseWriter, r *http.Request) {
 	if err := jsonutil.Encode(w, r, http.StatusOK, servResp); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		slog.Error("json encode: ", "err", err)
+		return
+	}
+}
+
+func (h *UserHandler) HandleUpdateUserById(w http.ResponseWriter, r *http.Request) {
+	userId, err := middleware.GetIdFromHeader(r)
+	if err != nil {
+		responses.SendAPIError(w, r, svcerror.GetErrorCode(err), err.Error(), nil)
+		return
+	}
+
+	decoded, err := jsonutil.Decode[UpdateRequest](r)
+	if err != nil {
+		responses.SendAPIError(w, r, http.StatusBadRequest, err.Error(), nil)
+		return
+	}
+
+	parsedUserId, err := uuid.Parse(userId)
+	if err != nil {
+		responses.SendAPIError(w, r, http.StatusBadRequest, "error parsing auth header", nil)
+		return
+	}
+
+	updates := make(map[string]interface{})
+	if decoded.Xp.IsPresent() {
+		updates["xp"] = decoded.Xp.ValueOrZero()
+	}
+	if decoded.LevelId.IsPresent() {
+		updates["level_id"] = decoded.LevelId.ValueOrZero()
+	}
+	if decoded.CashAvailable.IsPresent() {
+		updates["cash_available"] = decoded.CashAvailable.ValueOrZero()
+	}
+
+	if len(updates) == 0 {
+		responses.SendAPIError(w, r, http.StatusBadRequest, "no updates provided", nil)
+		return
+	}
+
+	user, err := h.userService.UpdateUserById(parsedUserId, updates)
+	if err != nil {
+		responses.SendAPIError(w, r, svcerror.GetErrorCode(err), err.Error(), nil)
+		return
+	}
+
+	res := responses.New(user, "successfully updated user")
+	if err := jsonutil.Encode(w, r, http.StatusOK, res); err != nil {
+		responses.SendAPIError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
 	}
 }

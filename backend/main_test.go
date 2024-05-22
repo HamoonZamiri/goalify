@@ -18,6 +18,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const BASE_URL = "http://localhost:8080"
@@ -125,6 +126,17 @@ func TestIncorrectRefresh(t *testing.T) {
 	assert.Nil(t, err)
 
 	assert.Equal(t, http.StatusBadRequest, res.StatusCode)
+}
+
+func TestUpdateUserById(t *testing.T) {
+	reqBody := map[string]any{"xp": 100, "cash_available": 100}
+	res, err := buildAndSendRequest("PUT", fmt.Sprintf("%s/api/users", BASE_URL), reqBody)
+	require.Nil(t, err)
+
+	resBody, err := UnmarshalServerResponse[entities.UserDTO](res)
+	assert.Nil(t, err)
+	assert.Equal(t, 100, resBody.Data.Xp)
+	assert.Equal(t, 100, resBody.Data.CashAvailable)
 }
 
 func TestGoalCategoryCreate(t *testing.T) {
