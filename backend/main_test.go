@@ -139,6 +139,14 @@ func TestUpdateUserById(t *testing.T) {
 	assert.Equal(t, 100, resBody.Data.CashAvailable)
 }
 
+func TestIncorrectUpdateUserById(t *testing.T) {
+	reqBody := map[string]any{"xp": "incorrect", "cash_available": "incorrect"}
+	res, err := buildAndSendRequest("PUT", fmt.Sprintf("%s/api/users", BASE_URL), reqBody)
+	require.Nil(t, err)
+
+	assert.Equal(t, http.StatusBadRequest, res.StatusCode)
+}
+
 func TestGoalCategoryCreate(t *testing.T) {
 	reqBody := map[string]any{"title": "goal cat", "xp_per_goal": 100}
 	res, err := buildAndSendRequest("POST", fmt.Sprintf("%s/api/goals/categories", BASE_URL), reqBody)
