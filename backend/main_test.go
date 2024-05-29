@@ -159,6 +159,13 @@ func TestGoalCategoryCreate(t *testing.T) {
 	assert.Equal(t, 100, gc.Data.Xp_per_goal)
 }
 
+func TestGoalCategoryCreateInvalidFields(t *testing.T) {
+	reqBody := map[string]any{"title": "goal cat", "xp_per_goal": -10}
+	res, err := buildAndSendRequest("POST", fmt.Sprintf("%s/api/goals/categories", BASE_URL), reqBody)
+	assert.Nil(t, err)
+	assert.Equal(t, http.StatusBadRequest, res.StatusCode)
+}
+
 func TestGetGoalCategories(t *testing.T) {
 	res, err := buildAndSendRequest("GET", fmt.Sprintf("%s/api/goals/categories", BASE_URL), nil)
 	assert.Nil(t, err)
