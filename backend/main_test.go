@@ -30,21 +30,24 @@ var (
 	userId       string
 )
 
-func UnmarshalServerResponse[T any](res *http.Response) (responses.ServerResponse[T], error) {
-	var serverResponse responses.ServerResponse[T]
-
-	body, err := io.ReadAll(res.Body)
-	if err != nil {
-		return serverResponse, err
-	}
-
-	err = json.Unmarshal(body, &serverResponse)
-	return serverResponse, err
-}
-
 func setup() {
 	go main.Run()
 	time.Sleep(2 * time.Second)
+}
+
+func TestMain(m *testing.M) {
+	var err error
+	dbx, err = db.New("goalify")
+	if err != nil {
+		panic(err)
+	}
+
+	setup()
+	code := m.Run()
+
+	query := `DELETE from goals; DELETE FROM goal_categories; DELETE from users;`
+	dbx.MustExec(query)
+	os.Exit(code)
 }
 
 func TestHealth(t *testing.T) {
@@ -52,6 +55,10 @@ func TestHealth(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, 200, res.StatusCode)
 }
+
+/* Users Domain Tests
+* Testing Resource: /api/users
+ */
 
 func TestSignup(t *testing.T) {
 	reqBody := handler.SignupRequest{Email: "user@mail.com", Password: "password123!"}
@@ -147,6 +154,10 @@ func TestIncorrectUpdateUserById(t *testing.T) {
 	assert.Equal(t, http.StatusBadRequest, res.StatusCode)
 }
 
+/* Goal Domain Tests
+* Testing Resource: /api/goals
+ */
+
 func TestGoalCategoryCreate(t *testing.T) {
 	reqBody := map[string]any{"title": "goal cat", "xp_per_goal": 100}
 	res, err := buildAndSendRequest("POST", fmt.Sprintf("%s/api/goals/categories", BASE_URL), reqBody)
@@ -230,6 +241,16 @@ func TestCreateGoal(t *testing.T) {
 	assert.Equal(t, "goal description", resBody.Data.Description)
 }
 
+func TestCreateGoalInvalidFields(t *testing.T) {
+	reqBody := map[string]any{
+		"title": "goal title", "description": "goal description", "category_id": "not a uuid",
+	}
+	res, err := buildAndSendRequest("POST", BASE_URL+"/api/goals", reqBody)
+	require.Nil(t, err)
+	assert.Equal(t, http.StatusBadRequest, res.StatusCode)
+}
+
+// utility functions
 func buildAndSendRequest(method, url string, body map[string]any) (*http.Response, error) {
 	var buf bytes.Buffer
 	json.NewEncoder(&buf).Encode(body)
@@ -291,17 +312,14 @@ func createTestGoal(t *testing.T, title, description string, categoryId, userId 
 	return &goal
 }
 
-func TestMain(m *testing.M) {
-	var err error
-	dbx, err = db.New("goalify")
+func UnmarshalServerResponse[T any](res *http.Response) (responses.ServerResponse[T], error) {
+	var serverResponse responses.ServerResponse[T]
+
+	body, err := io.ReadAll(res.Body)
 	if err != nil {
-		panic(err)
+		return serverResponse, err
 	}
 
-	setup()
-	code := m.Run()
-
-	query := `DELETE from goals; DELETE FROM goal_categories; DELETE from users;`
-	dbx.MustExec(query)
-	os.Exit(code)
+	err = json.Unmarshal(body, &serverResponse)
+	return serverResponse, err
 }

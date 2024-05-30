@@ -35,14 +35,14 @@ func (h *GoalHandler) HandleCreateGoal(w http.ResponseWriter, r *http.Request) {
 	parsedUserId, err := uuid.Parse(userId)
 	if err != nil {
 		slog.Error("parse userId: ", "err", err)
-		responses.SendAPIError(w, r, http.StatusInternalServerError, "error parsing user id", nil)
+		responses.SendAPIError(w, r, http.StatusBadRequest, "error parsing user id", nil)
 		return
 	}
 
 	parsedCategoryId, err := uuid.Parse(body.CategoryId)
 	if err != nil {
 		slog.Error("parse categoryId: ", "err", err)
-		responses.SendAPIError(w, r, http.StatusInternalServerError, "error parsing category id", nil)
+		responses.SendAPIError(w, r, http.StatusBadRequest, "error parsing category id", nil)
 		return
 	}
 
