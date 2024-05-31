@@ -6,5 +6,5 @@
     <RouterLink to="/login">Login</RouterLink>
     <RouterLink to="/register">Register</RouterLink>
   </nav>
-  <Main> <RouterView /> </Main>
+  <main><RouterView /></main>
 </template>
