@@ -214,6 +214,14 @@ func TestUpdateGoalCategoryById(t *testing.T) {
 	assert.Equal(t, 69, resBody.Data.Xp_per_goal)
 }
 
+func TestUpdateGoalCategoryByIdInvalidFields(t *testing.T) {
+	gc := createTestGoalCategory(t, "update goal category", uuid.MustParse(userId))
+	reqBody := map[string]any{"title": "updated title", "xp_per_goal": -1}
+	res, err := buildAndSendRequest("PUT", fmt.Sprintf("%s/api/goals/categories/%s", BASE_URL, gc.Id), reqBody)
+	require.Nil(t, err)
+	assert.Equal(t, http.StatusBadRequest, res.StatusCode)
+}
+
 func TestDeleteGoalCategoryById(t *testing.T) {
 	cat := createTestGoalCategory(t, "delete goal category", uuid.MustParse(userId))
 
