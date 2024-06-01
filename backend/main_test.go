@@ -231,6 +231,17 @@ func TestDeleteGoalCategoryById(t *testing.T) {
 	assert.Equal(t, http.StatusOK, res.StatusCode)
 }
 
+func TestDeleteGoalCategoryByIdNotAuthorized(t *testing.T) {
+	gc := createTestGoalCategory(t, "delete goal category", uuid.MustParse(userId))
+	req, err := http.NewRequest("DELETE", fmt.Sprintf("%s/api/goals/categories/%s", BASE_URL, gc.Id), nil)
+	require.Nil(t, err)
+	req.Header.Add("Authorization", "Bearer "+accessToken+"1")
+	res, err := http.DefaultClient.Do(req)
+
+	require.Nil(t, err)
+	assert.Equal(t, http.StatusUnauthorized, res.StatusCode)
+}
+
 func TestCreateGoal(t *testing.T) {
 	cat := createTestGoalCategory(t, "create goal", uuid.MustParse(userId))
 	reqBody := map[string]any{
