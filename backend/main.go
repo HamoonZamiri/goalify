@@ -35,6 +35,7 @@ func NewServer(userHandler *uh.UserHandler, goalHandler *gh.GoalHandler) http.Ha
 	mux.Handle("DELETE /api/goals/categories/{categoryId}", middleware.AuthenticatedOnly(goalHandler.HandleDeleteGoalCategoryById))
 
 	mux.Handle("POST /api/goals", middleware.AuthenticatedOnly(goalHandler.HandleCreateGoal))
+	mux.Handle("PUT /api/goals/{goalId}", middleware.AuthenticatedOnly(goalHandler.HandleUpdateGoalById))
 	return mux
 }
 

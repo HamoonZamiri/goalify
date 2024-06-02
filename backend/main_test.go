@@ -269,6 +269,20 @@ func TestCreateGoalInvalidFields(t *testing.T) {
 	assert.Equal(t, http.StatusBadRequest, res.StatusCode)
 }
 
+func TestUpdateGoalById(t *testing.T) {
+	cat := createTestGoalCategory(t, "update goal", uuid.MustParse(userId))
+	goal := createTestGoal(t, "goal title", "goal description", cat.Id, uuid.MustParse(userId))
+	reqBody := map[string]any{"title": "updated title", "description": "updated description"}
+	res, err := buildAndSendRequest("PUT", fmt.Sprintf("%s/api/goals/%s", BASE_URL, goal.Id), reqBody)
+	require.Nil(t, err)
+
+	assert.Equal(t, http.StatusOK, res.StatusCode)
+	resBody, err := UnmarshalServerResponse[entities.Goal](res)
+	require.Nil(t, err)
+	assert.Equal(t, "updated title", resBody.Data.Title)
+	assert.Equal(t, "updated description", resBody.Data.Description)
+}
+
 // utility functions
 func buildAndSendRequest(method, url string, body map[string]any) (*http.Response, error) {
 	var buf bytes.Buffer
