@@ -205,6 +205,30 @@ func (gs *GoalServiceImpl) UpdateGoalById(goalId uuid.UUID, updates map[string]i
 		return nil, fmt.Errorf("%w: user does not own this goal", svcerror.ErrUnauthorized)
 	}
 
+	categoryId := updates["category_id"]
+	if categoryId != nil {
+		categoryId, ok := categoryId.(string)
+		if !ok {
+			return nil, fmt.Errorf("%w: category_id must be a string", svcerror.ErrBadRequest)
+		}
+		parsedCategoryId, err := uuid.Parse(categoryId)
+		if err != nil {
+			slog.Error("service.UpdateGoalById: uuid.Parse(categoryId):", "err", err)
+			return nil, fmt.Errorf("%w: error parsing category_id", svcerror.ErrBadRequest)
+		}
+
+		cat, err := gs.goalCategoryStore.GetGoalCategoryById(parsedCategoryId)
+		if err != nil {
+			slog.Error("service.UpdateGoalById: store.GetGoalCategoryById:", "err", err)
+			return nil, fmt.Errorf("%w: error fetching goal category", svcerror.ErrInternalServer)
+		}
+
+		if cat.UserId != userId {
+			slog.Error("service.UpdateGoalById: user does not own this category", "userId", userId, "categoryId", parsedCategoryId, "ownerId", cat.UserId)
+			return nil, fmt.Errorf("%w: user does not own this category", svcerror.ErrUnauthorized)
+		}
+	}
+
 	updatedGoal, err := gs.goalStore.UpdateGoalById(goalId, updates)
 	if err != nil {
 		slog.Error("service.UpdateGoalById: store.UpdateGoalById: ", "err", err)
