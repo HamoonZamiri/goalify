@@ -28,7 +28,7 @@ func AuthenticatedOnly(next http.HandlerFunc) http.Handler {
 			token := split[1]
 			id, err := service.VerifyToken(token)
 			if err != nil {
-				slog.Error("verify token: ", "err", err)
+				slog.Error("middleware.AuthenticatedOnly: service.VerifyToken:", "err", err)
 				responses.SendAPIError(w, r, http.StatusUnauthorized, "invalid access token: unauthorized request", nil)
 				return
 			}
