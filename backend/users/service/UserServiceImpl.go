@@ -84,13 +84,11 @@ func userToUserDTO(user *entities.User) *entities.UserDTO {
 func (s *UserServiceImpl) SignUp(email, password string) (*entities.UserDTO, error) {
 	_, err := s.userStore.GetUserByEmail(email)
 	if err == nil {
-		err := fmt.Errorf("%w: user with email %s already exists", svcerror.ErrBadRequest, email)
-		slog.Error(err.Error())
-		return nil, err
+		return nil, fmt.Errorf("%w: user with email %s already exists", svcerror.ErrBadRequest, email)
 	}
 
 	if err != sql.ErrNoRows {
-		slog.Error("error getting user", "err", err.Error())
+		slog.Error("service.SignUp: store.GetUserByEmail:", "err", err.Error())
 		return nil, fmt.Errorf("%w: internal error signing up user", svcerror.ErrInternalServer)
 	}
 
@@ -118,8 +116,10 @@ func (s *UserServiceImpl) Refresh(userId, refreshToken string) (*entities.UserDT
 	user, err := s.userStore.GetUserById(userId)
 	if err == sql.ErrNoRows {
 		return nil, fmt.Errorf("%w: error finding user", svcerror.ErrNotFound)
-	} else if err != nil {
-		slog.Error("error getting user", "err", err.Error())
+	}
+
+	if err != nil {
+		slog.Error("service.Refresh: store.GetUserById:", "err", err.Error())
 		return nil, fmt.Errorf("%w: error getting user", svcerror.ErrInternalServer)
 	}
 
@@ -133,8 +133,9 @@ func (s *UserServiceImpl) Refresh(userId, refreshToken string) (*entities.UserDT
 
 	newRefreshToken := generateRefreshToken()
 	user, err = s.userStore.UpdateRefreshToken(user.Id.String(), newRefreshToken.String())
+
 	if err != nil {
-		slog.Error("error updating refresh token", "err", err.Error())
+		slog.Error("service.Refresh: store.UpdateRefreshToken:", "err", err.Error())
 		return nil, fmt.Errorf("%w: error updating refresh token", svcerror.ErrInternalServer)
 	}
 
@@ -146,12 +147,18 @@ func (s *UserServiceImpl) Login(email, password string) (*entities.UserDTO, erro
 	if err == sql.ErrNoRows {
 		return nil, fmt.Errorf("%w: user with email %s not found", svcerror.ErrNotFound, email)
 	} else if err != nil {
-		slog.Error("error getting user", "err", err.Error())
+		slog.Error("service.Login: store.GetUserByEmail:", "err", err.Error())
 		return nil, fmt.Errorf("%w: error getting user", svcerror.ErrInternalServer)
 	}
 
-	if bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)) != nil {
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
+	if err == bcrypt.ErrMismatchedHashAndPassword {
 		return nil, fmt.Errorf("%w: invalid password", svcerror.ErrBadRequest)
+	}
+
+	if err != nil {
+		slog.Error("service.Login: bcrypt.CompareHashAndPassword:", "err", err.Error())
+		return nil, fmt.Errorf("%w: error comparing password", svcerror.ErrInternalServer)
 	}
 
 	return userToUserDTO(user), nil
@@ -163,7 +170,7 @@ func (s *UserServiceImpl) DeleteUserById(id string) error {
 		return fmt.Errorf("%w: user not found", svcerror.ErrNotFound)
 	}
 	if err != nil {
-		slog.Error("DeleteUserById: ", "err", err.Error())
+		slog.Error("service.DeleteUserById: store.DeleteUserById:", "err", err.Error())
 		return fmt.Errorf("%w: error deleting user", svcerror.ErrInternalServer)
 	}
 	return nil
@@ -174,8 +181,9 @@ func (s *UserServiceImpl) UpdateUserById(id uuid.UUID, updates map[string]interf
 	if err == sql.ErrNoRows {
 		return nil, fmt.Errorf("%w: user not found", svcerror.ErrNotFound)
 	}
+
 	if err != nil {
-		slog.Error("UpdateUserById: ", "err", err.Error())
+		slog.Error("service.UpdateUserById: store.UpdateUserById", "err", err.Error())
 		return nil, fmt.Errorf("%w: error updating user", svcerror.ErrInternalServer)
 	}
 	return userToUserDTO(user), nil
