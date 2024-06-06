@@ -100,13 +100,13 @@ func (s *UserServiceImpl) SignUp(email, password string) (*entities.UserDTO, err
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
-		slog.Error("error hashing password", "err", err.Error())
+		slog.Error("service.SignUp: bcrypt.GenerateFromPassword:", "err", err.Error())
 		return nil, fmt.Errorf("%w: error hashing password", svcerror.ErrInternalServer)
 	}
 
 	user, err := s.userStore.CreateUser(cleanedEmail, string(hashedPassword))
 	if err != nil {
-		slog.Error("error creating user", "err", err.Error())
+		slog.Error("service.SignUp: store.CreateUser:", "err", err.Error())
 		return nil, fmt.Errorf("%w: error creating user", svcerror.ErrInternalServer)
 	}
 	return userToUserDTO(user), nil
