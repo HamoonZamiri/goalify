@@ -189,7 +189,7 @@ func TestGetGoalCategories(t *testing.T) {
 }
 
 func TestGetGoalCategoryById(t *testing.T) {
-	gc := createTestGoalCategory(t, "create goal category", uuid.MustParse(userId))
+	gc := createTestGoalCategory("create goal category", uuid.MustParse(userId))
 
 	res, err := buildAndSendRequest("GET", fmt.Sprintf("%s/api/goals/categories/%s", BASE_URL, gc.Id), nil)
 	assert.Nil(t, err)
@@ -201,7 +201,7 @@ func TestGetGoalCategoryById(t *testing.T) {
 }
 
 func TestUpdateGoalCategoryById(t *testing.T) {
-	gc := createTestGoalCategory(t, "update goal category", uuid.MustParse(userId))
+	gc := createTestGoalCategory("update goal category", uuid.MustParse(userId))
 
 	reqBody := map[string]any{"title": "updated title", "xp_per_goal": 69}
 	res, err := buildAndSendRequest("PUT", fmt.Sprintf("%s/api/goals/categories/%s", BASE_URL, gc.Id), reqBody)
@@ -215,7 +215,7 @@ func TestUpdateGoalCategoryById(t *testing.T) {
 }
 
 func TestUpdateGoalCategoryByIdInvalidFields(t *testing.T) {
-	gc := createTestGoalCategory(t, "update goal category", uuid.MustParse(userId))
+	gc := createTestGoalCategory("update goal category", uuid.MustParse(userId))
 	reqBody := map[string]any{"title": "updated title", "xp_per_goal": -1}
 	res, err := buildAndSendRequest("PUT", fmt.Sprintf("%s/api/goals/categories/%s", BASE_URL, gc.Id), reqBody)
 	require.Nil(t, err)
@@ -223,7 +223,7 @@ func TestUpdateGoalCategoryByIdInvalidFields(t *testing.T) {
 }
 
 func TestDeleteGoalCategoryById(t *testing.T) {
-	cat := createTestGoalCategory(t, "delete goal category", uuid.MustParse(userId))
+	cat := createTestGoalCategory("delete goal category", uuid.MustParse(userId))
 
 	res, err := buildAndSendRequest("DELETE", fmt.Sprintf("%s/api/goals/categories/%s", BASE_URL, cat.Id), nil)
 	assert.Nil(t, err)
@@ -232,7 +232,7 @@ func TestDeleteGoalCategoryById(t *testing.T) {
 }
 
 func TestDeleteGoalCategoryByIdNotAuthorized(t *testing.T) {
-	gc := createTestGoalCategory(t, "delete goal category", uuid.MustParse(userId))
+	gc := createTestGoalCategory("delete goal category", uuid.MustParse(userId))
 	req, err := http.NewRequest("DELETE", fmt.Sprintf("%s/api/goals/categories/%s", BASE_URL, gc.Id), nil)
 	require.Nil(t, err)
 	req.Header.Add("Authorization", "Bearer "+accessToken+"1")
@@ -243,7 +243,7 @@ func TestDeleteGoalCategoryByIdNotAuthorized(t *testing.T) {
 }
 
 func TestCreateGoal(t *testing.T) {
-	cat := createTestGoalCategory(t, "create goal", uuid.MustParse(userId))
+	cat := createTestGoalCategory("create goal", uuid.MustParse(userId))
 	reqBody := map[string]any{
 		"title": "goal title", "description": "goal description", "category_id": cat.Id,
 		"user_id": userId,
@@ -270,8 +270,8 @@ func TestCreateGoalInvalidFields(t *testing.T) {
 }
 
 func TestUpdateGoalById(t *testing.T) {
-	cat := createTestGoalCategory(t, "update goal", uuid.MustParse(userId))
-	goal := createTestGoal(t, "goal title", "goal description", cat.Id, uuid.MustParse(userId))
+	cat := createTestGoalCategory("update goal", uuid.MustParse(userId))
+	goal := createTestGoal("goal title", "goal description", cat.Id, uuid.MustParse(userId))
 	reqBody := map[string]any{"title": "updated title", "description": "updated description"}
 	res, err := buildAndSendRequest("PUT", fmt.Sprintf("%s/api/goals/%s", BASE_URL, goal.Id), reqBody)
 	require.Nil(t, err)
@@ -300,7 +300,7 @@ func buildAndSendRequest(method, url string, body map[string]any) (*http.Respons
 	return res, err
 }
 
-func printErrResponse(t *testing.T, res *http.Response) error {
+func printErrResponse(res *http.Response) error {
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		return err
@@ -315,7 +315,7 @@ func printErrResponse(t *testing.T, res *http.Response) error {
 	return nil
 }
 
-func printSuccessResponse[T any](t *testing.T, res *http.Response) error {
+func printSuccessResponse[T any](res *http.Response) error {
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		return err
@@ -329,7 +329,7 @@ func printSuccessResponse[T any](t *testing.T, res *http.Response) error {
 	return nil
 }
 
-func createTestGoalCategory(t *testing.T, title string, userId uuid.UUID) *entities.GoalCategory {
+func createTestGoalCategory(title string, userId uuid.UUID) *entities.GoalCategory {
 	query := `INSERT INTO goal_categories (title, xp_per_goal, user_id) 
   VALUES ($1, $2, $3) RETURNING *`
 	var goalCategory entities.GoalCategory
@@ -337,7 +337,7 @@ func createTestGoalCategory(t *testing.T, title string, userId uuid.UUID) *entit
 	return &goalCategory
 }
 
-func createTestGoal(t *testing.T, title, description string, categoryId, userId uuid.UUID) *entities.Goal {
+func createTestGoal(title, description string, categoryId, userId uuid.UUID) *entities.Goal {
 	query := `INSERT INTO goals (title, description, user_id, category_id)
   VALUES ($1, $2, $3, $4) RETURNING *`
 	var goal entities.Goal
