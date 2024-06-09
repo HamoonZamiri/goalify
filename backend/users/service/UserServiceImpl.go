@@ -62,25 +62,6 @@ func generateRefreshToken() uuid.UUID {
 	return uuid.New()
 }
 
-func userToUserDTO(user *entities.User) *entities.UserDTO {
-	token, err := generateJWTToken(user.Id)
-	if err != nil {
-		// handle error
-		panic(err)
-	}
-
-	return &entities.UserDTO{
-		Email:              user.Email,
-		AccessToken:        token,
-		Xp:                 user.Xp,
-		LevelId:            user.LevelId,
-		CashAvailable:      user.CashAvailable,
-		Id:                 user.Id,
-		RefreshToken:       user.RefreshToken,
-		RefreshTokenExpiry: user.RefreshTokenExpiry,
-	}
-}
-
 func (s *UserServiceImpl) SignUp(email, password string) (*entities.UserDTO, error) {
 	_, err := s.userStore.GetUserByEmail(email)
 	if err == nil {
@@ -109,7 +90,12 @@ func (s *UserServiceImpl) SignUp(email, password string) (*entities.UserDTO, err
 		slog.Error("service.SignUp: store.CreateUser:", "err", err.Error())
 		return nil, fmt.Errorf("%w: error creating user", svcerror.ErrInternalServer)
 	}
-	return userToUserDTO(user), nil
+	accessToken, err := generateJWTToken(user.Id)
+	if err != nil {
+		slog.Error("Users: service.Refresh: service.SignUp:", "err", err.Error())
+		return nil, fmt.Errorf("%w: error generating access token", svcerror.ErrInternalServer)
+	}
+	return user.ToUserDTO(accessToken), nil
 }
 
 func (s *UserServiceImpl) Refresh(userId, refreshToken string) (*entities.UserDTO, error) {
@@ -133,13 +119,17 @@ func (s *UserServiceImpl) Refresh(userId, refreshToken string) (*entities.UserDT
 
 	newRefreshToken := generateRefreshToken()
 	user, err = s.userStore.UpdateRefreshToken(user.Id.String(), newRefreshToken.String())
-
 	if err != nil {
 		slog.Error("service.Refresh: store.UpdateRefreshToken:", "err", err.Error())
 		return nil, fmt.Errorf("%w: error updating refresh token", svcerror.ErrInternalServer)
 	}
 
-	return userToUserDTO(user), nil
+	accessToken, err := generateJWTToken(user.Id)
+	if err != nil {
+		slog.Error("Users: service.Refresh: service.generateJWTToken:", "err", err.Error())
+		return nil, fmt.Errorf("%w: error generating access token", svcerror.ErrInternalServer)
+	}
+	return user.ToUserDTO(accessToken), nil
 }
 
 func (s *UserServiceImpl) Login(email, password string) (*entities.UserDTO, error) {
@@ -161,7 +151,12 @@ func (s *UserServiceImpl) Login(email, password string) (*entities.UserDTO, erro
 		return nil, fmt.Errorf("%w: error comparing password", svcerror.ErrInternalServer)
 	}
 
-	return userToUserDTO(user), nil
+	accessToken, err := generateJWTToken(user.Id)
+	if err != nil {
+		slog.Error("Users: service.Login: service.generateJWTToken:", "err", err.Error())
+		return nil, fmt.Errorf("%w: error generating access token", svcerror.ErrInternalServer)
+	}
+	return user.ToUserDTO(accessToken), nil
 }
 
 func (s *UserServiceImpl) DeleteUserById(id string) error {
@@ -186,5 +181,11 @@ func (s *UserServiceImpl) UpdateUserById(id uuid.UUID, updates map[string]interf
 		slog.Error("service.UpdateUserById: store.UpdateUserById", "err", err.Error())
 		return nil, fmt.Errorf("%w: error updating user", svcerror.ErrInternalServer)
 	}
-	return userToUserDTO(user), nil
+
+	accessToken, err := generateJWTToken(user.Id)
+	if err != nil {
+		slog.Error("Users: service.UpdateUserById: service.generateJWTToken:", "err", err.Error())
+		return nil, fmt.Errorf("%w: error generating access token", svcerror.ErrInternalServer)
+	}
+	return user.ToUserDTO(accessToken), nil
 }
