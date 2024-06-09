@@ -31,3 +31,18 @@ type UserDTO struct {
 	Id                 uuid.UUID `db:"id" json:"id"`
 	RefreshToken       uuid.UUID `db:"refresh_token" json:"refresh_token"`
 }
+
+func (u *User) ToUserDTO(accessToken string) *UserDTO {
+	return &UserDTO{
+		RefreshTokenExpiry: u.RefreshTokenExpiry,
+		CreatedAt:          u.CreatedAt,
+		UpdatedAt:          u.UpdatedAt,
+		Email:              u.Email,
+		AccessToken:        accessToken,
+		Xp:                 u.Xp,
+		LevelId:            u.LevelId,
+		CashAvailable:      u.CashAvailable,
+		Id:                 u.Id,
+		RefreshToken:       u.RefreshToken,
+	}
+}
