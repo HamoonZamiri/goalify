@@ -13,7 +13,7 @@ import (
 )
 
 func (h *GoalHandler) HandleCreateGoalCategory(w http.ResponseWriter, r *http.Request) {
-	funcStr := "Goal Categories: handler.HandleCreateGoalCategory"
+	funcStr := h.traceLogger.GetTrace("handler.HandleCreateGoalCategory")
 	body, problems, err := jsonutil.DecodeValid[CreateGoalCategoryRequest](r)
 	if len(problems) > 0 {
 		apiError := responses.NewAPIError("invalid request", problems)
@@ -55,7 +55,7 @@ func (h *GoalHandler) HandleCreateGoalCategory(w http.ResponseWriter, r *http.Re
 }
 
 func (h *GoalHandler) HandleGetGoalCategoriesByUserId(w http.ResponseWriter, r *http.Request) {
-	funcStr := "Goal Categories: handler.HandleGetGoalCategoriesByUserId"
+	funcStr := h.traceLogger.GetTrace("handler.HandleGetGoalCategoriesByUserId")
 	userId, err := middleware.GetIdFromHeader(r)
 	if err != nil {
 		slog.Error(fmt.Sprintf("%s: middleware.GetIdFromHeader:", funcStr), "err", err)
@@ -84,7 +84,7 @@ func (h *GoalHandler) HandleGetGoalCategoriesByUserId(w http.ResponseWriter, r *
 }
 
 func (h *GoalHandler) HandleGetGoalCategoryById(w http.ResponseWriter, r *http.Request) {
-	funcStr := "Goal Categories: handler.HandleGetGoalCategoryById"
+	funcStr := h.traceLogger.GetTrace("handler.HandleGetGoalCategoryById")
 	userId, err := middleware.GetIdFromHeader(r)
 	if err != nil {
 		slog.Error(fmt.Sprintf("%s: middleware.GetIdFromHeader:", funcStr), "err", err)
@@ -121,7 +121,7 @@ func (h *GoalHandler) HandleGetGoalCategoryById(w http.ResponseWriter, r *http.R
 }
 
 func (h *GoalHandler) HandleUpdateGoalCategoryById(w http.ResponseWriter, r *http.Request) {
-	funcStr := "Goal Categories: handler.HandleUpdateGoalCategoryById"
+	funcStr := h.traceLogger.GetTrace("handler.HandleUpdateGoalCategoryById")
 	userId, err := middleware.GetIdFromHeader(r)
 	if err != nil {
 		slog.Error(fmt.Sprintf("%s: middleware.GetIdFromHeader:", funcStr), "err", err)
@@ -183,7 +183,7 @@ func (h *GoalHandler) HandleUpdateGoalCategoryById(w http.ResponseWriter, r *htt
 }
 
 func (h *GoalHandler) HandleDeleteGoalCategoryById(w http.ResponseWriter, r *http.Request) {
-	funcStr := "Goal Categories: handler.HandleDeleteGoalCategoryById"
+	funcStr := h.traceLogger.GetTrace("handler.HandleDeleteGoalCategoryById")
 	userId, err := middleware.GetIdFromHeader(r)
 	if err != nil {
 		slog.Error(fmt.Sprintf("%s: middleware.GetIdFromHeader:", funcStr), "err", err)

@@ -6,6 +6,7 @@ import (
 	gSrv "goalify/goals/service"
 	gs "goalify/goals/stores"
 	"goalify/middleware"
+	"goalify/stacktrace"
 	uh "goalify/users/handler"
 	usrSrv "goalify/users/service"
 	us "goalify/users/stores"
@@ -42,6 +43,9 @@ func NewServer(userHandler *uh.UserHandler, goalHandler *gh.GoalHandler) http.Ha
 func Run() error {
 	db, _ := db.New("goalify")
 
+	// logs for stack trace implementing stacktrace.TraceLogger
+	goalDomainLogger := stacktrace.NewDomainStackTraceLogger("Goals")
+
 	userStore := us.NewUserStore(db)
 	userService := usrSrv.NewUserService(userStore)
 	userHandler := uh.NewUserHandler(userService)
@@ -49,7 +53,7 @@ func Run() error {
 	goalStore := gs.NewGoalStore(db)
 	goalCategoryStore := gs.NewGoalCategoryStore(db)
 	goalService := gSrv.NewGoalService(goalStore, goalCategoryStore)
-	goalHandler := gh.NewGoalHandler(goalService)
+	goalHandler := gh.NewGoalHandler(goalService, goalDomainLogger)
 
 	srv := NewServer(userHandler, goalHandler)
 	httpServer := &http.Server{

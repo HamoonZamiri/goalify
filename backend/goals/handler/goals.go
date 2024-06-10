@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"fmt"
 	"goalify/jsonutil"
 	"goalify/middleware"
 	"goalify/responses"
@@ -12,6 +13,7 @@ import (
 )
 
 func (h *GoalHandler) HandleCreateGoal(w http.ResponseWriter, r *http.Request) {
+	funcStr := h.traceLogger.GetTrace("handler.HandleCreateGoal")
 	body, problems, err := jsonutil.DecodeValid[CreateGoalRequest](r)
 	if len(problems) > 0 {
 		apiError := responses.NewAPIError("invalid request", problems)
@@ -20,28 +22,28 @@ func (h *GoalHandler) HandleCreateGoal(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err != nil {
-		slog.Error("HandleCreateGoal: jsonutil.DecodeValid[CreateGoalRequest](r):", "err", err)
+		slog.Error(fmt.Sprintf("%s: jsonutil.DecodeValid[CreateGoalRequest]:", funcStr), "err", err)
 		responses.SendAPIError(w, r, http.StatusInternalServerError, "error decoding request body", nil)
 		return
 	}
 
 	userId, err := middleware.GetIdFromHeader(r)
 	if err != nil {
-		slog.Error("HandleCreateGoal: middleware.GetIdFromHeader(r):", "err", err)
+		slog.Error(fmt.Sprintf("%s: middleware.GetIdFromHeader:", funcStr), "err", err)
 		responses.SendAPIError(w, r, http.StatusUnauthorized, err.Error(), nil)
 		return
 	}
 
 	parsedUserId, err := uuid.Parse(userId)
 	if err != nil {
-		slog.Error("HandleCreateGoal: uuid.Parse(userId):", "err", err)
+		slog.Error(fmt.Sprintf("%s: uuid.Parse:", funcStr), "err", err)
 		responses.SendAPIError(w, r, http.StatusBadRequest, "error parsing user id", nil)
 		return
 	}
 
 	parsedCategoryId, err := uuid.Parse(body.CategoryId)
 	if err != nil {
-		slog.Error("HandleCreateGoal: uuid.Parse(categoryId):", "err", err)
+		slog.Error(fmt.Sprintf("%s: uuid.Parse:", funcStr), "err", err)
 		responses.SendAPIError(w, r, http.StatusBadRequest, "error parsing category id", nil)
 		return
 	}

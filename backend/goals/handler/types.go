@@ -4,16 +4,18 @@ import (
 	"fmt"
 	"goalify/goals/service"
 	"goalify/options"
+	"goalify/stacktrace"
 
 	"github.com/google/uuid"
 )
 
 type GoalHandler struct {
 	goalService service.GoalService
+	traceLogger stacktrace.TraceLogger
 }
 
-func NewGoalHandler(goalService service.GoalService) *GoalHandler {
-	return &GoalHandler{goalService}
+func NewGoalHandler(goalService service.GoalService, traceLogger stacktrace.TraceLogger) *GoalHandler {
+	return &GoalHandler{goalService, traceLogger}
 }
 
 type CreateGoalRequest struct {
