@@ -1,11 +1,11 @@
 package handler
 
 import (
-	"goalify/jsonutil"
+	"goalify/utils/jsonutil"
 	"goalify/middleware"
-	"goalify/responses"
-	"goalify/svcerror"
+	"goalify/utils/responses"
 	"goalify/users/service"
+	"goalify/utils/svcerror"
 	"log/slog"
 	"net/http"
 

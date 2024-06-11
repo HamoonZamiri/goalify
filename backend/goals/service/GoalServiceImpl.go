@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"goalify/entities"
 	"goalify/goals/stores"
-	"goalify/svcerror"
+	"goalify/utils/svcerror"
 	"log/slog"
 	"strings"
 

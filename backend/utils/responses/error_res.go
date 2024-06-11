@@ -1,7 +1,7 @@
 package responses
 
 import (
-	"goalify/jsonutil"
+	"goalify/utils/jsonutil"
 	"net/http"
 )
 

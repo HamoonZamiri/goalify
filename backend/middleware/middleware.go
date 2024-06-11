@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"errors"
-	"goalify/responses"
+	"goalify/utils/responses"
 	"goalify/users/service"
 	"log/slog"
 	"net/http"

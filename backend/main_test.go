@@ -7,7 +7,7 @@ import (
 	main "goalify"
 	"goalify/db"
 	"goalify/entities"
-	"goalify/responses"
+	"goalify/utils/responses"
 	"goalify/users/handler"
 	"io"
 	"net/http"

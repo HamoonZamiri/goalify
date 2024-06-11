@@ -3,8 +3,8 @@ package handler
 import (
 	"fmt"
 	"goalify/goals/service"
-	"goalify/options"
-	"goalify/stacktrace"
+	"goalify/utils/options"
+	"goalify/utils/stacktrace"
 
 	"github.com/google/uuid"
 )

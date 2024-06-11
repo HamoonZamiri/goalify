@@ -2,10 +2,10 @@ package handler
 
 import (
 	"fmt"
-	"goalify/jsonutil"
+	"goalify/utils/jsonutil"
 	"goalify/middleware"
-	"goalify/responses"
-	"goalify/svcerror"
+	"goalify/utils/responses"
+	"goalify/utils/svcerror"
 	"log/slog"
 	"net/http"
 

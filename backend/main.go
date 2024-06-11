@@ -6,7 +6,7 @@ import (
 	gSrv "goalify/goals/service"
 	gs "goalify/goals/stores"
 	"goalify/middleware"
-	"goalify/stacktrace"
+	"goalify/utils/stacktrace"
 	uh "goalify/users/handler"
 	usrSrv "goalify/users/service"
 	us "goalify/users/stores"

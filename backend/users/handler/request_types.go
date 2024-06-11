@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"goalify/options"
+	"goalify/utils/options"
 	"strings"
 )
 
