@@ -6,10 +6,10 @@ import (
 	gSrv "goalify/goals/service"
 	gs "goalify/goals/stores"
 	"goalify/middleware"
-	"goalify/utils/stacktrace"
 	uh "goalify/users/handler"
 	usrSrv "goalify/users/service"
 	us "goalify/users/stores"
+	"goalify/utils/stacktrace"
 	"log/slog"
 	"net/http"
 	"os"
@@ -52,7 +52,7 @@ func Run() error {
 
 	goalStore := gs.NewGoalStore(db)
 	goalCategoryStore := gs.NewGoalCategoryStore(db)
-	goalService := gSrv.NewGoalService(goalStore, goalCategoryStore)
+	goalService := gSrv.NewGoalService(goalStore, goalCategoryStore, goalDomainLogger)
 	goalHandler := gh.NewGoalHandler(goalService, goalDomainLogger)
 
 	srv := NewServer(userHandler, goalHandler)
