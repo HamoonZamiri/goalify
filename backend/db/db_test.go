@@ -16,8 +16,7 @@ func TestBuildUpdateQuery(t *testing.T) {
 	}
 	id := uuid.New()
 	query, _ := BuildUpdateQuery(table, updates, id)
-	assert.Equal(t, query,
-		"UPDATE goals SET name = $1, description = $2, completed = $3 WHERE id = $4")
+	assert.Equal(t, "UPDATE goals SET name = $1, description = $2, completed = $3 WHERE id = $4", query)
 }
 
 func TestBuildSelectQuery(t *testing.T) {
@@ -28,6 +27,5 @@ func TestBuildSelectQuery(t *testing.T) {
 		"created_at": "2021-01-01",
 	}
 	query, _ := BuildSelectQuery(table, filters)
-	assert.Equal(t, query,
-		"SELECT * FROM goals WHERE id = $1 AND completed = $2 AND created_at = $3")
+	assert.Equal(t, "SELECT * FROM goals WHERE completed = $1 AND created_at = $2 AND id = $3", query)
 }
