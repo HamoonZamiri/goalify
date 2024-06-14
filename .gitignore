@@ -2,3 +2,4 @@ backend/.env
 .env
 .DS_Store
 pgdata
+backend/bin
