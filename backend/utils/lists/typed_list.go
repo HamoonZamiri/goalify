@@ -72,3 +72,12 @@ func (tl *TypedList[T]) Get(i int) (T, error) {
 func (tl *TypedList[T]) GetList() *list.List {
 	return tl.list
 }
+
+func (tl *TypedList[T]) Contains(value T) bool {
+	for e := tl.list.Front(); e != nil; e = e.Next() {
+		if e.Value == value {
+			return true
+		}
+	}
+	return false
+}

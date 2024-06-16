@@ -82,3 +82,13 @@ func TestRemoveBack(t *testing.T) {
 	_, err = list.Get(2)
 	assert.NotNil(t, err)
 }
+
+func TestContains(t *testing.T) {
+	list := New[int]()
+	list.PushBack(1)
+	list.PushBack(2)
+	list.PushBack(3)
+
+	assert.True(t, list.Contains(1))
+	assert.False(t, list.Contains(4))
+}
