@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"goalify/entities"
 	"goalify/goals/stores"
+	"goalify/utils/events"
 	"goalify/utils/stacktrace"
 	"goalify/utils/svcerror"
 	"log/slog"
@@ -22,14 +23,23 @@ type GoalServiceImpl struct {
 	goalStore         stores.GoalStore
 	goalCategoryStore stores.GoalCategoryStore
 	traceLogger       stacktrace.TraceLogger
+	eventPublisher    events.EventPublisher
 }
 
-func NewGoalService(goalStore stores.GoalStore, goalCategoryStore stores.GoalCategoryStore, traceLogger stacktrace.TraceLogger) *GoalServiceImpl {
-	return &GoalServiceImpl{
+func NewGoalService(goalStore stores.GoalStore,
+	goalCategoryStore stores.GoalCategoryStore,
+	traceLogger stacktrace.TraceLogger, ep events.EventPublisher,
+) *GoalServiceImpl {
+	gs := &GoalServiceImpl{
 		goalStore:         goalStore,
 		goalCategoryStore: goalCategoryStore,
 		traceLogger:       traceLogger,
+		eventPublisher:    ep,
 	}
+
+	gs.eventPublisher.Subscribe("user_created", gs)
+
+	return gs
 }
 
 func (gs *GoalServiceImpl) CreateGoal(title, description string, userId, categoryId uuid.UUID) (*entities.Goal, error) {
@@ -266,4 +276,26 @@ func (gs *GoalServiceImpl) UpdateGoalById(goalId uuid.UUID, updates map[string]i
 		return nil, fmt.Errorf("%w: error updating goal", svcerror.ErrInternalServer)
 	}
 	return updatedGoal, nil
+}
+
+func (gs *GoalServiceImpl) HandleEvent(event events.Event) {
+	switch event.EventType {
+	case "user_created":
+		gs.handleUserCreatedEvent(event)
+	default:
+		slog.Error("service.HandleEvent: unknown event type", "eventType", event.EventType)
+	}
+}
+
+func (gs *GoalServiceImpl) handleUserCreatedEvent(event events.Event) {
+	user, err := events.ParseEventData[*entities.User](event)
+	if err != nil {
+		slog.Error("service.handleUserCreatedEvent: events.ParseEventData:", "err", err)
+		return
+	}
+
+	_, err = gs.CreateGoalCategory("daily", XP_PER_GOAL_MAX, user.Id)
+	if err != nil {
+		slog.Error("service.handleUserCreatedEvent: CreateGoalCategory:", "err", err)
+	}
 }
