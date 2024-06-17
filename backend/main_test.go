@@ -7,8 +7,8 @@ import (
 	main "goalify"
 	"goalify/db"
 	"goalify/entities"
-	"goalify/utils/responses"
 	"goalify/users/handler"
+	"goalify/utils/responses"
 	"io"
 	"net/http"
 	"os"
@@ -32,7 +32,7 @@ var (
 
 func setup() {
 	go main.Run()
-	time.Sleep(2 * time.Second)
+	time.Sleep(1 * time.Second)
 }
 
 func TestMain(m *testing.M) {
@@ -185,7 +185,9 @@ func TestGetGoalCategories(t *testing.T) {
 	resBody, err := UnmarshalServerResponse[[]entities.GoalCategory](res)
 	assert.Nil(t, err)
 
-	assert.Equal(t, 1, len(resBody.Data))
+	// previously was asserting this value as 1, but since we have a user_created
+	// event that creates a goal category, we should expect 2
+	assert.Equal(t, 2, len(resBody.Data))
 }
 
 func TestGetGoalCategoryById(t *testing.T) {
@@ -281,6 +283,35 @@ func TestUpdateGoalById(t *testing.T) {
 	require.Nil(t, err)
 	assert.Equal(t, "updated title", resBody.Data.Title)
 	assert.Equal(t, "updated description", resBody.Data.Description)
+}
+
+func TestUserCreatedEvent(t *testing.T) {
+	reqBody := handler.SignupRequest{Email: "user2@mail.com", Password: "password123!"}
+	stringifiedBody, err := json.Marshal(reqBody)
+	assert.Nil(t, err)
+
+	res, err := http.Post(BASE_URL+"/api/users/signup", "application/json", bytes.NewReader(stringifiedBody))
+	assert.Nil(t, err)
+
+	assert.Equal(t, 200, res.StatusCode)
+
+	defer res.Body.Close()
+
+	serverResponse, err := UnmarshalServerResponse[entities.UserDTO](res)
+	assert.Nil(t, err)
+
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/api/goals/categories", BASE_URL), nil)
+	assert.Nil(t, err)
+	req.Header.Add("Authorization", "Bearer "+serverResponse.Data.AccessToken)
+	res, err = http.DefaultClient.Do(req)
+
+	assert.Nil(t, err)
+
+	assert.Equal(t, http.StatusOK, res.StatusCode)
+	resBody, err := UnmarshalServerResponse[[]*entities.GoalCategory](res)
+	assert.Nil(t, err)
+
+	assert.Equal(t, 1, len(resBody.Data))
 }
 
 // utility functions

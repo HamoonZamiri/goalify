@@ -9,6 +9,7 @@ import (
 	uh "goalify/users/handler"
 	usrSrv "goalify/users/service"
 	us "goalify/users/stores"
+	"goalify/utils/events"
 	"goalify/utils/stacktrace"
 	"log/slog"
 	"net/http"
@@ -46,13 +47,16 @@ func Run() error {
 	// logs for stack trace implementing stacktrace.TraceLogger
 	goalDomainLogger := stacktrace.NewDomainStackTraceLogger("Goals")
 
+	eventManager := events.NewEventManager()
+
 	userStore := us.NewUserStore(db)
-	userService := usrSrv.NewUserService(userStore)
+	userService := usrSrv.NewUserService(userStore, eventManager)
 	userHandler := uh.NewUserHandler(userService)
 
 	goalStore := gs.NewGoalStore(db)
 	goalCategoryStore := gs.NewGoalCategoryStore(db)
-	goalService := gSrv.NewGoalService(goalStore, goalCategoryStore, goalDomainLogger)
+	goalService := gSrv.NewGoalService(goalStore, goalCategoryStore,
+		goalDomainLogger, eventManager)
 	goalHandler := gh.NewGoalHandler(goalService, goalDomainLogger)
 
 	srv := NewServer(userHandler, goalHandler)
