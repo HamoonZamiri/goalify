@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"goalify/utils/lists"
 	"reflect"
+	"sync"
 )
 
 type Event struct {
@@ -34,6 +35,7 @@ type EventPublisher interface {
 
 type EventManager struct {
 	subscribers map[string]*lists.TypedList[Subscriber]
+	mu          sync.Mutex
 }
 
 func NewEvent(eventType string, data any) Event {
@@ -46,10 +48,14 @@ func NewEvent(eventType string, data any) Event {
 func NewEventManager() *EventManager {
 	return &EventManager{
 		subscribers: make(map[string]*lists.TypedList[Subscriber]),
+		mu:          sync.Mutex{},
 	}
 }
 
 func (em *EventManager) IsSubscribed(eventType string, subscriber Subscriber) bool {
+	em.mu.Lock()
+	defer em.mu.Unlock()
+
 	if _, ok := em.subscribers[eventType]; !ok {
 		return false
 	}
@@ -63,6 +69,8 @@ func (em *EventManager) IsSubscribed(eventType string, subscriber Subscriber) bo
 }
 
 func (em *EventManager) Subscribe(eventType string, subscriber Subscriber) {
+	em.mu.Lock()
+	defer em.mu.Unlock()
 	if _, ok := em.subscribers[eventType]; !ok {
 		em.subscribers[eventType] = lists.New[Subscriber]()
 	}
@@ -70,6 +78,8 @@ func (em *EventManager) Subscribe(eventType string, subscriber Subscriber) {
 }
 
 func (em *EventManager) Publish(event Event) {
+	em.mu.Lock()
+	defer em.mu.Unlock()
 	subList := em.subscribers[event.EventType].GetList()
 	for e := subList.Front(); e != nil; e = e.Next() {
 		sub := e.Value.(Subscriber)
@@ -78,6 +88,8 @@ func (em *EventManager) Publish(event Event) {
 }
 
 func (em *EventManager) Unsubscribe(eventType string, subscriber Subscriber) {
+	em.mu.Lock()
+	defer em.mu.Unlock()
 	subList := em.subscribers[eventType].GetList()
 	for e := subList.Front(); e != nil; e = e.Next() {
 		if e.Value == subscriber {
