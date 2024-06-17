@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"goalify/entities"
 	"goalify/users/stores"
+	"goalify/utils/events"
 	"goalify/utils/svcerror"
 	"log/slog"
 	"os"
@@ -18,11 +19,12 @@ import (
 )
 
 type UserServiceImpl struct {
-	userStore stores.UserStore
+	userStore      stores.UserStore
+	eventPublisher events.EventPublisher
 }
 
-func NewUserService(userStore stores.UserStore) *UserServiceImpl {
-	return &UserServiceImpl{userStore: userStore}
+func NewUserService(userStore stores.UserStore, ep events.EventPublisher) *UserServiceImpl {
+	return &UserServiceImpl{userStore: userStore, eventPublisher: ep}
 }
 
 func generateJWTToken(userId uuid.UUID) (string, error) {
@@ -95,6 +97,7 @@ func (s *UserServiceImpl) SignUp(email, password string) (*entities.UserDTO, err
 		slog.Error("Users: service.Refresh: service.SignUp:", "err", err.Error())
 		return nil, fmt.Errorf("%w: error generating access token", svcerror.ErrInternalServer)
 	}
+	s.eventPublisher.Publish(events.NewEvent("user_created", user))
 	return user.ToUserDTO(accessToken), nil
 }
 
