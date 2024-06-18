@@ -1,10 +1,24 @@
 <script setup lang="ts"></script>
 
 <template>
-  <div class="text-lg font-semibold">Goalify</div>
-  <nav>
-    <RouterLink to="/login">Login</RouterLink>
-    <RouterLink to="/register">Register</RouterLink>
-  </nav>
+  <header class="bg-emerald-100 mb-4">
+    <div class="flex text-blue-400 justify-between p-6">
+      <RouterLink to="/">
+        <h1 class="font-semibold text-3xl hover:text-blue-500">Goalify</h1>
+      </RouterLink>
+      <nav class="flex gap-4">
+        <RouterLink
+          class="font-semibold text-xl hover:text-blue-500"
+          to="/login"
+          >Login</RouterLink
+        >
+        <RouterLink
+          class="font-semibold text-xl hover:text-blue-500"
+          to="/register"
+          >Register</RouterLink
+        >
+      </nav>
+    </div>
+  </header>
   <main><RouterView /></main>
 </template>
