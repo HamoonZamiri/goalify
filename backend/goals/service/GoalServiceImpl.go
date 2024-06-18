@@ -280,7 +280,7 @@ func (gs *GoalServiceImpl) UpdateGoalById(goalId uuid.UUID, updates map[string]i
 
 func (gs *GoalServiceImpl) HandleEvent(event events.Event) {
 	switch event.EventType {
-	case "user_created":
+	case events.USER_CREATED:
 		gs.handleUserCreatedEvent(event)
 	default:
 		slog.Error("service.HandleEvent: unknown event type", "eventType", event.EventType)

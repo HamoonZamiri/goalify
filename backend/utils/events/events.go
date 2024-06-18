@@ -12,6 +12,13 @@ type Event struct {
 	EventType string
 }
 
+const (
+	USER_CREATED string = "user_created"
+	GOAL_CREATED string = "goal_created"
+	GOAL_UPDATED string = "goal_updated"
+	USER_UPDATED string = "user_updated"
+)
+
 func ParseEventData[T any](event Event) (T, error) {
 	var val T
 	var ok bool
