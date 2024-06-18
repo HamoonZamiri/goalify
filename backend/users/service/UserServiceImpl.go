@@ -97,7 +97,7 @@ func (s *UserServiceImpl) SignUp(email, password string) (*entities.UserDTO, err
 		slog.Error("Users: service.Refresh: service.SignUp:", "err", err.Error())
 		return nil, fmt.Errorf("%w: error generating access token", svcerror.ErrInternalServer)
 	}
-	s.eventPublisher.Publish(events.NewEvent("user_created", user))
+	s.eventPublisher.Publish(events.NewEvent(events.USER_CREATED, user))
 	return user.ToUserDTO(accessToken), nil
 }
 
