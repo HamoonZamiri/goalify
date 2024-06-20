@@ -30,7 +30,7 @@ export type TGoalCategory = {
 };
 
 export const mockGoal: TGoal = {
-  title: "Test goal",
+  title: "Complete 10 leetcode questions with a score of 80% or higher",
   description: "Test description",
   status: "not_complete",
   id: "1",
@@ -41,7 +41,7 @@ export const mockGoal: TGoal = {
 };
 
 export const mockGoalCategory: TGoalCategory = {
-  title: "Test category",
+  title: "Daily",
   goals: [mockGoal, mockGoal, mockGoal],
   xp_per_goal: 10,
   id: "1",
