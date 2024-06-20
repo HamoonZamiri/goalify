@@ -1,9 +1,4 @@
-<script setup lang="ts">
-import GoalCategory from "./components/goals/GoalCategory.vue";
-import { ref } from "vue";
-import { type TGoalCategory, mockGoalCategory } from "./types";
-const categories = ref<TGoalCategory[]>([mockGoalCategory, mockGoalCategory]);
-</script>
+<script setup lang="ts"></script>
 
 <template>
   <header class="bg-emerald-100 mb-2">
@@ -25,10 +20,5 @@ const categories = ref<TGoalCategory[]>([mockGoalCategory, mockGoalCategory]);
       </nav>
     </div>
   </header>
-  <section class="flex gap-4 px-6">
-    <div class="p-4 w-1/4" v-for="cat in categories">
-      <GoalCategory :goalCategory="cat" />
-    </div>
-  </section>
   <main><RouterView /></main>
 </template>
