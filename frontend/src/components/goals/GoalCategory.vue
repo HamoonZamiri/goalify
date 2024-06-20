@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import Goal from "./Goal.vue";
+import GoalCard from "./GoalCard.vue";
 import { type TGoalCategory } from "@/types";
 const props = defineProps<{
   goalCategory: TGoalCategory;
@@ -11,14 +11,14 @@ const props = defineProps<{
       <span class="text-xl text-blue-400 font-semibold pb-2">{{
         props.goalCategory.title
       }}</span>
-      <span>+</span>
+      <v-icon class="hover:cursor-pointer" name="px-notes-plus" />
     </header>
     <section class="">
       <div
-        class="bg-blue-100 p-2 my-4"
-        v-for="goal in props.goalCategory.goals"
+        class="rounded-xl border-4 border-blue-400 p-4 mb-4"
+        v-for="goal in goalCategory.goals"
       >
-        <Goal :goal="goal" />
+        <GoalCard :goal="goal" />
       </div>
     </section>
   </div>
