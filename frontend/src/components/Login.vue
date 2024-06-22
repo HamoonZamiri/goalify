@@ -1,15 +1,21 @@
 <script setup lang="ts">
+import { API_BASE } from "@/utils/constants";
+import {
+  UserSchema,
+  createServerResponseSchema,
+  type User,
+} from "@/utils/schemas";
+import { setUser } from "@/utils/user";
 import { ref } from "vue";
 
+const error = ref<string | null>(null);
 const formData = ref<{ email: string; password: string }>({
   email: "",
   password: "",
 });
 
-const API_BASE = "http://localhost:3000/";
 async function login(payload: MouseEvent) {
   payload.preventDefault();
-  console.log(formData.value);
   const res = await fetch(`${API_BASE}/users/login`, {
     method: "POST",
     headers: {
@@ -17,9 +23,14 @@ async function login(payload: MouseEvent) {
     },
     body: JSON.stringify(formData.value),
   });
-  if (res.ok) {
-    const json: unknown = await res.json();
+  const json: unknown = await res.json();
+  if (!res.ok) {
+    error.value = (json as { message: string }).message;
+    return;
   }
+  const parsed = createServerResponseSchema(UserSchema).parse(json);
+  setUser(parsed.data as User);
+  error.value = null;
 }
 </script>
 
@@ -49,5 +60,6 @@ async function login(payload: MouseEvent) {
         Login
       </button>
     </form>
+    <p class="text-red-400 font-semibold">{{ error }}</p>
   </div>
 </template>
