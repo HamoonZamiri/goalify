@@ -14,6 +14,8 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+
+	"github.com/rs/cors"
 )
 
 func NewServer(userHandler *uh.UserHandler, goalHandler *gh.GoalHandler) http.Handler {
@@ -38,7 +40,8 @@ func NewServer(userHandler *uh.UserHandler, goalHandler *gh.GoalHandler) http.Ha
 
 	mux.Handle("POST /api/goals", middleware.AuthenticatedOnly(goalHandler.HandleCreateGoal))
 	mux.Handle("PUT /api/goals/{goalId}", middleware.AuthenticatedOnly(goalHandler.HandleUpdateGoalById))
-	return mux
+	handler := cors.Default().Handler(mux)
+	return handler
 }
 
 func Run() error {
