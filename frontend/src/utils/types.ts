@@ -1,13 +1,3 @@
-export type User = {
-  id: string;
-  email: string;
-  xp: number;
-  level_id: number;
-  cash_available: number;
-  access_token: string;
-  refresh_token: string;
-};
-
 export type TGoal = {
   title: string;
   description: string;
@@ -27,16 +17,6 @@ export type TGoalCategory = {
   user_id: string;
   updated_at: Date;
   created_at: Date;
-};
-
-export type UserDTO = {
-  email: string;
-  access_token: string;
-  refresh_token: string;
-  xp: number;
-  level_id: number;
-  cash_available: number;
-  id: string;
 };
 
 export const mockGoal: TGoal = {
