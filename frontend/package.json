@@ -14,7 +14,8 @@
     "js-cookie": "^3.0.5",
     "oh-vue-icons": "^1.0.0-rc3",
     "vue": "^3.4.21",
-    "vue-router": "^4.3.0"
+    "vue-router": "^4.3.0",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@tsconfig/node20": "^20.1.4",
