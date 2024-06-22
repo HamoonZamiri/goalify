@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { type TGoal } from "@/types";
+import { type TGoal } from "@/utils/types";
 const props = defineProps<{
   goal: TGoal;
 }>();

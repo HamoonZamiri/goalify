@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import GoalCard from "./GoalCard.vue";
-import { type TGoalCategory } from "@/types";
+import { type TGoalCategory } from "@/utils/types";
 const props = defineProps<{
   goalCategory: TGoalCategory;
 }>();

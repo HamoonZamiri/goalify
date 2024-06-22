@@ -29,6 +29,16 @@ export type TGoalCategory = {
   created_at: Date;
 };
 
+export type UserDTO = {
+  email: string;
+  access_token: string;
+  refresh_token: string;
+  xp: number;
+  level_id: number;
+  cash_available: number;
+  id: string;
+};
+
 export const mockGoal: TGoal = {
   title: "Complete 10 leetcode questions with a score of 80% or higher",
   description: "Test description",

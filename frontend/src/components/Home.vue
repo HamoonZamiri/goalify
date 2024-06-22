@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import GoalCategory from "./goals/GoalCategory.vue";
 import { ref } from "vue";
-import { type TGoalCategory, mockGoalCategory } from "@/types";
+import { type TGoalCategory, mockGoalCategory } from "@/utils/types";
 const categories = ref<TGoalCategory[]>([mockGoalCategory, mockGoalCategory]);
 </script>
 
