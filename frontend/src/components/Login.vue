@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import router from "@/router";
 import { API_BASE } from "@/utils/constants";
 import {
   UserSchema,
@@ -31,6 +32,7 @@ async function login(payload: MouseEvent) {
   const parsed = createServerResponseSchema(UserSchema).parse(json);
   setUser(parsed.data as User);
   error.value = null;
+  router.push({ name: "Home" });
 }
 </script>
 
