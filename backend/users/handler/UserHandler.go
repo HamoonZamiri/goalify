@@ -1,10 +1,10 @@
 package handler
 
 import (
-	"goalify/utils/jsonutil"
 	"goalify/middleware"
-	"goalify/utils/responses"
 	"goalify/users/service"
+	"goalify/utils/jsonutil"
+	"goalify/utils/responses"
 	"goalify/utils/svcerror"
 	"log/slog"
 	"net/http"
@@ -65,7 +65,7 @@ func (h *UserHandler) HandleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := jsonutil.Encode(w, r, http.StatusOK, user); err != nil {
+	if err := jsonutil.Encode(w, r, http.StatusOK, responses.New(user, "user logged in successfully")); err != nil {
 		slog.Error("handler.HandleLogin: jsonutil.Encode:", "err", err)
 		responses.SendAPIError(w, r, http.StatusInternalServerError, "internal error", nil)
 		return
