@@ -2,7 +2,7 @@ import { type User } from "./schemas";
 import Cookies from "js-cookie";
 
 export function setUser(user: User) {
-  Cookies.set("user", JSON.stringify(user), { expires: 1 });
+  Cookies.set("user", JSON.stringify(user), { sameSite: "lax", expires: 1 });
 }
 
 export function getUser(): User | null {
@@ -12,4 +12,8 @@ export function getUser(): User | null {
 
 export function removeUser() {
   Cookies.remove("user");
+}
+
+export function isLoggedIn(): boolean {
+  return !!getUser();
 }
