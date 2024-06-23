@@ -16,6 +16,8 @@ const router = createRouter({
 router.beforeEach((to, _) => {
   if (!isLoggedIn() && to.name !== "Login" && to.name !== "Register") {
     return { name: "Login" };
+  } else if (isLoggedIn() && (to.name === "Login" || to.name === "Register")) {
+    return { name: "Home" };
   }
 });
 
