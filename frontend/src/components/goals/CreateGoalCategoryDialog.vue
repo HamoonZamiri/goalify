@@ -29,7 +29,10 @@ function handleSubmit(e: MouseEvent) {
 </script>
 
 <template>
-  <div class="hover:cursor-pointer hover:text-blue-500">
+  <div
+    @click="setIsOpen(true)"
+    class="hover:cursor-pointer hover:text-blue-500"
+  >
     <v-icon name="co-plus" />
     <span class="text-xl text-blue-400 font-semibold" @click="setIsOpen(true)">
       Add Category
