@@ -6,7 +6,7 @@ import {
   createServerResponseSchema,
   type User,
 } from "@/utils/schemas";
-import { setUser } from "@/utils/user";
+import authState from "@/state/auth";
 import { ref } from "vue";
 
 const error = ref<string | null>(null);
@@ -35,7 +35,7 @@ async function signup(payload: MouseEvent) {
     return;
   }
   const parsed = createServerResponseSchema(UserSchema).parse(json);
-  setUser(parsed.data as User);
+  authState.setUser(parsed.data as User);
   error.value = null;
   router.push({ name: "Home" });
 }

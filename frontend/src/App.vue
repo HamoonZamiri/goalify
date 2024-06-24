@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import router from "./router";
-import { isLoggedIn, removeUser } from "./utils/user";
+import authState from "./state/auth";
 
 function handleLogout(e: MouseEvent) {
   e.preventDefault();
-  removeUser();
+  authState.logout();
   router.push({ name: "Login" });
 }
 </script>
@@ -16,7 +16,7 @@ function handleLogout(e: MouseEvent) {
         <h1 class="font-semibold text-3xl hover:text-blue-500">Goalify</h1>
       </RouterLink>
       <nav class="flex gap-4">
-        <div v-if="!isLoggedIn()" class="flex gap-2">
+        <div v-if="!authState.user" class="flex gap-2">
           <RouterLink
             class="font-semibold text-xl hover:text-blue-500"
             to="/login"
