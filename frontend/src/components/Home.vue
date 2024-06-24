@@ -14,7 +14,7 @@ const categories = ref<TGoalCategory[]>([mockGoalCategory, mockGoalCategory]);
       <div class="w-full sm:w-1/3" v-for="cat in categories">
         <GoalCategory :goalCategory="cat" />
       </div>
-      <CreateGoalCategoryDialog class="" />
+      <CreateGoalCategoryDialog />
     </section>
   </div>
 </template>
