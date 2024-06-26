@@ -19,4 +19,12 @@ export const UserSchema = z.object({
   refresh_token: z.string().uuid(),
 });
 
+const UserResponseSchema = createServerResponseSchema(UserSchema);
+
 export type User = z.infer<typeof UserSchema>;
+
+export const Schemas = {
+  UserSchema,
+  createServerResponseSchema,
+  UserResponseSchema,
+} as const;
