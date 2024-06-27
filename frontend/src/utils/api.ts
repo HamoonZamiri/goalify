@@ -53,7 +53,7 @@ async function zodFetch<T>(
     });
   }
   if (!res.ok) {
-    return json.message;
+    return new Error(json.message);
   }
   const parsedResponse = schema.safeParse(json);
   if (!parsedResponse.success) {
@@ -62,7 +62,34 @@ async function zodFetch<T>(
   return parsedResponse.data;
 }
 
+async function createGoalCategory(
+  title: string,
+  xp_per_goal: number,
+): Promise<string | z.infer<typeof Schemas.GoalCategorySchema>> {
+  const res = await zodFetch(
+    `${API_BASE}/goals/categories`,
+    Schemas.GoalCategoryResponseSchema,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${authState.user?.access_token}`,
+      },
+      body: JSON.stringify({
+        title,
+        xp_per_goal,
+      }),
+    },
+  );
+  if (res instanceof Error) {
+    console.error(res);
+    return res.message;
+  }
+  return res.data;
+}
+
 export const ApiClient = {
   refresh: refreshUserToken,
   zodFetch,
+  createGoalCategory,
 } as const;
