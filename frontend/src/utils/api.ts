@@ -33,7 +33,7 @@ async function zodFetch<T>(
   url: string,
   schema: z.Schema<T>,
   options: RequestInit | undefined,
-): Promise<T | Error> {
+): Promise<T | string> {
   let res = await fetch(url, options);
   const json = await res.json();
 
@@ -41,7 +41,7 @@ async function zodFetch<T>(
     const err = await refreshUserToken();
     if (err instanceof Error) {
       authState.logout();
-      return err;
+      throw err;
     }
 
     res = await fetch(url, {
@@ -53,11 +53,11 @@ async function zodFetch<T>(
     });
   }
   if (!res.ok) {
-    return new Error(json.message);
+    return json.message as string;
   }
   const parsedResponse = schema.safeParse(json);
   if (!parsedResponse.success) {
-    return parsedResponse.error;
+    throw parsedResponse.error;
   }
   return parsedResponse.data;
 }
@@ -65,31 +65,49 @@ async function zodFetch<T>(
 async function createGoalCategory(
   title: string,
   xp_per_goal: number,
-): Promise<string | z.infer<typeof Schemas.GoalCategorySchema>> {
-  const res = await zodFetch(
-    `${API_BASE}/goals/categories`,
-    Schemas.GoalCategoryResponseSchema,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${authState.user?.access_token}`,
+): Promise<string | z.infer<typeof Schemas.GoalCategoryResponseSchema>> {
+  try {
+    const res = await zodFetch(
+      `${API_BASE}/goals/categories`,
+      Schemas.GoalCategoryResponseSchema,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authState.user?.access_token}`,
+        },
+        body: JSON.stringify({
+          title,
+          xp_per_goal,
+        }),
       },
-      body: JSON.stringify({
-        title,
-        xp_per_goal,
-      }),
-    },
-  );
-  if (res instanceof Error) {
-    console.error(res);
-    return res.message;
+    );
+    return res;
+  } catch (err) {
+    console.error(err);
+    return "Failed to create goal category.";
   }
-  return res.data;
+}
+
+async function getUserGoalCategories(): Promise<
+  string | z.infer<typeof Schemas.GoalCategoryResponseArraySchema>
+> {
+  try {
+    const res = await zodFetch(
+      `${API_BASE}/goals/categories`,
+      Schemas.GoalCategoryResponseArraySchema,
+      { headers: { Authorization: `Bearer ${authState.user?.access_token}` } },
+    );
+    return res;
+  } catch (err) {
+    console.error(err);
+    return "Failed to get goal categories.";
+  }
 }
 
 export const ApiClient = {
   refresh: refreshUserToken,
   zodFetch,
   createGoalCategory,
+  getUserGoalCategories,
 } as const;
