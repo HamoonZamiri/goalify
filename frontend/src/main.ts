@@ -7,8 +7,9 @@ import {
   IoCheckmarkCircleOutline,
   PxNotesPlus,
   CoPlus,
+  CoReload,
 } from "oh-vue-icons/icons";
-addIcons(IoCheckmarkCircleOutline, PxNotesPlus, CoPlus);
+addIcons(IoCheckmarkCircleOutline, PxNotesPlus, CoPlus, CoReload);
 const app = createApp(App);
 
 app.use(router);
