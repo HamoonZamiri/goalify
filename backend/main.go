@@ -40,7 +40,15 @@ func NewServer(userHandler *uh.UserHandler, goalHandler *gh.GoalHandler) http.Ha
 
 	mux.Handle("POST /api/goals", middleware.AuthenticatedOnly(goalHandler.HandleCreateGoal))
 	mux.Handle("PUT /api/goals/{goalId}", middleware.AuthenticatedOnly(goalHandler.HandleUpdateGoalById))
-	handler := cors.Default().Handler(mux)
+
+	c := cors.New(cors.Options{
+		AllowedOrigins:   []string{"http://localhost:5173"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowCredentials: true,
+		Debug:            true,
+		AllowedHeaders:   []string{"Authorization", "Content-Type"},
+	})
+	handler := c.Handler(mux)
 	return handler
 }
 
