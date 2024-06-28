@@ -55,6 +55,7 @@ const GoalCategoryResponseArraySchema = createServerResponseSchema(
 const GoalResponseArraySchema = createServerResponseSchema(GoalArraySchema);
 
 export type User = z.infer<typeof UserSchema>;
+export type Goal = z.infer<typeof GoalSchema>;
 export type GoalCategory = z.infer<typeof GoalCategorySchema>;
 
 export const Schemas = {
