@@ -1,8 +1,8 @@
 <script setup lang="ts">
+import type { GoalCategory } from "@/utils/schemas";
 import GoalCard from "./GoalCard.vue";
-import { type TGoalCategory } from "@/utils/types";
 const props = defineProps<{
-  goalCategory: TGoalCategory;
+  goalCategory: GoalCategory;
 }>();
 </script>
 <template>
