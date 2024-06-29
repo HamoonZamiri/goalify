@@ -43,7 +43,7 @@ func (s *GoalStoreImpl) UpdateGoalStatus(goalId uuid.UUID, status string) (*enti
 }
 
 func (s *GoalStoreImpl) GetGoalsByUserId(userId uuid.UUID) ([]*entities.Goal, error) {
-	var goals []*entities.Goal
+	goals := make([]*entities.Goal, 0)
 
 	err := s.db.Select(&goals, "SELECT * FROM goals WHERE user_id = $1", userId)
 	if err != nil {
