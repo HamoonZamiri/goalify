@@ -27,3 +27,13 @@ type GoalCategory struct {
 	Id          uuid.UUID `db:"id" json:"id"`
 	UserId      uuid.UUID `db:"user_id" json:"user_id"`
 }
+
+// we need default constructors to ensure no nil fields are returned in json
+// we had a problem where category.goals was nil, and where the slices are nil in json returns,
+func NewGoal() *Goal {
+	return &Goal{}
+}
+
+func NewGoalCategory() *GoalCategory {
+	return &GoalCategory{Goals: []*Goal{}}
+}
