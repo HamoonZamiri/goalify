@@ -32,12 +32,12 @@ func (s *GoalCategoryStoreImpl) UpdateGoalCategory(categoryId uuid.UUID, goalId 
 func (s *GoalCategoryStoreImpl) CreateGoalCategory(title string, xpPerGoal int, userId uuid.UUID) (*entities.GoalCategory, error) {
 	query := `INSERT INTO goal_categories (title, xp_per_goal, user_id) 
   VALUES ($1, $2, $3) RETURNING *`
-	var goalCategory entities.GoalCategory
-	err := s.db.QueryRowx(query, title, xpPerGoal, userId).StructScan(&goalCategory)
+	gc := entities.NewGoalCategory()
+	err := s.db.QueryRowx(query, title, xpPerGoal, userId).StructScan(gc)
 	if err != nil {
 		return nil, err
 	}
-	return &goalCategory, err
+	return gc, err
 }
 
 func (s *GoalCategoryStoreImpl) GetGoalCategoriesByUserId(userId uuid.UUID) ([]*entities.GoalCategory, error) {
@@ -48,7 +48,7 @@ func (s *GoalCategoryStoreImpl) GetGoalCategoriesByUserId(userId uuid.UUID) ([]*
   ON gc.id = g.category_id 
   WHERE gc.user_id = $1`
 
-	var categories []*entities.GoalCategory
+	categories := make([]*entities.GoalCategory, 0)
 	categoryMap := make(map[uuid.UUID]*entities.GoalCategory)
 	rows, err := s.db.Queryx(query, userId)
 	if err != nil {
@@ -96,13 +96,13 @@ func (s *GoalCategoryStoreImpl) GetGoalCategoryById(categoryId uuid.UUID) (*enti
 
 func (s *GoalCategoryStoreImpl) UpdateGoalCategoryById(categoryId uuid.UUID, updates map[string]any) (*entities.GoalCategory, error) {
 	query, args := db.BuildUpdateQuery("goal_categories", updates, categoryId)
-	var gc entities.GoalCategory
+	gc := entities.NewGoalCategory()
 
-	err := s.db.QueryRowx(fmt.Sprintf("%s RETURNING *", query), args...).StructScan(&gc)
+	err := s.db.QueryRowx(fmt.Sprintf("%s RETURNING *", query), args...).StructScan(gc)
 	if err != nil {
 		return nil, fmt.Errorf("queryrowx: %w", err)
 	}
-	return &gc, nil
+	return gc, nil
 }
 
 func (s *GoalCategoryStoreImpl) DeleteGoalCategoryById(categoryId uuid.UUID) error {
@@ -116,7 +116,7 @@ func (s *GoalCategoryStoreImpl) DeleteGoalCategoryById(categoryId uuid.UUID) err
 
 func mapGoalCategoryRows(rows *sqlx.Rows, categoryMap map[uuid.UUID]*entities.GoalCategory) error {
 	for rows.Next() {
-		var gc entities.GoalCategory
+		gc := entities.NewGoalCategory()
 		var goalId, goalTitle, goalDescription, goalStatus sql.NullString
 
 		err := rows.Scan(&gc.Id, &gc.Title, &gc.Xp_per_goal, &gc.UserId, &goalId, &goalTitle, &goalDescription, &goalStatus)
@@ -126,7 +126,7 @@ func mapGoalCategoryRows(rows *sqlx.Rows, categoryMap map[uuid.UUID]*entities.Go
 
 		if _, ok := categoryMap[gc.Id]; !ok {
 			gc.Goals = []*entities.Goal{}
-			categoryMap[gc.Id] = &gc
+			categoryMap[gc.Id] = gc
 		}
 
 		if goalId.Valid {
