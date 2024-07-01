@@ -5,6 +5,7 @@ import { Dialog, DialogPanel } from "@headlessui/vue";
 const ModalFormProps = defineProps({
   FormComponent: Object,
   OpenerComponent: Object,
+  formProps: Object,
 });
 const isOpen = ref(false);
 
@@ -14,10 +15,7 @@ function setIsOpen(value: boolean) {
 </script>
 
 <template>
-  <div
-    @click="setIsOpen(true)"
-    class="hover:cursor-pointer hover:text-blue-500"
-  >
+  <div class="hover:cursor-pointer" @click="setIsOpen(true)">
     <component
       :is-open="isOpen"
       :set-is-open="setIsOpen"
@@ -32,6 +30,7 @@ function setIsOpen(value: boolean) {
   >
     <DialogPanel>
       <component
+        :props="ModalFormProps.formProps"
         :is-open="isOpen"
         :set-is-open="setIsOpen"
         :is="ModalFormProps.FormComponent"
