@@ -1,6 +1,6 @@
 import authState from "@/state/auth";
 import { API_BASE, http } from "./constants";
-import { Schemas } from "./schemas";
+import { Schemas, type Goal } from "./schemas";
 import type { z } from "zod";
 
 type ServerResponse<T> = {
@@ -105,9 +105,39 @@ async function getUserGoalCategories(): Promise<
   }
 }
 
+async function createGoal(
+  title: string,
+  description: string,
+  categoryId: string,
+) {
+  try {
+    const res = await zodFetch(
+      `${API_BASE}/goals/create`,
+      Schemas.GoalResponseSchema,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authState.user?.access_token}`,
+        },
+        body: JSON.stringify({
+          title,
+          description,
+          category_id: categoryId,
+        }),
+      },
+    );
+    return res;
+  } catch (err) {
+    console.error(err);
+    return "Failed to create goal.";
+  }
+}
+
 export const ApiClient = {
   refresh: refreshUserToken,
   zodFetch,
   createGoalCategory,
   getUserGoalCategories,
+  createGoal,
 } as const;
