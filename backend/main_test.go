@@ -169,6 +169,7 @@ func TestGoalCategoryCreate(t *testing.T) {
 	assert.Equal(t, "goal cat", gc.Data.Title)
 	assert.Equal(t, 100, gc.Data.Xp_per_goal)
 	assert.NotNil(t, gc.Data.Goals)
+	assert.Equal(t, userId, gc.Data.UserId.String())
 }
 
 func TestGoalCategoryCreateInvalidFields(t *testing.T) {

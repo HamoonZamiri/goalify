@@ -41,8 +41,8 @@ func (s *GoalCategoryStoreImpl) CreateGoalCategory(title string, xpPerGoal int, 
 }
 
 func (s *GoalCategoryStoreImpl) GetGoalCategoriesByUserId(userId uuid.UUID) ([]*entities.GoalCategory, error) {
-	query := `SELECT gc.id, gc.title, gc.xp_per_goal, gc.user_id, g.id as goal_id, 
-  g.title as goal_title, g.description, g.status
+	query := `SELECT gc.id, gc.title, gc.xp_per_goal, gc.user_id, gc.created_at, gc.updated_at, g.id as goal_id, 
+  g.title as goal_title, g.description, g.status, g.created_at as goal_created_at, g.updated_at as goal_updated_at
   FROM goal_categories gc 
   LEFT JOIN goals g 
   ON gc.id = g.category_id 
@@ -69,8 +69,8 @@ func (s *GoalCategoryStoreImpl) GetGoalCategoriesByUserId(userId uuid.UUID) ([]*
 }
 
 func (s *GoalCategoryStoreImpl) GetGoalCategoryById(categoryId uuid.UUID) (*entities.GoalCategory, error) {
-	query := `SELECT gc.id, gc.title, gc.xp_per_goal, gc.user_id, g.id as goal_id, 
-  g.title as goal_title, g.description, g.status
+	query := `SELECT gc.id, gc.title, gc.xp_per_goal, gc.user_id, gc.created_at, gc.updated_at, g.id as goal_id, 
+  g.title as goal_title, g.description, g.status, g.created_at as goal_created_at, g.updated_at as goal_updated_at
   FROM goal_categories gc LEFT JOIN goals g 
   ON gc.id = g.category_id 
   WHERE gc.id = $1`
@@ -118,8 +118,11 @@ func mapGoalCategoryRows(rows *sqlx.Rows, categoryMap map[uuid.UUID]*entities.Go
 	for rows.Next() {
 		gc := entities.NewGoalCategory()
 		var goalId, goalTitle, goalDescription, goalStatus sql.NullString
+		var goalCreatedAt, goalUpdatedAt sql.NullTime
 
-		err := rows.Scan(&gc.Id, &gc.Title, &gc.Xp_per_goal, &gc.UserId, &goalId, &goalTitle, &goalDescription, &goalStatus)
+		err := rows.Scan(&gc.Id, &gc.Title, &gc.Xp_per_goal,
+			&gc.UserId, &gc.CreatedAt, &gc.UpdatedAt, &goalId, &goalTitle,
+			&goalDescription, &goalStatus, &goalCreatedAt, &goalUpdatedAt)
 		if err != nil {
 			return err
 		}
@@ -135,6 +138,10 @@ func mapGoalCategoryRows(rows *sqlx.Rows, categoryMap map[uuid.UUID]*entities.Go
 				Title:       goalTitle.String,
 				Description: goalDescription.String,
 				Status:      goalStatus.String,
+				UserId:      gc.UserId,
+				CategoryId:  gc.Id,
+				CreatedAt:   goalCreatedAt.Time,
+				UpdatedAt:   goalUpdatedAt.Time,
 			}
 			categoryMap[gc.Id].Goals = append(categoryMap[gc.Id].Goals, &goal)
 		}
