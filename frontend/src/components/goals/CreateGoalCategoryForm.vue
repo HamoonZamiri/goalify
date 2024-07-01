@@ -21,7 +21,6 @@ const props = defineProps<{
 
 async function handleSubmit(e: MouseEvent) {
   e.preventDefault();
-  props.setIsOpen(false);
   const res = await ApiClient.createGoalCategory(
     formData.value.title,
     formData.value.xp_per_goal,
