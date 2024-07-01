@@ -20,6 +20,11 @@ func NewGoalCategoryStore(db *sqlx.DB) *GoalCategoryStoreImpl {
 	return &GoalCategoryStoreImpl{db: db}
 }
 
+const category_join_goals_query string = `SELECT gc.id, gc.title, gc.xp_per_goal, gc.user_id, gc.created_at, gc.updated_at, g.id as goal_id, 
+  g.title as goal_title, g.description, g.status, g.created_at as goal_created_at, g.updated_at as goal_updated_at
+  FROM goal_categories gc LEFT JOIN goals g 
+  ON gc.id = g.category_id`
+
 func (s *GoalCategoryStoreImpl) UpdateGoalCategory(categoryId uuid.UUID, goalId uuid.UUID) (*entities.GoalCategory, error) {
 	var goalCategory entities.GoalCategory
 	err := s.db.QueryRowx("UPDATE goals SET category_id = $1 WHERE id = $2 RETURNING *", categoryId, goalId).StructScan(&goalCategory)
@@ -41,12 +46,7 @@ func (s *GoalCategoryStoreImpl) CreateGoalCategory(title string, xpPerGoal int, 
 }
 
 func (s *GoalCategoryStoreImpl) GetGoalCategoriesByUserId(userId uuid.UUID) ([]*entities.GoalCategory, error) {
-	query := `SELECT gc.id, gc.title, gc.xp_per_goal, gc.user_id, gc.created_at, gc.updated_at, g.id as goal_id, 
-  g.title as goal_title, g.description, g.status, g.created_at as goal_created_at, g.updated_at as goal_updated_at
-  FROM goal_categories gc 
-  LEFT JOIN goals g 
-  ON gc.id = g.category_id 
-  WHERE gc.user_id = $1`
+	query := category_join_goals_query + ` WHERE gc.user_id = $1`
 
 	categories := make([]*entities.GoalCategory, 0)
 	categoryMap := make(map[uuid.UUID]*entities.GoalCategory)
@@ -69,11 +69,7 @@ func (s *GoalCategoryStoreImpl) GetGoalCategoriesByUserId(userId uuid.UUID) ([]*
 }
 
 func (s *GoalCategoryStoreImpl) GetGoalCategoryById(categoryId uuid.UUID) (*entities.GoalCategory, error) {
-	query := `SELECT gc.id, gc.title, gc.xp_per_goal, gc.user_id, gc.created_at, gc.updated_at, g.id as goal_id, 
-  g.title as goal_title, g.description, g.status, g.created_at as goal_created_at, g.updated_at as goal_updated_at
-  FROM goal_categories gc LEFT JOIN goals g 
-  ON gc.id = g.category_id 
-  WHERE gc.id = $1`
+	query := category_join_goals_query + ` WHERE gc.id = $1`
 
 	categoryMap := make(map[uuid.UUID]*entities.GoalCategory)
 
