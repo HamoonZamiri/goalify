@@ -3,10 +3,13 @@ build:
 
 run: build
 	@./bin/goalify
-
-test:
-	@go test -count=1 ./... 
-
+unit:
+	@echo "Running unit tests..."
+	@go test -count=1 ./utils/... ./middleware/... ./db/...
+inte:
+	@echo "Running integration tests..."
+	@go test -v -count=1 ./main_test.go
+test: unit inte
 up:
 	@docker-compose up -d
 down: 
