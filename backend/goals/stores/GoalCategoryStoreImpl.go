@@ -47,46 +47,38 @@ func (s *GoalCategoryStoreImpl) CreateGoalCategory(title string, xpPerGoal int, 
 func (s *GoalCategoryStoreImpl) GetGoalCategoriesByUserId(userId uuid.UUID) ([]*entities.GoalCategory, error) {
 	query := category_join_goals_query + ` WHERE gc.user_id = $1`
 
-	categories := make([]*entities.GoalCategory, 0)
-	categoryMap := make(map[uuid.UUID]*entities.GoalCategory)
 	rows, err := s.db.Queryx(query, userId)
 	if err != nil {
 		return nil, err
 	}
 
-	err = mapGoalCategoryRows(rows, categoryMap)
+	categorySlice, err := mapGoalCategoryRows(rows)
 	if err != nil {
 		slog.Error("error mapping joint goals and categories", "error", err)
 		return nil, err
 	}
 
-	for _, category := range categoryMap {
-		categories = append(categories, category)
-	}
-
-	return categories, nil
+	return categorySlice, nil
 }
 
 func (s *GoalCategoryStoreImpl) GetGoalCategoryById(categoryId uuid.UUID) (*entities.GoalCategory, error) {
 	query := category_join_goals_query + ` WHERE gc.id = $1`
-
-	categoryMap := make(map[uuid.UUID]*entities.GoalCategory)
 
 	rows, err := s.db.Queryx(query, categoryId)
 	if err != nil {
 		return nil, err
 	}
 
-	err = mapGoalCategoryRows(rows, categoryMap)
+	categorySlice, err := mapGoalCategoryRows(rows)
 	if err != nil {
 		return nil, err
 	}
 
-	if len(categoryMap) == 0 {
+	if len(categorySlice) == 0 {
 		return nil, errors.New("category not found")
 	}
 
-	return categoryMap[categoryId], nil
+	return categorySlice[0], nil
 }
 
 func (s *GoalCategoryStoreImpl) UpdateGoalCategoryById(categoryId uuid.UUID, updates map[string]any) (*entities.GoalCategory, error) {
@@ -109,11 +101,14 @@ func (s *GoalCategoryStoreImpl) DeleteGoalCategoryById(categoryId uuid.UUID) err
 	return nil
 }
 
-func mapGoalCategoryRows(rows *sqlx.Rows, categoryMap map[uuid.UUID]*entities.GoalCategory) error {
+func mapGoalCategoryRows(rows *sqlx.Rows) ([]*entities.GoalCategory, error) {
 	var results []entities.CategoryWithGoalRow
 	err := sqlx.StructScan(rows, &results)
+	categoryMap := make(map[uuid.UUID]*entities.GoalCategory)
+	categorySlice := make([]*entities.GoalCategory, 0)
+
 	if err != nil {
-		return err
+		return categorySlice, err
 	}
 
 	for _, result := range results {
@@ -127,5 +122,10 @@ func mapGoalCategoryRows(rows *sqlx.Rows, categoryMap map[uuid.UUID]*entities.Go
 			categoryMap[gc.Id].Goals = append(categoryMap[gc.Id].Goals, goal)
 		}
 	}
-	return nil
+
+	for _, category := range categoryMap {
+		categorySlice = append(categorySlice, category)
+	}
+
+	return categorySlice, nil
 }
