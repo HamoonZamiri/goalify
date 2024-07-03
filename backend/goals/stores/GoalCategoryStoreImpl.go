@@ -1,7 +1,6 @@
 package stores
 
 import (
-	"database/sql"
 	"errors"
 	"fmt"
 	"goalify/db"
@@ -111,35 +110,21 @@ func (s *GoalCategoryStoreImpl) DeleteGoalCategoryById(categoryId uuid.UUID) err
 }
 
 func mapGoalCategoryRows(rows *sqlx.Rows, categoryMap map[uuid.UUID]*entities.GoalCategory) error {
-	for rows.Next() {
-		gc := entities.NewGoalCategory()
-		var goalId, goalTitle, goalDescription, goalStatus sql.NullString
-		var goalCreatedAt, goalUpdatedAt sql.NullTime
+	var results []entities.CategoryWithGoalRow
+	err := sqlx.StructScan(rows, &results)
+	if err != nil {
+		return err
+	}
 
-		err := rows.Scan(&gc.Id, &gc.Title, &gc.Xp_per_goal,
-			&gc.UserId, &gc.CreatedAt, &gc.UpdatedAt, &goalId, &goalTitle,
-			&goalDescription, &goalStatus, &goalCreatedAt, &goalUpdatedAt)
-		if err != nil {
-			return err
-		}
-
+	for _, result := range results {
+		gc := result.ToGoalCategory()
 		if _, ok := categoryMap[gc.Id]; !ok {
-			gc.Goals = []*entities.Goal{}
 			categoryMap[gc.Id] = gc
 		}
 
-		if goalId.Valid {
-			goal := entities.Goal{
-				Id:          uuid.MustParse(goalId.String),
-				Title:       goalTitle.String,
-				Description: goalDescription.String,
-				Status:      goalStatus.String,
-				UserId:      gc.UserId,
-				CategoryId:  gc.Id,
-				CreatedAt:   goalCreatedAt.Time,
-				UpdatedAt:   goalUpdatedAt.Time,
-			}
-			categoryMap[gc.Id].Goals = append(categoryMap[gc.Id].Goals, &goal)
+		if result.GoalId.Valid {
+			goal := result.ToGoal()
+			categoryMap[gc.Id].Goals = append(categoryMap[gc.Id].Goals, goal)
 		}
 	}
 	return nil
