@@ -1,6 +1,7 @@
 package main
 
 import (
+	"goalify/config"
 	"goalify/db"
 	gh "goalify/goals/handler"
 	gSrv "goalify/goals/service"
@@ -10,6 +11,7 @@ import (
 	usrSrv "goalify/users/service"
 	us "goalify/users/stores"
 	"goalify/utils/events"
+	"goalify/utils/options"
 	"goalify/utils/stacktrace"
 	"log/slog"
 	"net/http"
@@ -18,7 +20,9 @@ import (
 	"github.com/rs/cors"
 )
 
-func NewServer(userHandler *uh.UserHandler, goalHandler *gh.GoalHandler) http.Handler {
+func NewServer(userHandler *uh.UserHandler, goalHandler *gh.GoalHandler,
+	configService *config.ConfigService,
+) http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /health", func(w http.ResponseWriter, _ *http.Request) {
 		w.Write([]byte("Hello\n"))
@@ -41,11 +45,18 @@ func NewServer(userHandler *uh.UserHandler, goalHandler *gh.GoalHandler) http.Ha
 	mux.Handle("POST /api/goals", middleware.AuthenticatedOnly(goalHandler.HandleCreateGoal))
 	mux.Handle("PUT /api/goals/{goalId}", middleware.AuthenticatedOnly(goalHandler.HandleUpdateGoalById))
 
+	var corsDebug bool
+	if configService.MustGetEnv("ENV") == "dev" {
+		corsDebug = true
+	} else {
+		corsDebug = false
+	}
+
 	c := cors.New(cors.Options{
 		AllowedOrigins:   []string{"http://localhost:5173"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowCredentials: true,
-		Debug:            true,
+		Debug:            corsDebug,
 		AllowedHeaders:   []string{"Authorization", "Content-Type"},
 	})
 	handler := c.Handler(mux)
@@ -53,7 +64,17 @@ func NewServer(userHandler *uh.UserHandler, goalHandler *gh.GoalHandler) http.Ha
 }
 
 func Run() error {
-	db, _ := db.New("goalify")
+	// instantiate config service
+	configService := config.NewConfigService(options.None[string]())
+
+	var dbName string
+	if configService.MustGetEnv("ENV") == "test" {
+		dbName = configService.MustGetEnv("TEST_DB_NAME")
+	} else {
+		dbName = configService.MustGetEnv("DB_NAME")
+	}
+	db, _ := db.New(dbName, configService.MustGetEnv("DB_PASSWORD"),
+		configService.MustGetEnv("DB_NAME"))
 
 	// logs for stack trace implementing stacktrace.TraceLogger
 	goalDomainLogger := stacktrace.NewDomainStackTraceLogger("Goals")
@@ -70,14 +91,15 @@ func Run() error {
 		goalDomainLogger, eventManager)
 	goalHandler := gh.NewGoalHandler(goalService, goalDomainLogger)
 
-	srv := NewServer(userHandler, goalHandler)
+	srv := NewServer(userHandler, goalHandler, configService)
+	port := configService.MustGetEnv("PORT")
 	httpServer := &http.Server{
-		Addr:    ":8080",
+		Addr:    ":" + port,
 		Handler: srv,
 	}
 
 	var err error = nil
-	slog.Info("Listening on 8080")
+	slog.Info("Listening on " + port)
 
 	if err = httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		slog.Error("ListenAndServe: ", "err", err)
