@@ -5,9 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	main "goalify"
+	"goalify/config"
 	"goalify/db"
 	"goalify/entities"
 	"goalify/users/handler"
+	"goalify/utils/options"
 	"goalify/utils/responses"
 	"io"
 	"net/http"
@@ -24,10 +26,11 @@ import (
 const BASE_URL = "http://localhost:8080"
 
 var (
-	dbx          *sqlx.DB
-	accessToken  string
-	refreshToken string
-	userId       string
+	dbx           *sqlx.DB
+	accessToken   string
+	refreshToken  string
+	userId        string
+	configService *config.ConfigService
 )
 
 func setup() {
@@ -37,7 +40,11 @@ func setup() {
 
 func TestMain(m *testing.M) {
 	var err error
-	dbx, err = db.New("goalify")
+	configService = config.NewConfigService(options.None[string]())
+	configService.SetEnv("ENV", "test")
+
+	dbx, err = db.New(configService.MustGetEnv("TEST_DB_NAME"),
+		configService.MustGetEnv("DB_USER"), configService.MustGetEnv("DB_PASSWORD"))
 	if err != nil {
 		panic(err)
 	}
