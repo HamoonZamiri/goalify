@@ -7,6 +7,7 @@ import (
 	gSrv "goalify/goals/service"
 	gs "goalify/goals/stores"
 	"goalify/middleware"
+	"goalify/routes"
 	uh "goalify/users/handler"
 	usrSrv "goalify/users/service"
 	us "goalify/users/stores"
@@ -16,8 +17,6 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
-
-	"github.com/rs/cors"
 )
 
 func addRoute(mux *http.ServeMux, method, path string, handler http.HandlerFunc, mwChain middleware.Middleware) {
@@ -28,44 +27,7 @@ func NewServer(userHandler *uh.UserHandler, goalHandler *gh.GoalHandler,
 	configService *config.ConfigService,
 ) http.Handler {
 	mux := http.NewServeMux()
-
-	var corsDebug bool
-	if configService.MustGetEnv("ENV") == "dev" {
-		corsDebug = true
-	} else {
-		corsDebug = false
-	}
-
-	c := cors.New(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:5173"},
-		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowCredentials: true,
-		Debug:            corsDebug,
-		AllowedHeaders:   []string{"Authorization", "Content-Type"},
-	})
-	CorsChain := middleware.CreateChain(c.Handler)
-	AuthChain := middleware.CreateChain(c.Handler, middleware.AuthenticatedOnly)
-
-	mux.Handle("GET /health", CorsChain(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		w.Write([]byte("Hello\n"))
-	})))
-
-	// users domain
-	addRoute(mux, "POST", "/api/users/signup", userHandler.HandleSignup, CorsChain)
-	addRoute(mux, "POST", "/api/users/login", userHandler.HandleLogin, CorsChain)
-	addRoute(mux, "POST", "/api/users/refresh", userHandler.HandleRefresh, CorsChain)
-	addRoute(mux, "PUT", "/api/users", userHandler.HandleUpdateUserById, AuthChain)
-
-	// goals domain
-	addRoute(mux, "POST", "/api/goals", goalHandler.HandleCreateGoal, AuthChain)
-	addRoute(mux, "PUT", "/api/goals/{goalId}", goalHandler.HandleUpdateGoalById, AuthChain)
-
-	addRoute(mux, "POST", "/api/goals/categories", goalHandler.HandleCreateGoalCategory, AuthChain)
-	addRoute(mux, "GET", "/api/goals/categories", goalHandler.HandleGetGoalCategoriesByUserId, AuthChain)
-	addRoute(mux, "GET", "/api/goals/categories/{categoryId}", goalHandler.HandleGetGoalCategoryById, AuthChain)
-	addRoute(mux, "PUT", "/api/goals/categories/{categoryId}", goalHandler.HandleUpdateGoalCategoryById, AuthChain)
-	addRoute(mux, "DELETE", "/api/goals/categories/{categoryId}", goalHandler.HandleDeleteGoalCategoryById, AuthChain)
-
+	routes.AddRoutes(mux, userHandler, goalHandler, *configService)
 	return mux
 }
 
