@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { type TGoal } from "@/utils/types";
+import type { Goal } from "@/utils/schemas";
 const props = defineProps<{
-  goal: TGoal;
+  goal: Goal;
 }>();
 </script>
 <template>
@@ -15,6 +15,6 @@ const props = defineProps<{
     <span class="font-semibold">{{ props.goal.title }}</span>
   </header>
   <section>
-    <p>{{ props.goal.created_at.toDateString() }}</p>
+    <p>{{ props.goal.created_at }}</p>
   </section>
 </template>

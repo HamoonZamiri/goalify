@@ -28,11 +28,10 @@ const GoalSchema = z.object({
   title: z.string(),
   description: z.string(),
   category_id: z.string().uuid(),
-  completed: z.boolean(),
   user_id: z.string().uuid(),
   status: z.enum(["complete", "not_complete"]),
-  created_at: z.date(),
-  updated_at: z.date(),
+  created_at: z.string(),
+  updated_at: z.string(),
 });
 
 const GoalCategorySchema = z.object({
