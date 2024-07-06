@@ -2,8 +2,8 @@ package handler
 
 import (
 	"fmt"
-	"goalify/utils/jsonutil"
 	"goalify/middleware"
+	"goalify/utils/jsonutil"
 	"goalify/utils/responses"
 	"goalify/utils/svcerror"
 	"log/slog"

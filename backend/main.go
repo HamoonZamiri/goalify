@@ -18,28 +18,12 @@ import (
 	"github.com/rs/cors"
 )
 
+func addRoute(mux *http.ServeMux, method, path string, handler http.HandlerFunc, mwChain middleware.Middleware) {
+	mux.Handle(method+" "+path, mwChain(http.HandlerFunc(handler)))
+}
+
 func NewServer(userHandler *uh.UserHandler, goalHandler *gh.GoalHandler) http.Handler {
 	mux := http.NewServeMux()
-	mux.HandleFunc("GET /health", func(w http.ResponseWriter, _ *http.Request) {
-		w.Write([]byte("Hello\n"))
-	})
-
-	// users domain
-	mux.HandleFunc("POST /api/users/signup", userHandler.HandleSignup)
-	mux.HandleFunc("POST /api/users/login", userHandler.HandleLogin)
-	mux.HandleFunc("POST /api/users/refresh", userHandler.HandleRefresh)
-	mux.Handle(http.MethodPut+" /api/users", middleware.AuthenticatedOnly(userHandler.HandleUpdateUserById))
-
-	// goals domain
-	mux.Handle("POST /api/goals/create", middleware.AuthenticatedOnly(goalHandler.HandleCreateGoal))
-	mux.Handle("POST /api/goals/categories", middleware.AuthenticatedOnly(goalHandler.HandleCreateGoalCategory))
-	mux.Handle("GET /api/goals/categories", middleware.AuthenticatedOnly(goalHandler.HandleGetGoalCategoriesByUserId))
-	mux.Handle("GET /api/goals/categories/{categoryId}", middleware.AuthenticatedOnly(goalHandler.HandleGetGoalCategoryById))
-	mux.Handle("PUT /api/goals/categories/{categoryId}", middleware.AuthenticatedOnly(goalHandler.HandleUpdateGoalCategoryById))
-	mux.Handle("DELETE /api/goals/categories/{categoryId}", middleware.AuthenticatedOnly(goalHandler.HandleDeleteGoalCategoryById))
-
-	mux.Handle("POST /api/goals", middleware.AuthenticatedOnly(goalHandler.HandleCreateGoal))
-	mux.Handle("PUT /api/goals/{goalId}", middleware.AuthenticatedOnly(goalHandler.HandleUpdateGoalById))
 
 	c := cors.New(cors.Options{
 		AllowedOrigins:   []string{"http://localhost:5173"},
@@ -48,8 +32,30 @@ func NewServer(userHandler *uh.UserHandler, goalHandler *gh.GoalHandler) http.Ha
 		Debug:            true,
 		AllowedHeaders:   []string{"Authorization", "Content-Type"},
 	})
-	handler := c.Handler(mux)
-	return handler
+	CorsChain := middleware.CreateChain(c.Handler)
+	AuthChain := middleware.CreateChain(c.Handler, middleware.AuthenticatedOnly)
+
+	mux.Handle("GET /health", CorsChain(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Write([]byte("Hello\n"))
+	})))
+
+	// users domain
+	addRoute(mux, "POST", "/api/users/signup", userHandler.HandleSignup, CorsChain)
+	addRoute(mux, "POST", "/api/users/login", userHandler.HandleLogin, CorsChain)
+	addRoute(mux, "POST", "/api/users/refresh", userHandler.HandleRefresh, CorsChain)
+	addRoute(mux, "PUT", "/api/users", userHandler.HandleUpdateUserById, AuthChain)
+
+	// goals domain
+	addRoute(mux, "POST", "/api/goals", goalHandler.HandleCreateGoal, AuthChain)
+	addRoute(mux, "PUT", "/api/goals/{goalId}", goalHandler.HandleUpdateGoalById, AuthChain)
+
+	addRoute(mux, "POST", "/api/goals/categories", goalHandler.HandleCreateGoalCategory, AuthChain)
+	addRoute(mux, "GET", "/api/goals/categories", goalHandler.HandleGetGoalCategoriesByUserId, AuthChain)
+	addRoute(mux, "GET", "/api/goals/categories/{categoryId}", goalHandler.HandleGetGoalCategoryById, AuthChain)
+	addRoute(mux, "PUT", "/api/goals/categories/{categoryId}", goalHandler.HandleUpdateGoalCategoryById, AuthChain)
+	addRoute(mux, "DELETE", "/api/goals/categories/{categoryId}", goalHandler.HandleDeleteGoalCategoryById, AuthChain)
+
+	return mux
 }
 
 func Run() error {

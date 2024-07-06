@@ -9,7 +9,19 @@ import (
 	"strings"
 )
 
-func AuthenticatedOnly(next http.HandlerFunc) http.Handler {
+type Middleware func(http.Handler) http.Handler
+
+func CreateChain(mws ...Middleware) Middleware {
+	return func(next http.Handler) http.Handler {
+		for i := len(mws) - 1; i >= 0; i-- {
+			mw := mws[i]
+			next = mw(next)
+		}
+		return next
+	}
+}
+
+func AuthenticatedOnly(next http.Handler) http.Handler {
 	return http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
 			authstr := r.Header.Get("Authorization")
@@ -33,7 +45,7 @@ func AuthenticatedOnly(next http.HandlerFunc) http.Handler {
 			}
 
 			r.Header.Set("user_id", id)
-			next(w, r)
+			next.ServeHTTP(w, r)
 		},
 	)
 }
