@@ -27,11 +27,18 @@ func AddRoutes(mux *http.ServeMux, userHandler *uh.UserHandler,
 	}
 
 	c := cors.New(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:5173"},
-		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedOrigins: []string{"http://localhost:5173"},
+		AllowedMethods: []string{
+			http.MethodPatch,
+			http.MethodPost,
+			http.MethodPut,
+			http.MethodGet,
+			http.MethodDelete,
+			http.MethodOptions,
+		},
 		AllowCredentials: true,
 		Debug:            corsDebug,
-		AllowedHeaders:   []string{"Authorization", "Content-Type"},
+		AllowedHeaders:   []string{"*"},
 	})
 	CorsChain := middleware.CreateChain(c.Handler)
 	AuthChain := middleware.CreateChain(c.Handler, middleware.AuthenticatedOnly)
