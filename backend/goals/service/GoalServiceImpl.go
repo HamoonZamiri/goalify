@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	XP_PER_GOAL_MAX = 100
+	XP_PER_GOAL_MAX int = 100
 )
 
 type GoalServiceImpl struct {
@@ -38,6 +38,7 @@ func NewGoalService(goalStore stores.GoalStore,
 	}
 
 	gs.eventPublisher.Subscribe("user_created", gs)
+	gs.eventPublisher.Subscribe("goal_category_created", gs)
 
 	return gs
 }
@@ -135,6 +136,8 @@ func (gs *GoalServiceImpl) CreateGoalCategory(title string, xpPerGoal int, userI
 		slog.Error(fmt.Sprintf("%s: store.CreateGoalCategory:", funcStr), "err", err)
 		return nil, fmt.Errorf("%w: error creating goal category", svcerror.ErrInternalServer)
 	}
+
+	events.NewEvent("goal_category_created", cat)
 
 	return cat, nil
 }
@@ -297,5 +300,18 @@ func (gs *GoalServiceImpl) handleUserCreatedEvent(event events.Event) {
 	_, err = gs.CreateGoalCategory("daily", XP_PER_GOAL_MAX, user.Id)
 	if err != nil {
 		slog.Error("service.handleUserCreatedEvent: CreateGoalCategory:", "err", err)
+	}
+}
+
+func (gs *GoalServiceImpl) handleGoalCategoryCreatedEvent(event events.Event) {
+	category, err := events.ParseEventData[*entities.GoalCategory](event)
+	if err != nil {
+		slog.Error("service.handleGoalCategoryCreatedEvent: events.ParseEventData:", "err", err)
+		return
+	}
+
+	_, err = gs.CreateGoal("example", "This is an example goal/task!", category.UserId, category.Id)
+	if err != nil {
+		slog.Error("service.handleGoalCategoryCreatedEvent: CreateGoal:", "err", err)
 	}
 }

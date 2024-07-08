@@ -323,6 +323,17 @@ func TestUserCreatedEvent(t *testing.T) {
 	assert.Equal(t, 1, len(resBody.Data))
 }
 
+func TestGoalCategoryCreatedEvent(t *testing.T) {
+	reqBody := map[string]any{"title": "goal cat", "xp_per_goal": 100}
+	res, err := buildAndSendRequest("POST", fmt.Sprintf("%s/api/goals/categories", BASE_URL), reqBody)
+	assert.Nil(t, err)
+	assert.Equal(t, http.StatusOK, res.StatusCode)
+
+	serverResponse, err := UnmarshalServerResponse[entities.GoalCategory](res)
+	assert.Nil(t, err)
+	assert.Equal(t, 1, len(serverResponse.Data.Goals))
+}
+
 // utility functions
 func buildAndSendRequest(method, url string, body map[string]any) (*http.Response, error) {
 	var buf bytes.Buffer
