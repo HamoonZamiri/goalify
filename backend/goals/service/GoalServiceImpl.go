@@ -286,6 +286,8 @@ func (gs *GoalServiceImpl) HandleEvent(event events.Event) {
 	switch event.EventType {
 	case events.USER_CREATED:
 		gs.handleUserCreatedEvent(event)
+	case events.GOAL_CATEGORY_CREATED:
+		gs.handleGoalCategoryCreatedEvent(event)
 	default:
 		slog.Error("service.HandleEvent: unknown event type", "eventType", event.EventType)
 	}
