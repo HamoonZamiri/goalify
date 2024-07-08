@@ -37,8 +37,8 @@ func NewGoalService(goalStore stores.GoalStore,
 		eventPublisher:    ep,
 	}
 
-	gs.eventPublisher.Subscribe("user_created", gs)
-	gs.eventPublisher.Subscribe("goal_category_created", gs)
+	gs.eventPublisher.Subscribe(events.USER_CREATED, gs)
+	gs.eventPublisher.Subscribe(events.GOAL_CATEGORY_CREATED, gs)
 
 	return gs
 }
@@ -137,7 +137,8 @@ func (gs *GoalServiceImpl) CreateGoalCategory(title string, xpPerGoal int, userI
 		return nil, fmt.Errorf("%w: error creating goal category", svcerror.ErrInternalServer)
 	}
 
-	events.NewEvent("goal_category_created", cat)
+	e := events.NewEvent(events.GOAL_CATEGORY_CREATED, cat)
+	gs.eventPublisher.Publish(e)
 
 	return cat, nil
 }
