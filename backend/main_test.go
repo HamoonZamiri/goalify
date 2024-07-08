@@ -324,14 +324,9 @@ func TestUserCreatedEvent(t *testing.T) {
 }
 
 func TestGoalCategoryCreatedEvent(t *testing.T) {
-	reqBody := map[string]any{"title": "goal cat", "xp_per_goal": 100}
-	res, err := buildAndSendRequest("POST", fmt.Sprintf("%s/api/goals/categories", BASE_URL), reqBody)
-	assert.Nil(t, err)
-	assert.Equal(t, http.StatusOK, res.StatusCode)
-
-	serverResponse, err := UnmarshalServerResponse[entities.GoalCategory](res)
-	assert.Nil(t, err)
-	assert.Equal(t, 1, len(serverResponse.Data.Goals))
+	gc := createTestGoalCategory("testing goal category created event", uuid.MustParse(userId))
+	assert.NotNil(t, gc)
+	assert.Equal(t, 1, len(gc.Goals))
 }
 
 // utility functions
