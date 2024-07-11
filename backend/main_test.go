@@ -35,7 +35,7 @@ var (
 
 func setup() {
 	go main.Run()
-	time.Sleep(1 * time.Second)
+	time.Sleep(250 * time.Millisecond)
 }
 
 func TestMain(m *testing.M) {
@@ -48,11 +48,12 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		panic(err)
 	}
+	query := `DELETE from goals; DELETE FROM goal_categories; DELETE from users;`
+	dbx.MustExec(query)
 
 	setup()
 	code := m.Run()
 
-	query := `DELETE from goals; DELETE FROM goal_categories; DELETE from users;`
 	dbx.MustExec(query)
 	os.Exit(code)
 }
@@ -80,6 +81,7 @@ func TestSignup(t *testing.T) {
 	defer res.Body.Close()
 
 	serverResponse, err := UnmarshalServerResponse[entities.UserDTO](res)
+	fmt.Println(io.ReadAll(res.Body))
 	assert.Nil(t, err)
 	assert.Equal(t, "user@mail.com", serverResponse.Data.Email)
 
@@ -324,9 +326,25 @@ func TestUserCreatedEvent(t *testing.T) {
 }
 
 func TestGoalCategoryCreatedEvent(t *testing.T) {
-	gc := createTestGoalCategory("testing goal category created event", uuid.MustParse(userId))
-	assert.NotNil(t, gc)
-	assert.Equal(t, 1, len(gc.Goals))
+	// create a goal category
+	body := map[string]any{"title": "testing create category event", "xp_per_goal": 100}
+	url := fmt.Sprintf("%s/api/goals/categories", BASE_URL)
+	res, err := buildAndSendRequest("POST", url, body)
+	assert.Nil(t, err)
+	assert.Equal(t, http.StatusOK, res.StatusCode)
+
+	responseData, err := UnmarshalServerResponse[entities.GoalCategory](res)
+	gc := responseData.Data
+	assert.Nil(t, err)
+	assert.Equal(t, http.StatusOK, res.StatusCode)
+
+	// check if the default goal was created
+	res, err = buildAndSendRequest("GET", fmt.Sprintf("%s/api/goals/categories/%s", BASE_URL, gc.Id), nil)
+	assert.Nil(t, err)
+	serverResponse, err := UnmarshalServerResponse[*entities.GoalCategory](res)
+	assert.Nil(t, err)
+
+	assert.Equal(t, 1, len(serverResponse.Data.Goals))
 }
 
 // utility functions
