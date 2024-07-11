@@ -2,6 +2,7 @@ package events
 
 import (
 	"log/slog"
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -9,6 +10,7 @@ import (
 
 type CountEventHandler struct {
 	count int
+	wg    *sync.WaitGroup
 }
 
 func (h *CountEventHandler) HandleIncrementEvent(event Event) {
@@ -28,17 +30,19 @@ func (h *CountEventHandler) HandleEvent(event Event) {
 	default:
 		slog.Error("unhandled event type")
 	}
+	h.wg.Done()
 }
 
-func NewCountEventHandler() *CountEventHandler {
+func NewCountEventHandler(w *sync.WaitGroup) *CountEventHandler {
 	return &CountEventHandler{
 		count: 0,
+		wg:    w,
 	}
 }
 
 func TestSubscribe(t *testing.T) {
 	em := NewEventManager()
-	h := NewCountEventHandler()
+	h := NewCountEventHandler(nil)
 
 	em.Subscribe("increment", h)
 	em.Subscribe("decrement", h)
@@ -49,7 +53,7 @@ func TestSubscribe(t *testing.T) {
 
 func TestUnsubscribe(t *testing.T) {
 	em := NewEventManager()
-	h := NewCountEventHandler()
+	h := NewCountEventHandler(nil)
 
 	em.Subscribe("increment", h)
 	assert.True(t, em.IsSubscribed("increment", h))
@@ -59,17 +63,23 @@ func TestUnsubscribe(t *testing.T) {
 }
 
 func TestPublishEvent(t *testing.T) {
+	wg := &sync.WaitGroup{}
 	em := NewEventManager()
-	h := NewCountEventHandler()
+	h := NewCountEventHandler(wg)
 
 	em.Subscribe("increment", h)
 	em.Subscribe("decrement", h)
+
+	wg.Add(1)
 	incEvent := NewEvent("increment", 1)
 	em.Publish(incEvent)
+	wg.Wait()
 	assert.Equal(t, 1, h.count)
 
+	wg.Add(1)
 	decEvent := NewEvent("decrement", 1)
 	em.Publish(decEvent)
+	wg.Wait()
 	assert.Equal(t, 0, h.count)
 }
 
@@ -81,10 +91,11 @@ func TestParseEvent(t *testing.T) {
 }
 
 func TestMultipleSubscribers(t *testing.T) {
+	wg := &sync.WaitGroup{}
 	em := NewEventManager()
 	subscribers := make([]*CountEventHandler, 0)
 	for i := 0; i < 5; i++ {
-		eh := NewCountEventHandler()
+		eh := NewCountEventHandler(wg)
 		subscribers = append(subscribers, eh)
 		em.Subscribe("increment", eh)
 	}
@@ -92,7 +103,9 @@ func TestMultipleSubscribers(t *testing.T) {
 	assert.Equal(t, 5, em.subscribers["increment"].Len())
 
 	for i := 0; i < 5; i++ {
+		wg.Add(5) // there are 5 subscribers
 		em.Publish(NewEvent("increment", 20))
+		wg.Wait()
 	}
 
 	for _, sub := range subscribers {

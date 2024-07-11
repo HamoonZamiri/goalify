@@ -14,6 +14,7 @@ type Event struct {
 }
 
 const (
+	QUEUE_MAX_SIZE        int    = 1000
 	USER_CREATED          string = "user_created"
 	GOAL_CREATED          string = "goal_created"
 	GOAL_UPDATED          string = "goal_updated"
@@ -43,6 +44,7 @@ type EventPublisher interface {
 }
 
 type EventManager struct {
+	eventQueue  chan Event
 	subscribers map[string]*lists.TypedList[Subscriber]
 	mu          sync.Mutex
 }
@@ -55,10 +57,13 @@ func NewEvent(eventType string, data any) Event {
 }
 
 func NewEventManager() *EventManager {
-	return &EventManager{
+	em := &EventManager{
+		eventQueue:  make(chan Event, QUEUE_MAX_SIZE),
 		subscribers: make(map[string]*lists.TypedList[Subscriber]),
 		mu:          sync.Mutex{},
 	}
+	go em.processEvents()
+	return em
 }
 
 func (em *EventManager) IsSubscribed(eventType string, subscriber Subscriber) bool {
@@ -87,16 +92,27 @@ func (em *EventManager) Subscribe(eventType string, subscriber Subscriber) {
 }
 
 func (em *EventManager) Publish(event Event) {
-	if _, ok := em.subscribers[event.EventType]; !ok {
-		return
-	}
-	subList := em.subscribers[event.EventType].GetList()
-	for e := subList.Front(); e != nil; e = e.Next() {
-		sub, ok := e.Value.(Subscriber)
+	em.eventQueue <- event
+}
+
+func (em *EventManager) processEvents() {
+	for event := range em.eventQueue {
+		em.mu.Lock()
+		subList, ok := em.subscribers[event.EventType]
 		if !ok {
-			slog.Warn("EventManager.Publish: type assertion failed", "subscriber", e.Value)
+			em.mu.Unlock()
+			continue
 		}
-		sub.HandleEvent(event)
+		underlyingList := subList.GetList()
+		for e := underlyingList.Front(); e != nil; e = e.Next() {
+			sub, ok := e.Value.(Subscriber)
+			if !ok {
+				slog.Warn("EventManager.Publish: type assertion failed", "subscriber", e.Value)
+			}
+			sub.HandleEvent(event)
+		}
+		em.mu.Unlock()
+
 	}
 }
 
