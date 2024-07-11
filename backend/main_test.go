@@ -311,16 +311,22 @@ func TestUserCreatedEvent(t *testing.T) {
 	serverResponse, err := UnmarshalServerResponse[entities.UserDTO](res)
 	assert.Nil(t, err)
 
+	var resBody responses.ServerResponse[[]*entities.GoalCategory]
 	req, err := http.NewRequest("GET", fmt.Sprintf("%s/api/goals/categories", BASE_URL), nil)
 	assert.Nil(t, err)
 	req.Header.Add("Authorization", "Bearer "+serverResponse.Data.AccessToken)
-	res, err = http.DefaultClient.Do(req)
+	for i := 0; i < 5; i++ {
+		res, err = http.DefaultClient.Do(req)
+		assert.Nil(t, err)
 
-	assert.Nil(t, err)
-
-	assert.Equal(t, http.StatusOK, res.StatusCode)
-	resBody, err := UnmarshalServerResponse[[]*entities.GoalCategory](res)
-	assert.Nil(t, err)
+		assert.Equal(t, http.StatusOK, res.StatusCode)
+		resBody, err = UnmarshalServerResponse[[]*entities.GoalCategory](res)
+		assert.Nil(t, err)
+		if len(resBody.Data) == 1 {
+			break
+		}
+		time.Sleep(200 * time.Millisecond)
+	}
 
 	assert.Equal(t, 1, len(resBody.Data))
 }
@@ -339,11 +345,18 @@ func TestGoalCategoryCreatedEvent(t *testing.T) {
 	assert.Equal(t, http.StatusOK, res.StatusCode)
 
 	// check if the default goal was created
-	res, err = buildAndSendRequest("GET", fmt.Sprintf("%s/api/goals/categories/%s", BASE_URL, gc.Id), nil)
-	assert.Nil(t, err)
-	serverResponse, err := UnmarshalServerResponse[*entities.GoalCategory](res)
-	assert.Nil(t, err)
 
+	var serverResponse responses.ServerResponse[*entities.GoalCategory]
+	for i := 0; i < 5; i++ {
+		res, err = buildAndSendRequest("GET", fmt.Sprintf("%s/api/goals/categories/%s", BASE_URL, gc.Id), nil)
+		assert.Nil(t, err)
+		serverResponse, err = UnmarshalServerResponse[*entities.GoalCategory](res)
+		assert.Nil(t, err)
+		if len(serverResponse.Data.Goals) == 1 {
+			break
+		}
+		time.Sleep(200 * time.Millisecond)
+	}
 	assert.Equal(t, 1, len(serverResponse.Data.Goals))
 }
 
