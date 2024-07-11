@@ -19,6 +19,8 @@ const (
 	XP_PER_GOAL_MAX int = 100
 )
 
+var subscribedEvents = []string{events.GOAL_CATEGORY_CREATED, events.USER_CREATED}
+
 type GoalServiceImpl struct {
 	goalStore         stores.GoalStore
 	goalCategoryStore stores.GoalCategoryStore
@@ -37,8 +39,9 @@ func NewGoalService(goalStore stores.GoalStore,
 		eventPublisher:    ep,
 	}
 
-	gs.eventPublisher.Subscribe(events.USER_CREATED, gs)
-	gs.eventPublisher.Subscribe(events.GOAL_CATEGORY_CREATED, gs)
+	for _, event := range subscribedEvents {
+		ep.Subscribe(event, gs)
+	}
 
 	return gs
 }
