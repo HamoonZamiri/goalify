@@ -3,6 +3,7 @@ package events
 import (
 	"fmt"
 	"goalify/utils/lists"
+	"log/slog"
 	"reflect"
 	"sync"
 )
@@ -86,11 +87,15 @@ func (em *EventManager) Subscribe(eventType string, subscriber Subscriber) {
 }
 
 func (em *EventManager) Publish(event Event) {
-	em.mu.Lock()
-	defer em.mu.Unlock()
+	if _, ok := em.subscribers[event.EventType]; !ok {
+		return
+	}
 	subList := em.subscribers[event.EventType].GetList()
 	for e := subList.Front(); e != nil; e = e.Next() {
-		sub := e.Value.(Subscriber)
+		sub, ok := e.Value.(Subscriber)
+		if !ok {
+			slog.Warn("EventManager.Publish: type assertion failed", "subscriber", e.Value)
+		}
 		sub.HandleEvent(event)
 	}
 }
