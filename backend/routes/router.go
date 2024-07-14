@@ -40,8 +40,8 @@ func AddRoutes(mux *http.ServeMux, userHandler *uh.UserHandler,
 		Debug:            corsDebug,
 		AllowedHeaders:   []string{"*"},
 	})
-	CorsChain := middleware.CreateChain(c.Handler)
-	AuthChain := middleware.CreateChain(c.Handler, middleware.AuthenticatedOnly)
+	CorsChain := middleware.CreateChain(middleware.Logging, c.Handler)
+	AuthChain := middleware.CreateChain(middleware.Logging, c.Handler, middleware.AuthenticatedOnly)
 
 	mux.Handle("GET /health", CorsChain(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.Write([]byte("Hello\n"))
