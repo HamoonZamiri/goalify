@@ -62,5 +62,8 @@ func AddRoutes(mux *http.ServeMux, userHandler *uh.UserHandler,
 	addRoute(mux, "GET", "/api/goals/categories/{categoryId}", goalHandler.HandleGetGoalCategoryById, AuthChain)
 	addRoute(mux, "PUT", "/api/goals/categories/{categoryId}", goalHandler.HandleUpdateGoalCategoryById, AuthChain)
 	addRoute(mux, "DELETE", "/api/goals/categories/{categoryId}", goalHandler.HandleDeleteGoalCategoryById, AuthChain)
+
+	// need options method available on all endpoints for CORS
+	addRoute(mux, "OPTIONS", "/api/*", nil, CorsChain)
 	return mux
 }
