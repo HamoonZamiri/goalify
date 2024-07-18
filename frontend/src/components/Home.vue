@@ -8,6 +8,8 @@ import ModalForm from "./ModalForm.vue";
 import CreateGoalCategoryForm from "./goals/CreateGoalCategoryForm.vue";
 import CreateCategoryButton from "./goals/CreateCategoryButton.vue";
 import goalState from "@/state/goals";
+
+// State
 const error = ref<string | null>(null);
 const isLoading = ref<boolean>(true);
 
@@ -31,8 +33,8 @@ onMounted(async () => {
     v-else
     class="flex flex-col items-center sm:items-start px-6 w-auto bg-slate-50"
   >
-    <section class="flex-col sm:flex-row flex gap-4 w-auto">
-      <div class="w-full sm:w-1/3" v-for="cat in goalState.categories">
+    <section class="flex-col sm:flex-row flex gap-4 w-full">
+      <div class="w-full sm:w-1/4" v-for="cat in goalState.categories">
         <GoalCategoryCard :goalCategory="cat" />
       </div>
       <ModalForm

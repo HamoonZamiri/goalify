@@ -9,7 +9,7 @@ const props = defineProps<{
 }>();
 </script>
 <template>
-  <div class="flex-col">
+  <div class="flex flex-col">
     <header class="flex justify-between">
       <span class="text-xl text-blue-400 font-semibold pb-2">{{
         props.goalCategory.title
@@ -20,13 +20,11 @@ const props = defineProps<{
         :formProps="{ categoryId: props.goalCategory.id }"
       />
     </header>
-    <section class="">
-      <div
-        class="rounded-xl border-4 border-blue-400 p-4 mb-4"
-        v-for="goal in goalCategory.goals"
-      >
-        <GoalCard :goal="goal" />
-      </div>
-    </section>
+    <div
+      class="rounded-xl border-2 border-gray-400 p-4 mb-4 w-full"
+      v-for="goal in goalCategory.goals"
+    >
+      <GoalCard :goal="goal" />
+    </div>
   </div>
 </template>

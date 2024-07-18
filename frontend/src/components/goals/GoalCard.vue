@@ -14,7 +14,5 @@ const props = defineProps<{
     />
     <span class="font-semibold">{{ props.goal.title }}</span>
   </header>
-  <section>
-    <p>{{ props.goal.created_at }}</p>
-  </section>
+  <section></section>
 </template>
