@@ -1,7 +1,8 @@
 import authState from "@/state/auth";
 import { API_BASE, http } from "./constants";
-import { Schemas, type Goal } from "./schemas";
+import { Schemas, type Goal, type GoalCategory } from "./schemas";
 import type { z } from "zod";
+import router from "@/router";
 
 type ServerResponse<T> = {
   message: string;
@@ -41,7 +42,7 @@ async function zodFetch<T>(
     const err = await refreshUserToken();
     if (err instanceof Error) {
       authState.logout();
-      throw err;
+      router.push({ name: "Login" });
     }
 
     res = await fetch(url, {
@@ -65,7 +66,7 @@ async function zodFetch<T>(
 async function createGoalCategory(
   title: string,
   xp_per_goal: number,
-): Promise<string | z.infer<typeof Schemas.GoalCategoryResponseSchema>> {
+): Promise<string | ServerResponse<GoalCategory>> {
   try {
     const res = await zodFetch(
       `${API_BASE}/goals/categories`,
@@ -90,7 +91,7 @@ async function createGoalCategory(
 }
 
 async function getUserGoalCategories(): Promise<
-  string | z.infer<typeof Schemas.GoalCategoryResponseArraySchema>
+  string | ServerResponse<GoalCategory[]>
 > {
   try {
     const res = await zodFetch(
@@ -109,7 +110,7 @@ async function createGoal(
   title: string,
   description: string,
   categoryId: string,
-) {
+): Promise<string | ServerResponse<Goal>> {
   try {
     const res = await zodFetch(
       `${API_BASE}/goals/create`,
