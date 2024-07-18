@@ -1,21 +1,20 @@
 <script setup lang="ts">
 import GoalCategoryCard from "./goals/GoalCategoryCard.vue";
 import { onMounted, ref } from "vue";
-import CreateGoalCategoryDialog from "./goals/CreateGoalCategoryDialog.vue";
-import type { GoalCategory } from "@/utils/schemas";
-import { ApiClient } from "@/utils/api";
+import { type ErrorResponse, ApiClient } from "@/utils/api";
 import ModalForm from "./ModalForm.vue";
 import CreateGoalCategoryForm from "./goals/CreateGoalCategoryForm.vue";
 import CreateCategoryButton from "./goals/CreateCategoryButton.vue";
 import goalState from "@/state/goals";
 
 // State
-const error = ref<string | null>(null);
+const error = ref<ErrorResponse | null>(null);
 const isLoading = ref<boolean>(true);
 
 onMounted(async () => {
   const res = await ApiClient.getUserGoalCategories();
-  if (typeof res === "string") {
+  if (ApiClient.isError(res)) {
+    // in this case we are only expecting a message and not input validation errors
     error.value = res;
     return;
   }
