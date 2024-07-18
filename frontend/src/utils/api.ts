@@ -9,7 +9,27 @@ type ServerResponse<T> = {
   data: T;
 };
 
-async function refreshUserToken(): Promise<void | Error> {
+type ErrorMap = Record<string, string>;
+export type ErrorResponse = {
+  // we will manually add this field to our errors from the json response
+  statusCode?: number;
+  // message should always be present
+  message: string;
+  // in creation requests the server returns an object mapping field names to error messages
+  errors?: ErrorMap;
+};
+
+function isError(
+  res: ServerResponse<any> | ErrorResponse,
+): res is ErrorResponse {
+  const casted = res as ErrorResponse;
+  return (
+    casted.errors !== undefined ||
+    (casted.statusCode !== undefined && casted.statusCode >= 400)
+  );
+}
+
+async function refreshUserToken(): Promise<void> {
   if (!authState.user) return;
   const res = await fetch(`${API_BASE}/users/refresh`, {
     method: "POST",
@@ -21,11 +41,11 @@ async function refreshUserToken(): Promise<void | Error> {
   const json: unknown = await res.json();
   if (!res.ok) {
     authState.logout();
-    return new Error("failed to refresh token");
+    router.push({ name: "Login" });
   }
   const parsedJson = Schemas.UserResponseSchema.safeParse(json);
   if (!parsedJson.success) {
-    return parsedJson.error;
+    throw parsedJson.error;
   }
   authState.setUser(parsedJson.data.data);
 }
@@ -34,17 +54,12 @@ async function zodFetch<T>(
   url: string,
   schema: z.Schema<T>,
   options: RequestInit | undefined,
-): Promise<T | string> {
+): Promise<T | ErrorResponse> {
   let res = await fetch(url, options);
   const json = await res.json();
 
   if (res.status === http.StatusUnauthorized) {
-    const err = await refreshUserToken();
-    if (err instanceof Error) {
-      authState.logout();
-      router.push({ name: "Login" });
-    }
-
+    await refreshUserToken();
     res = await fetch(url, {
       ...options,
       headers: {
@@ -54,7 +69,9 @@ async function zodFetch<T>(
     });
   }
   if (!res.ok) {
-    return json.message as string;
+    const error = json as ErrorResponse;
+    error.statusCode = res.status;
+    return error;
   }
   const parsedResponse = schema.safeParse(json);
   if (!parsedResponse.success) {
@@ -66,73 +83,58 @@ async function zodFetch<T>(
 async function createGoalCategory(
   title: string,
   xp_per_goal: number,
-): Promise<string | ServerResponse<GoalCategory>> {
-  try {
-    const res = await zodFetch(
-      `${API_BASE}/goals/categories`,
-      Schemas.GoalCategoryResponseSchema,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${authState.user?.access_token}`,
-        },
-        body: JSON.stringify({
-          title,
-          xp_per_goal,
-        }),
+): Promise<ErrorResponse | ServerResponse<GoalCategory>> {
+  const res = await zodFetch(
+    `${API_BASE}/goals/categories`,
+    Schemas.GoalCategoryResponseSchema,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${authState.user?.access_token}`,
       },
-    );
-    return res;
-  } catch (err) {
-    console.error(err);
-    return "Failed to create goal category.";
-  }
+      body: JSON.stringify({
+        title,
+        xp_per_goal,
+      }),
+    },
+  );
+  return res;
 }
 
 async function getUserGoalCategories(): Promise<
-  string | ServerResponse<GoalCategory[]>
+  ErrorResponse | ServerResponse<GoalCategory[]>
 > {
-  try {
-    const res = await zodFetch(
-      `${API_BASE}/goals/categories`,
-      Schemas.GoalCategoryResponseArraySchema,
-      { headers: { Authorization: `Bearer ${authState.user?.access_token}` } },
-    );
-    return res;
-  } catch (err) {
-    console.error(err);
-    return "Failed to get goal categories.";
-  }
+  const res = await zodFetch(
+    `${API_BASE}/goals/categories`,
+    Schemas.GoalCategoryResponseArraySchema,
+    { headers: { Authorization: `Bearer ${authState.user?.access_token}` } },
+  );
+  return res;
 }
 
 async function createGoal(
   title: string,
   description: string,
   categoryId: string,
-): Promise<string | ServerResponse<Goal>> {
-  try {
-    const res = await zodFetch(
-      `${API_BASE}/goals/create`,
-      Schemas.GoalResponseSchema,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${authState.user?.access_token}`,
-        },
-        body: JSON.stringify({
-          title,
-          description,
-          category_id: categoryId,
-        }),
+): Promise<ErrorResponse | ServerResponse<Goal>> {
+  const res = await zodFetch(
+    `${API_BASE}/goals/create`,
+    Schemas.GoalResponseSchema,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${authState.user?.access_token}`,
       },
-    );
-    return res;
-  } catch (err) {
-    console.error(err);
-    return "Failed to create goal.";
-  }
+      body: JSON.stringify({
+        title,
+        description,
+        category_id: categoryId,
+      }),
+    },
+  );
+  return res;
 }
 
 export const ApiClient = {
@@ -141,4 +143,5 @@ export const ApiClient = {
   createGoalCategory,
   getUserGoalCategories,
   createGoal,
+  isError,
 } as const;
