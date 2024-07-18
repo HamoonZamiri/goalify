@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import goalState from "@/state/goals";
-import { ApiClient } from "@/utils/api";
+import { ApiClient, type ErrorResponse } from "@/utils/api";
 import { ref } from "vue";
 
 type CreateCategoryForm = {
@@ -12,7 +12,7 @@ const formData = ref<CreateCategoryForm>({
   xp_per_goal: 0,
 });
 
-const error = ref<string | null>(null);
+const error = ref<ErrorResponse | null>(null);
 
 const props = defineProps<{
   isOpen: boolean;
@@ -25,13 +25,14 @@ async function handleSubmit(e: MouseEvent) {
     formData.value.title,
     formData.value.xp_per_goal,
   );
-  if (typeof res === "string") {
+  if (ApiClient.isError(res)) {
     error.value = res;
     return;
   }
 
   formData.value.title = "";
-  formData.value.xp_per_goal = 0;
+  formData.value.xp_per_goal = 1;
+  error.value = null;
 
   // dispatch an event to update the categories
   goalState.addCategory(res.data);
@@ -43,13 +44,16 @@ async function handleSubmit(e: MouseEvent) {
     class="rounded-lg border bg-white p-3 w-[400px] grid grid-cols-1 gap-8 hover:cursor-default"
   >
     <p class="font-semibold">Create a New Goal/Task Category</p>
-    <div class="grid grid-cols-1 gap-4">
+    <div class="">
       <label>Title:</label>
       <input
         type="text"
         v-model="formData.title"
         class="block w-full rounded-md border-0 px-1.5 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-200 sm:text-sm sm:leading-6"
       />
+      <p class="text-red-400" v-if="error?.errors?.title">
+        {{ error.errors.title }}
+      </p>
     </div>
     <div>
       <label>XP/goal:</label>
@@ -60,6 +64,9 @@ async function handleSubmit(e: MouseEvent) {
         max="100"
         class="block w-full rounded-md border-0 px-1.5 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-200 sm:text-sm sm:leading-6"
       />
+      <p class="text-red-400" v-if="error?.errors?.xp_per_goal">
+        {{ error.errors.xp_per_goal }}
+      </p>
     </div>
     <button
       @click="handleSubmit"
