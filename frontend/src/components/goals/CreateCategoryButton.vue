@@ -5,11 +5,8 @@ const props = defineProps<{
 }>();
 </script>
 <template>
-  <v-icon name="co-plus" />
-  <span
-    class="text-xl text-blue-400 font-semibold"
-    @click="props.setIsOpen(true)"
-  >
+  <v-icon name="co-plus" fill="white" />
+  <span class="text-xl text-white font-semibold" @click="props.setIsOpen(true)">
     Add Category
   </span>
 </template>

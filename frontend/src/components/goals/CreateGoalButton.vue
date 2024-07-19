@@ -1,5 +1,5 @@
 <script setup lang="ts"></script>
 
 <template>
-  <v-icon class="hover:cursor-pointer" name="px-notes-plus" />
+  <v-icon name="px-notes-plus" fill="white" />
 </template>

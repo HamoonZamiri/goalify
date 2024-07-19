@@ -30,7 +30,7 @@ onMounted(async () => {
   </div>
   <div
     v-else
-    class="flex flex-col items-center sm:items-start px-6 w-auto bg-slate-50"
+    class="flex flex-col bg-gray-900 items-center sm:items-start px-6 w-auto"
   >
     <section class="flex-col sm:flex-row flex gap-4 w-full">
       <div class="w-full sm:w-1/4" v-for="cat in goalState.categories">

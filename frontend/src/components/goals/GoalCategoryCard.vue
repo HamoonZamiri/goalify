@@ -11,7 +11,7 @@ const props = defineProps<{
 <template>
   <div class="flex flex-col">
     <header class="flex justify-between">
-      <span class="text-xl text-blue-400 font-semibold pb-2">{{
+      <span class="text-xl text-white font-semibold pb-2">{{
         props.goalCategory.title
       }}</span>
       <ModalForm
@@ -21,7 +21,7 @@ const props = defineProps<{
       />
     </header>
     <div
-      class="rounded-xl border-2 border-gray-400 p-4 mb-4 w-full"
+      class="rounded-xl border-2 border-gray-400 p-4 mb-4 w-full bg-gray-200"
       v-for="goal in goalCategory.goals"
     >
       <GoalCard :goal="goal" />
