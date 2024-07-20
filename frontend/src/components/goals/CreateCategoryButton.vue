@@ -6,7 +6,7 @@ const props = defineProps<{
 </script>
 <template>
   <v-icon name="co-plus" fill="white" />
-  <span class="text-xl text-white font-semibold" @click="props.setIsOpen(true)">
+  <span class="text-xl text-gray-200" @click="props.setIsOpen(true)">
     Add Category
   </span>
 </template>

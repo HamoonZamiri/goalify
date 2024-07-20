@@ -12,7 +12,7 @@ const props = defineProps<{
       animation="wrench"
       hover
     />
-    <span class="font-semibold">{{ props.goal.title }}</span>
+    <span class="font-semibold text-gray-300">{{ props.goal.title }}</span>
   </header>
   <section></section>
 </template>
