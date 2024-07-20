@@ -118,22 +118,18 @@ async function createGoal(
   description: string,
   categoryId: string,
 ): Promise<ErrorResponse | ServerResponse<Goal>> {
-  const res = await zodFetch(
-    `${API_BASE}/goals/create`,
-    Schemas.GoalResponseSchema,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${authState.user?.access_token}`,
-      },
-      body: JSON.stringify({
-        title,
-        description,
-        category_id: categoryId,
-      }),
+  const res = await zodFetch(`${API_BASE}/goals`, Schemas.GoalResponseSchema, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${authState.user?.access_token}`,
     },
-  );
+    body: JSON.stringify({
+      title,
+      description,
+      category_id: categoryId,
+    }),
+  });
   return res;
 }
 
