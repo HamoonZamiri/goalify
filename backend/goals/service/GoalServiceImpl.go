@@ -321,3 +321,24 @@ func (gs *GoalServiceImpl) handleGoalCategoryCreatedEvent(event events.Event) {
 		slog.Error("service.handleGoalCategoryCreatedEvent: CreateGoal:", "err", err)
 	}
 }
+
+func (gs *GoalServiceImpl) DeleteGoalById(goalId, userId uuid.UUID) error {
+	goal, err := gs.goalStore.GetGoalById(goalId)
+	if err == sql.ErrNoRows {
+		slog.Error("service.handleDeleteGoalById: store.GetGoalById:", "err", err)
+		return errors.New("goal with id " + goalId.String() + " not found")
+	}
+	if err != nil {
+		slog.Error("service.handleDeleteGoalById: store.GetGoalById:", "err", err)
+		return fmt.Errorf("%w: error fetching goal", svcerror.ErrBadRequest)
+	}
+	if goal.UserId != userId {
+		return fmt.Errorf("%w: user does not own this goal", svcerror.ErrUnauthorized)
+	}
+	err = gs.goalStore.DeleteGoalById(goalId)
+	if err != nil {
+		slog.Error("service.handleDeleteGoalById: store.DeleteGoalById:", "err", err)
+		return fmt.Errorf("%w: error deleting goal", svcerror.ErrInternalServer)
+	}
+	return nil
+}

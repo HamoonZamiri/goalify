@@ -14,4 +14,5 @@ type GoalStore interface {
 	UpdateGoalDescription(description string, goalId uuid.UUID) (*entities.Goal, error)
 	GetGoalById(goalId uuid.UUID) (*entities.Goal, error)
 	UpdateGoalById(goalId uuid.UUID, updates map[string]interface{}) (*entities.Goal, error)
+	DeleteGoalById(goalId uuid.UUID) error
 }

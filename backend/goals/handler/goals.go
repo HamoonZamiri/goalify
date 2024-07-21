@@ -123,3 +123,38 @@ func (h *GoalHandler) HandleUpdateGoalById(w http.ResponseWriter, r *http.Reques
 		responses.SendAPIError(w, r, http.StatusInternalServerError, "internal error encoding response", nil)
 	}
 }
+
+func (gh *GoalHandler) HandleDeleteGoalById(w http.ResponseWriter, r *http.Request) {
+	userId, err := middleware.GetIdFromHeader(r)
+	if err != nil {
+		slog.Error("HandleDeleteGoalById: middleware.GetIdFromHeader: ", "err", err)
+		responses.SendAPIError(w, r, http.StatusUnauthorized, err.Error(), nil)
+		return
+	}
+	userUUID, err := uuid.Parse(userId)
+	if err != nil {
+		slog.Error("HandleDeleteGoalById: uuid.Parse:", "err", err)
+		responses.SendAPIError(w, r, http.StatusBadRequest, "error parsing user id", nil)
+		return
+	}
+
+	goalId := r.PathValue("goalId")
+	goalUUID, err := uuid.Parse(goalId)
+	if err != nil {
+		slog.Error("HandleDeleteGoalById: uuid.Parse:", "err", err)
+		responses.SendAPIError(w, r, http.StatusBadRequest, "error parsing goal id", nil)
+		return
+	}
+
+	err = gh.goalService.DeleteGoalById(goalUUID, userUUID)
+	if err != nil {
+		responses.SendAPIError(w, r, http.StatusInternalServerError, "error deleting goal", nil)
+		return
+	}
+
+	res := map[string]string{"data": "null", "message": "goal deleted successfully"}
+	if err := jsonutil.Encode(w, r, http.StatusOK, res); err != nil {
+		slog.Error("HandleDeleteGoalById: jsonutil.Encode(nil):", "err", err)
+		responses.SendAPIError(w, r, http.StatusInternalServerError, "internal error encoding response", nil)
+	}
+}

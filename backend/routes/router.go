@@ -56,6 +56,7 @@ func AddRoutes(mux *http.ServeMux, userHandler *uh.UserHandler,
 	// goals domain
 	addRoute(mux, "POST", "/api/goals", goalHandler.HandleCreateGoal, AuthChain)
 	addRoute(mux, "PUT", "/api/goals/{goalId}", goalHandler.HandleUpdateGoalById, AuthChain)
+	addRoute(mux, http.MethodDelete, "/api/goals/{goalId}", goalHandler.HandleDeleteGoalById, AuthChain)
 
 	addRoute(mux, "POST", "/api/goals/categories", goalHandler.HandleCreateGoalCategory, AuthChain)
 	addRoute(mux, "GET", "/api/goals/categories", goalHandler.HandleGetGoalCategoriesByUserId, AuthChain)

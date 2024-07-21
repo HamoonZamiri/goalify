@@ -41,6 +41,10 @@ type UpdateGoalRequest struct {
 	Status      options.Option[string] `json:"status"`
 }
 
+type DeleteGoalRequest struct {
+	GoalId string `json:"goal_id"`
+}
+
 const (
 	TEXT_MAX_LEN    = 255
 	XP_MAX_PER_GOAL = 100

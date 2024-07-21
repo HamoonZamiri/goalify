@@ -360,6 +360,56 @@ func TestGoalCategoryCreatedEvent(t *testing.T) {
 	assert.Equal(t, 1, len(serverResponse.Data.Goals))
 }
 
+func TestDeleteGoal(t *testing.T) {
+	// create category and goal to be deleted
+	body := map[string]any{
+		"title":       "some title",
+		"xp_per_goal": 50,
+	}
+	url := fmt.Sprintf("%s/api/goals/categories", BASE_URL)
+	res, err := buildAndSendRequest("POST", url, body)
+	assert.Nil(t, err)
+	assert.Equal(t, http.StatusOK, res.StatusCode)
+	gc, err := UnmarshalServerResponse[entities.GoalCategory](res)
+	assert.Nil(t, err)
+
+	url = fmt.Sprintf("%s/api/goals", BASE_URL)
+	body = map[string]any{
+		"title":       "some title",
+		"description": "some description",
+		"category_id": gc.Data.Id,
+	}
+	res, err = buildAndSendRequest("POST", url, body)
+	assert.Nil(t, err)
+	assert.Equal(t, http.StatusOK, res.StatusCode)
+	goal, err := UnmarshalServerResponse[entities.Goal](res)
+	assert.Nil(t, err)
+
+	// rerun requests until goal category created event triggers
+	url = fmt.Sprintf("%s/api/goals/categories/%s", BASE_URL, gc.Data.Id)
+	for i := 0; i < 5; i++ {
+		res, _ = buildAndSendRequest("GET", url, nil)
+		gc, _ = UnmarshalServerResponse[entities.GoalCategory](res)
+		if len(gc.Data.Goals) == 2 {
+			break
+		}
+		time.Sleep(200 * time.Millisecond)
+	}
+	assert.Equal(t, 2, len(gc.Data.Goals))
+
+	deleteUrl := fmt.Sprintf("%s/api/goals/%s", BASE_URL, goal.Data.Id)
+	res, err = buildAndSendRequest("DELETE", deleteUrl, nil)
+	assert.Nil(t, err)
+	assert.Equal(t, res.StatusCode, http.StatusOK)
+
+	// rerun request to get goal category by id
+	res, err = buildAndSendRequest("GET", url, nil)
+	assert.Nil(t, err)
+	gc, err = UnmarshalServerResponse[entities.GoalCategory](res)
+	assert.Nil(t, err)
+	assert.Equal(t, 1, len(gc.Data.Goals))
+}
+
 // utility functions
 func buildAndSendRequest(method, url string, body map[string]any) (*http.Response, error) {
 	var buf bytes.Buffer

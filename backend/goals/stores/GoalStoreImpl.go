@@ -94,3 +94,8 @@ func (s *GoalStoreImpl) UpdateGoalById(goalId uuid.UUID, updates map[string]inte
 	}
 	return &goal, nil
 }
+
+func (s *GoalStoreImpl) DeleteGoalById(goalId uuid.UUID) error {
+	_, err := s.db.Exec("DELETE FROM goals WHERE id = $1", goalId)
+	return err
+}
