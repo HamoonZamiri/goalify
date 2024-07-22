@@ -148,7 +148,7 @@ func (gh *GoalHandler) HandleDeleteGoalById(w http.ResponseWriter, r *http.Reque
 
 	err = gh.goalService.DeleteGoalById(goalUUID, userUUID)
 	if err != nil {
-		responses.SendAPIError(w, r, http.StatusInternalServerError, "error deleting goal", nil)
+		responses.SendAPIError(w, r, svcerror.GetErrorCode(err), "error deleting goal", nil)
 		return
 	}
 
