@@ -400,7 +400,7 @@ func TestDeleteGoal(t *testing.T) {
 	deleteUrl := fmt.Sprintf("%s/api/goals/%s", BASE_URL, goal.Data.Id)
 	res, err = buildAndSendRequest("DELETE", deleteUrl, nil)
 	assert.Nil(t, err)
-	assert.Equal(t, res.StatusCode, http.StatusOK)
+	assert.Equal(t, http.StatusOK, res.StatusCode)
 
 	// rerun request to get goal category by id
 	res, err = buildAndSendRequest("GET", url, nil)
@@ -408,6 +408,13 @@ func TestDeleteGoal(t *testing.T) {
 	gc, err = UnmarshalServerResponse[entities.GoalCategory](res)
 	assert.Nil(t, err)
 	assert.Equal(t, 1, len(gc.Data.Goals))
+}
+
+func TestDeleteGoalNotFound(t *testing.T) {
+	deleteUrl := fmt.Sprintf("%s/api/goals/%s", BASE_URL, uuid.New())
+	res, err := buildAndSendRequest("DELETE", deleteUrl, nil)
+	assert.Nil(t, err)
+	assert.Equal(t, http.StatusNotFound, res.StatusCode)
 }
 
 // utility functions
