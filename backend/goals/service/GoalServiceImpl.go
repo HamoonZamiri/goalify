@@ -303,7 +303,7 @@ func (gs *GoalServiceImpl) handleUserCreatedEvent(event events.Event) {
 		return
 	}
 
-	_, err = gs.CreateGoalCategory("daily", XP_PER_GOAL_MAX, user.Id)
+	_, err = gs.CreateGoalCategory("Daily", XP_PER_GOAL_MAX, user.Id)
 	if err != nil {
 		slog.Error("service.handleUserCreatedEvent: CreateGoalCategory:", "err", err)
 	}
