@@ -326,7 +326,7 @@ func (gs *GoalServiceImpl) DeleteGoalById(goalId, userId uuid.UUID) error {
 	goal, err := gs.goalStore.GetGoalById(goalId)
 	if err == sql.ErrNoRows {
 		slog.Error("service.handleDeleteGoalById: store.GetGoalById:", "err", err)
-		return errors.New("goal with id " + goalId.String() + " not found")
+		return fmt.Errorf("%w: goal not found", svcerror.ErrNotFound)
 	}
 	if err != nil {
 		slog.Error("service.handleDeleteGoalById: store.GetGoalById:", "err", err)
