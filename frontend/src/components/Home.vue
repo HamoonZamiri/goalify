@@ -33,7 +33,7 @@ onMounted(async () => {
     class="flex flex-col bg-gray-900 items-center sm:items-start px-6 w-auto"
   >
     <section class="flex-col sm:flex-row flex gap-4 w-full">
-      <div class="w-full sm:w-1/4" v-for="cat in goalState.categories">
+      <div class="w-full sm:w-1/3" v-for="cat in goalState.categories">
         <GoalCategoryCard :goalCategory="cat" />
       </div>
       <ModalForm
