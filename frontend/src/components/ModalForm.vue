@@ -24,7 +24,7 @@ function setIsOpen(value: boolean) {
   </div>
   <Dialog
     className="absolute inset-0 h-screen flex justify-center items-center
-    hover:cursor-pointer bg-gray-600 z-10 w-screen bg-opacity-90 rounded-lg p-4"
+    hover:cursor-pointer bg-gray-600 z-10 w-screen bg-opacity-20 rounded-lg p-4"
     :open="isOpen"
     @close="setIsOpen(false)"
   >
