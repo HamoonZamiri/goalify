@@ -41,28 +41,30 @@ async function handleSubmit(e: MouseEvent) {
 </script>
 <template>
   <form
-    class="rounded-lg border bg-white p-3 w-[400px] grid grid-cols-1 gap-8 hover:cursor-default"
+    class="rounded-lg border bg-gray-700 p-6 w-[95vw] sm:w-[40vw] grid grid-cols-1 gap-4 hover:cursor-default"
   >
-    <p class="font-semibold">Create a New Goal/Task Category</p>
-    <div class="">
-      <label>Title:</label>
+    <p class="flex justify-center text-xl text-gray-200">
+      Create a New Goal/Task Category
+    </p>
+    <div class="grid grid-cols-1 gap-4">
+      <label class="text-gray-200">Title:</label>
       <input
         type="text"
         v-model="formData.title"
-        class="block w-full rounded-md border-0 px-1.5 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-200 sm:text-sm sm:leading-6"
+        class="block h-10 w-full bg-gray-300 rounded-md border-0 px-1.5 py-1.5 text-gray-900 shadow-sm placeholder:text-gray-400 sm:text-sm sm:leading-6"
       />
       <p class="text-red-400" v-if="error?.errors?.title">
         {{ error.errors.title }}
       </p>
     </div>
     <div>
-      <label>XP/goal:</label>
+      <label class="text-gray-200">XP/goal:</label>
       <input
         v-model="formData.xp_per_goal"
         type="number"
         min="1"
         max="100"
-        class="block w-full rounded-md border-0 px-1.5 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-200 sm:text-sm sm:leading-6"
+        class="block h-10 w-full bg-gray-300 rounded-md border-0 px-1.5 py-1.5 text-gray-900 shadow-sm placeholder:text-gray-400 sm:text-sm sm:leading-6"
       />
       <p class="text-red-400" v-if="error?.errors?.xp_per_goal">
         {{ error.errors.xp_per_goal }}
@@ -70,7 +72,7 @@ async function handleSubmit(e: MouseEvent) {
     </div>
     <button
       @click="handleSubmit"
-      class="block w-full hover:bg-blue-200 bg-blue-100 rounded-lg h-10"
+      class="bg-blue-400 mt-4 rounded-lg text-gray-300 hover:bg-blue-500 h-10 py-1.5"
     >
       Add Category
     </button>

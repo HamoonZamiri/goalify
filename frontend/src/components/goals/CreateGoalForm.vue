@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import goalState from "@/state/goals";
-import { ApiClient } from "@/utils/api";
+import { ApiClient, type ErrorResponse } from "@/utils/api";
 import { ref } from "vue";
 
 type CreateGoalForm = {
@@ -13,7 +13,7 @@ const formData = ref<CreateGoalForm>({
   description: "",
 });
 
-const error = ref<string | null>(null);
+const error = ref<ErrorResponse | null>(null);
 
 const CreateGoalFormProps = defineProps<{
   props: {
@@ -31,7 +31,7 @@ async function handleSubmit(e: MouseEvent) {
     description,
     CreateGoalFormProps.props.categoryId,
   );
-  if (typeof res === "string") {
+  if (ApiClient.isError(res)) {
     error.value = res;
     return;
   }
@@ -44,27 +44,29 @@ async function handleSubmit(e: MouseEvent) {
 
 <template>
   <form
-    class="rounded-lg border bg-white p-3 w-[400px] grid grid-cols-1 gap-8 hover:cursor-default"
+    class="rounded-lg border bg-gray-700 p-6 w-[95vw] sm:w-[40vw] grid grid-cols-1 gap-4 hover:cursor-default"
   >
-    <p class="font-semibold">Create a New Goal/Task</p>
+    <p class="flex justify-center text-xl text-gray-200">
+      Create a New Goal/Task
+    </p>
     <div class="grid grid-cols-1 gap-4">
-      <label>Title:</label>
+      <label class="text-gray-200">Title:</label>
       <input
         type="text"
         v-model="formData.title"
-        class="block w-full rounded-md border-0 px-1.5 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-200 sm:text-sm sm:leading-6"
+        class="block h-10 w-full bg-gray-300 rounded-md border-0 px-1.5 py-1.5 text-gray-900 shadow-sm placeholder:text-gray-400 sm:text-sm sm:leading-6"
       />
     </div>
     <div>
-      <label>Description:</label>
+      <label class="text-gray-200">Description:</label>
       <textarea
         v-model="formData.description"
-        class="block w-full rounded-md border-0 px-1.5 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-200 sm:text-sm sm:leading-6"
+        class="block h-28 w-full bg-gray-300 rounded-md border-0 px-1.5 py-1.5 text-gray-900 shadow-sm placeholder:text-gray-400 sm:text-sm sm:leading-6"
       />
     </div>
     <button
       @click="handleSubmit"
-      class="block w-full hover:bg-blue-200 bg-blue-100 rounded-lg h-10"
+      class="bg-blue-400 mt-4 rounded-lg text-gray-300 hover:bg-blue-500 h-10 py-1.5"
     >
       Add Goal
     </button>
