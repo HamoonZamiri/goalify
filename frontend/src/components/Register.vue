@@ -8,8 +8,9 @@ import {
 } from "@/utils/schemas";
 import authState from "@/state/auth";
 import { ref } from "vue";
+import type { ErrorResponse } from "@/utils/api";
 
-const error = ref<string | null>(null);
+const error = ref<ErrorResponse | null>(null);
 const formData = ref<{
   email: string;
   password: string;
@@ -31,7 +32,7 @@ async function signup(payload: MouseEvent) {
   });
   const json: unknown = await res.json();
   if (!res.ok) {
-    error.value = (json as { message: string }).message;
+    error.value = json as ErrorResponse;
     return;
   }
   const parsed = createServerResponseSchema(UserSchema).parse(json);
@@ -52,6 +53,9 @@ async function signup(payload: MouseEvent) {
           class="block h-10 w-full bg-gray-300 rounded-md border-0 px-1.5 py-1.5 text-gray-900 shadow-sm placeholder:text-gray-400 sm:text-sm sm:leading-6"
           type="email"
         />
+        <p class="text-red-400" v-if="error?.errors?.email">
+          {{ error.errors.email }}
+        </p>
       </div>
       <div class="">
         <label class="text-gray-200">Password</label>
@@ -60,14 +64,20 @@ async function signup(payload: MouseEvent) {
           class="block h-10 w-full bg-gray-300 rounded-md border-0 px-1.5 py-1.5 text-gray-900 shadow-sm placeholder:text-gray-400 sm:text-sm sm:leading-6"
           type="password"
         />
+        <p class="text-red-400" v-if="error?.errors?.password">
+          {{ error.errors.password }}
+        </p>
       </div>
       <div class="mb-2">
         <label class="text-gray-200">Confirm Password</label>
         <input
           v-model="formData.confirmPassword"
           class="block h-10 w-full bg-gray-300 rounded-md border-0 px-1.5 py-1.5 text-gray-900 shadow-sm placeholder:text-gray-400 sm:text-sm sm:leading-6"
-          type="password"
+          type="password{ message: string }).message;"
         />
+        <p class="text-red-400" v-if="error?.errors?.password">
+          {{ error.errors.password }}
+        </p>
       </div>
       <button
         @click="signup"
