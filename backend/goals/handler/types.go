@@ -69,9 +69,9 @@ func (r CreateGoalCategoryRequest) Valid() map[string]string {
 	}
 
 	if r.XpPerGoal <= 0 {
-		problems["xp_per_goal"] = "xp_per_goal must be greater than 0"
+		problems["xp_per_goal"] = "xp per goal must be greater than 0"
 	} else if r.XpPerGoal > XP_MAX_PER_GOAL {
-		problems["xp_per_goal"] = fmt.Sprintf("xp_per_goal must be less than %d", XP_MAX_PER_GOAL)
+		problems["xp_per_goal"] = fmt.Sprintf("xp per goal must be less than %d", XP_MAX_PER_GOAL)
 	}
 	return problems
 }
@@ -83,11 +83,11 @@ func (r UpdateGoalCategoryRequest) Valid() map[string]string {
 	}
 
 	if r.XpPerGoal.IsPresent() && r.XpPerGoal.ValueOrZero() <= 0 {
-		problems["xp_per_goal"] = "xp_per_goal must be greater than 0"
+		problems["xp_per_goal"] = "xp per goal must be greater than 0"
 	}
 
 	if r.XpPerGoal.IsPresent() && r.XpPerGoal.ValueOrZero() > XP_MAX_PER_GOAL {
-		problems["xp_per_goal"] = fmt.Sprintf("xp_per_goal must be less than %d", XP_MAX_PER_GOAL)
+		problems["xp_per_goal"] = fmt.Sprintf("xp per goal must be less than %d", XP_MAX_PER_GOAL)
 	}
 
 	return problems
@@ -111,7 +111,7 @@ func (r CreateGoalRequest) Valid() map[string]string {
 	}
 
 	if r.CategoryId == "" {
-		problems["category_id"] = "category_id is required"
+		problems["category_id"] = "category id is required"
 	}
 
 	return problems
@@ -137,11 +137,11 @@ func (r UpdateGoalRequest) Valid() map[string]string {
 	}
 
 	if r.CategoryId.IsPresent() && r.CategoryId.ValueOrZero() == "" {
-		problems["category_id"] = "category_id cannot be empty"
+		problems["category_id"] = "category id cannot be empty"
 	}
 
 	if r.CategoryId.IsPresent() && !isValidUUID(r.CategoryId.ValueOrZero()) {
-		problems["category_id"] = "category_id must be a valid UUID"
+		problems["category_id"] = "category id must be a valid UUID"
 	}
 
 	if r.Status.IsPresent() && r.Status.ValueOrZero() != "completed" && r.Status.ValueOrZero() != "not_completed" {
