@@ -44,7 +44,7 @@ async function handleSubmit(e: MouseEvent) {
 
 <template>
   <form
-    class="rounded-lg border bg-gray-700 p-6 w-[95vw] sm:w-[40vw] grid grid-cols-1 gap-4 hover:cursor-default"
+    class="rounded-lg border bg-gray-800 p-6 w-[95vw] sm:w-[40vw] grid grid-cols-1 gap-4 hover:cursor-default"
   >
     <p class="flex justify-center text-xl text-gray-200">
       Create a New Goal/Task
@@ -54,14 +54,14 @@ async function handleSubmit(e: MouseEvent) {
       <input
         type="text"
         v-model="formData.title"
-        class="block h-10 w-full bg-gray-300 rounded-md border-0 px-1.5 py-1.5 text-gray-900 shadow-sm placeholder:text-gray-400 sm:text-sm sm:leading-6"
+        class="block h-10 w-full bg-gray-300 rounded-md border-0 px-1.5 py-1.5 text-gray-900 shadow-sm placeholder:text-gray-400 sm:text-sm sm:leading-6 focus:outline-none"
       />
     </div>
     <div>
       <label class="text-gray-200">Description:</label>
       <textarea
         v-model="formData.description"
-        class="block h-28 w-full bg-gray-300 rounded-md border-0 px-1.5 py-1.5 text-gray-900 shadow-sm placeholder:text-gray-400 sm:text-sm sm:leading-6"
+        class="block h-28 w-full bg-gray-300 rounded-md border-0 px-1.5 py-1.5 text-gray-900 shadow-sm placeholder:text-gray-400 sm:text-sm sm:leading-6 focus:outline-none"
       />
     </div>
     <button

@@ -41,17 +41,17 @@ async function handleSubmit(e: MouseEvent) {
 </script>
 <template>
   <form
-    class="rounded-lg border bg-gray-700 p-6 w-[95vw] sm:w-[40vw] grid grid-cols-1 gap-4 hover:cursor-default"
+    class="rounded-lg border bg-gray-800 p-10 w-[95vw] sm:w-[40vw] grid grid-cols-1 gap-4 hover:cursor-default"
   >
     <p class="flex justify-center text-xl text-gray-200">
       Create a New Goal/Task Category
     </p>
-    <div class="grid grid-cols-1 gap-4">
+    <div class="">
       <label class="text-gray-200">Title:</label>
       <input
         type="text"
         v-model="formData.title"
-        class="block h-10 w-full bg-gray-300 rounded-md border-0 px-1.5 py-1.5 text-gray-900 shadow-sm placeholder:text-gray-400 sm:text-sm sm:leading-6"
+        class="block h-10 w-full bg-gray-300 rounded-md border-0 px-1.5 py-1.5 text-gray-900 shadow-sm placeholder:text-gray-400 sm:text-sm sm:leading-6 focus:outline-none"
       />
       <p class="text-red-400" v-if="error?.errors?.title">
         {{ error.errors.title }}
@@ -64,7 +64,7 @@ async function handleSubmit(e: MouseEvent) {
         type="number"
         min="1"
         max="100"
-        class="block h-10 w-full bg-gray-300 rounded-md border-0 px-1.5 py-1.5 text-gray-900 shadow-sm placeholder:text-gray-400 sm:text-sm sm:leading-6"
+        class="block h-10 w-full bg-gray-300 rounded-md border-0 px-1.5 py-1.5 text-gray-900 shadow-sm placeholder:text-gray-400 sm:text-sm sm:leading-6 focus:outline-none"
       />
       <p class="text-red-400" v-if="error?.errors?.xp_per_goal">
         {{ error.errors.xp_per_goal }}
@@ -72,7 +72,7 @@ async function handleSubmit(e: MouseEvent) {
     </div>
     <button
       @click="handleSubmit"
-      class="bg-blue-400 mt-4 rounded-lg text-gray-300 hover:bg-blue-500 h-10 py-1.5"
+      class="bg-blue-400 mt-10 rounded-lg text-gray-300 hover:bg-blue-500 h-10 py-1.5"
     >
       Add Category
     </button>

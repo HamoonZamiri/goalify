@@ -50,7 +50,7 @@ async function signup(payload: MouseEvent) {
         <label class="text-gray-200">Email</label>
         <input
           v-model="formData.email"
-          class="block h-10 w-full bg-gray-300 rounded-md border-0 px-1.5 py-1.5 text-gray-900 shadow-sm placeholder:text-gray-400 sm:text-sm sm:leading-6"
+          class="block h-10 w-full bg-gray-300 rounded-md border-0 px-1.5 py-1.5 text-gray-900 shadow-sm placeholder:text-gray-400 sm:text-sm sm:leading-6 focus:outline-none"
           type="email"
         />
         <p class="text-red-400" v-if="error?.errors?.email">
@@ -61,7 +61,7 @@ async function signup(payload: MouseEvent) {
         <label class="text-gray-200">Password</label>
         <input
           v-model="formData.password"
-          class="block h-10 w-full bg-gray-300 rounded-md border-0 px-1.5 py-1.5 text-gray-900 shadow-sm placeholder:text-gray-400 sm:text-sm sm:leading-6"
+          class="block h-10 w-full bg-gray-300 rounded-md border-0 px-1.5 py-1.5 text-gray-900 shadow-sm placeholder:text-gray-400 sm:text-sm sm:leading-6 focus:outline-none"
           type="password"
         />
         <p class="text-red-400" v-if="error?.errors?.password">
@@ -72,8 +72,8 @@ async function signup(payload: MouseEvent) {
         <label class="text-gray-200">Confirm Password</label>
         <input
           v-model="formData.confirmPassword"
-          class="block h-10 w-full bg-gray-300 rounded-md border-0 px-1.5 py-1.5 text-gray-900 shadow-sm placeholder:text-gray-400 sm:text-sm sm:leading-6"
-          type="password{ message: string }).message;"
+          class="block h-10 w-full bg-gray-300 rounded-md border-0 px-1.5 py-1.5 text-gray-900 shadow-sm placeholder:text-gray-400 sm:text-sm sm:leading-6 focus:outline-none"
+          type="password"
         />
         <p class="text-red-400" v-if="error?.errors?.password">
           {{ error.errors.password }}
