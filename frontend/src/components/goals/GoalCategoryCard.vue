@@ -20,10 +20,7 @@ const props = defineProps<{
         :formProps="{ categoryId: props.goalCategory.id }"
       />
     </header>
-    <div
-      class="p-4 mb-4 w-full bg-gray-700 rounded-sm"
-      v-for="goal in goalCategory.goals"
-    >
+    <div class="mb-4 w-full" v-for="goal in goalCategory.goals">
       <GoalCard :goal="goal" />
     </div>
   </div>
