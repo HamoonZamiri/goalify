@@ -22,7 +22,7 @@ function getStatus(status: string) {
 <template>
   <header
     @click="setIsEditing(true)"
-    class="flex p-4 w-full h-full bg-gray-700 hover:cursor-pointer gap-x-2 items-center rounded-sm"
+    class="flex p-4 w-full h-full bg-gray-700 hover:cursor-pointer hover:bg-gray-600 gap-x-2 items-center rounded-sm"
   >
     <v-icon
       class="hover:cursor-pointer"
@@ -40,7 +40,7 @@ function getStatus(status: string) {
     >
       <DialogPanel class="w-1/2">
         <div
-          class="flex flex-col gap-4 h-full p-8 border-white bg-gray-800 hover:cursor-default shadow-md shadow-sky-400"
+          class="flex flex-col gap-4 h-full p-8 border-white bg-gray-800 hover:cursor-default shadow-md shadow-gray-400"
         >
           <input
             v-model="props.goal.title"
