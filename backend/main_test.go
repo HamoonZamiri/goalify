@@ -81,7 +81,6 @@ func TestSignup(t *testing.T) {
 	defer res.Body.Close()
 
 	serverResponse, err := UnmarshalServerResponse[entities.UserDTO](res)
-	fmt.Println(io.ReadAll(res.Body))
 	assert.Nil(t, err)
 	assert.Equal(t, "user@mail.com", serverResponse.Data.Email)
 
@@ -105,6 +104,10 @@ func TestLogin(t *testing.T) {
 
 	res, _ := http.Post(BASE_URL+"/api/users/login", "application/json", bytes.NewReader(stringifiedBody))
 	assert.Equal(t, res.StatusCode, http.StatusOK)
+	assert.Nil(t, err)
+	serverResponse, err := UnmarshalServerResponse[entities.UserDTO](res)
+	assert.Nil(t, err)
+	refreshToken = serverResponse.Data.RefreshToken.String()
 }
 
 func TestLoginIncorrectPassword(t *testing.T) {

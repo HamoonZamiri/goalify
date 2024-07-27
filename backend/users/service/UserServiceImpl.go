@@ -159,6 +159,13 @@ func (s *UserServiceImpl) Login(email, password string) (*entities.UserDTO, erro
 		slog.Error("Users: service.Login: service.generateJWTToken:", "err", err.Error())
 		return nil, fmt.Errorf("%w: error generating access token", svcerror.ErrInternalServer)
 	}
+
+	// refresh token now
+	user, err = s.userStore.UpdateRefreshToken(user.Id.String(), generateRefreshToken().String())
+	if err != nil {
+		slog.Error("service.Login: store.UpdateRefreshToken:", "err", err.Error())
+		return nil, fmt.Errorf("%w: error updating refresh token", svcerror.ErrInternalServer)
+	}
 	return user.ToUserDTO(accessToken), nil
 }
 
