@@ -42,6 +42,7 @@ async function refreshUserToken(): Promise<void> {
   if (!res.ok) {
     authState.logout();
     router.push({ name: "Login" });
+    return;
   }
   const parsedJson = Schemas.UserResponseSchema.safeParse(json);
   if (!parsedJson.success) {
