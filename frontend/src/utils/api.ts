@@ -133,11 +133,33 @@ async function createGoal(
   return res;
 }
 
+async function updateGoal(
+  goalId: string,
+  updates: Partial<Goal>,
+): Promise<ErrorResponse | ServerResponse<Goal>> {
+  const res = await zodFetch(
+    `${API_BASE}/goals/${goalId}`,
+    Schemas.GoalResponseSchema,
+    {
+      method: http.MethodPut,
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${authState.user?.access_token}`,
+      },
+      body: JSON.stringify(updates),
+    },
+  );
+  return res;
+}
+
+// async function deleteGoal(goalId: string)
+
 export const ApiClient = {
   refresh: refreshUserToken,
   zodFetch,
   createGoalCategory,
   getUserGoalCategories,
   createGoal,
+  updateGoal,
   isError,
 } as const;
