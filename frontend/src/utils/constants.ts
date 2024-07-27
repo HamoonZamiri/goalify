@@ -4,4 +4,9 @@ export const http = {
   StatusUnauthorized: 401,
   StatusBadRequest: 400,
   StatusNotFound: 404,
+  MethodPatch: "PATCH",
+  MethodPost: "POST",
+  MethodDelete: "DELETE",
+  MethodGet: "GET",
+  MethodPut: "PUT",
 } as const;
