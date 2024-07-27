@@ -1,10 +1,21 @@
 <script setup lang="ts">
 import type { Goal } from "@/utils/schemas";
-import { ref, h } from "vue";
+import { ref, h, watch, reactive } from "vue";
 import { Dialog, DialogPanel } from "@headlessui/vue";
+import { ApiClient } from "@/utils/api";
 const props = defineProps<{
   goal: Goal;
 }>();
+
+const updates = reactive<{
+  title: string;
+  description: string;
+  status: "complete" | "not_complete";
+}>({
+  title: props.goal.title,
+  description: props.goal.description,
+  status: props.goal.status,
+});
 
 const isEditing = ref(false);
 
@@ -18,6 +29,21 @@ function getStatus(status: string) {
   }
   return h("p", { class: "rounded-lg bg-orange-400 px-2" }, "Not Complete");
 }
+
+// watches for updates on the goal title and description
+watch(updates, async (newUpdates) => {
+  // syncronhize state passed in from props with local reactive updates
+  props.goal.title = newUpdates.title;
+  props.goal.description = newUpdates.description;
+  // do not send updates with empty strings, titles and descriptions cannot be empty
+  if (!newUpdates.title || !newUpdates.description) return;
+
+  // in the future we want to use a debouncer to reduce the number of api calls
+  await ApiClient.updateGoal(props.goal.id, {
+    title: newUpdates.title,
+    description: newUpdates.description,
+  });
+});
 </script>
 <template>
   <header
@@ -43,7 +69,7 @@ function getStatus(status: string) {
           class="flex flex-col gap-4 h-full p-8 border-white bg-gray-800 hover:cursor-default shadow-md shadow-gray-400"
         >
           <input
-            v-model="props.goal.title"
+            v-model="updates.title"
             class="w-full bg-gray-800 text-gray-200 focus:outline-none text-3xl"
           />
           <div class="flex gap-x-24 w-full text-gray-200">
@@ -51,7 +77,7 @@ function getStatus(status: string) {
             <component :is="getStatus(props.goal.status)" />
           </div>
           <textarea
-            v-model="props.goal.description"
+            v-model="updates.description"
             class="w-full bg-gray-300 focus:outline-none h-64 p-2"
           />
         </div>
