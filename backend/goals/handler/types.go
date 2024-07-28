@@ -144,8 +144,8 @@ func (r UpdateGoalRequest) Valid() map[string]string {
 		problems["category_id"] = "category id must be a valid UUID"
 	}
 
-	if r.Status.IsPresent() && r.Status.ValueOrZero() != "completed" && r.Status.ValueOrZero() != "not_completed" {
-		problems["status"] = "status must be either 'completed' or 'not_completed'"
+	if r.Status.IsPresent() && r.Status.ValueOrZero() != "complete" && r.Status.ValueOrZero() != "not_complete" {
+		problems["status"] = "status must be either 'complete' or 'not_complete'"
 	}
 	return problems
 }
