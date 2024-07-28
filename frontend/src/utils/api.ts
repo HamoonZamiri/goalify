@@ -2,7 +2,7 @@ import authState from "@/state/auth";
 import { API_BASE, http } from "./constants";
 import { Schemas, type Goal, type GoalCategory } from "./schemas";
 import type { z } from "zod";
-import router from "@/router";
+import router, { RouteNames } from "@/router";
 
 type ServerResponse<T> = {
   message: string;
@@ -68,6 +68,7 @@ async function zodFetch<T>(
         Authorization: `Bearer ${authState.user?.access_token}`,
       },
     });
+    router.push(RouteNames.HOME);
   }
   if (!res.ok) {
     const error = json as ErrorResponse;
