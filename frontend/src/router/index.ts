@@ -24,4 +24,10 @@ router.beforeEach((to, _) => {
   }
 });
 
+export const RouteNames = {
+  LOGIN: "Login",
+  REGISTER: "Register",
+  HOME: "Home",
+} as const;
+
 export default router;
