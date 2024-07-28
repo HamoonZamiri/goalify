@@ -1,7 +1,14 @@
 <script setup lang="ts">
 import type { Goal } from "@/utils/schemas";
 import { ref, h, watch, reactive } from "vue";
-import { Dialog, DialogPanel } from "@headlessui/vue";
+import {
+  Dialog,
+  DialogPanel,
+  Listbox,
+  ListboxButton,
+  ListboxOption,
+  ListboxOptions,
+} from "@headlessui/vue";
 import { ApiClient } from "@/utils/api";
 const props = defineProps<{
   goal: Goal;
@@ -42,8 +49,24 @@ watch(updates, async (newUpdates) => {
   await ApiClient.updateGoal(props.goal.id, {
     title: newUpdates.title,
     description: newUpdates.description,
+    status: newUpdates.status,
   });
 });
+
+const statuses = [
+  {
+    id: 1,
+    name: "Not Complete",
+    value: "not_complete",
+  },
+  {
+    id: 2,
+    name: "Complete",
+    value: "complete",
+  },
+];
+
+const statusMap = { not_complete: "Not Complete", complete: "Complete" };
 </script>
 <template>
   <header
@@ -74,7 +97,33 @@ watch(updates, async (newUpdates) => {
           />
           <div class="flex gap-x-24 w-full text-gray-200">
             <p class="text-xl">Status</p>
-            <component :is="getStatus(props.goal.status)" />
+            <!-- <component :is="getStatus(props.goal.status)" /> -->
+            <div class="">
+              <Listbox v-model="updates.status">
+                <ListboxButton
+                  :class="{
+                    'w-56 h-8 text-center rounded-lg text-gray-600': true,
+                    'bg-green-400': updates.status === 'complete',
+                    'bg-orange-400': updates.status !== 'complete',
+                  }"
+                  >{{ statusMap[updates.status] }}</ListboxButton
+                >
+                <ListboxOptions class="mt-1">
+                  <ListboxOption
+                    v-for="status in statuses"
+                    :key="status.id"
+                    :value="status.value"
+                    :disabled="status.value === updates.status"
+                    :class="{
+                      'w-56 h-8 bg-gray-300 text-gray-600 text-center hover:bg-gray-400': true,
+                      hidden: updates.status === status.value,
+                    }"
+                  >
+                    {{ status.name }}
+                  </ListboxOption>
+                </ListboxOptions>
+              </Listbox>
+            </div>
           </div>
           <textarea
             v-model="updates.description"
