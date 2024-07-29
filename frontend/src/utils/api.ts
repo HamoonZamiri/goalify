@@ -154,6 +154,19 @@ async function updateGoal(
   return res;
 }
 
+async function deleteGoal(goalId: string): Promise<void> {
+  const res = await fetch(`${API_BASE}/goals/${goalId}`, {
+    method: http.MethodDelete,
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${authState.user?.access_token}`,
+    },
+  });
+  if (!res.ok) {
+    throw new Error("Failed to delete goal");
+  }
+}
+
 // async function deleteGoal(goalId: string)
 
 export const ApiClient = {
@@ -163,5 +176,6 @@ export const ApiClient = {
   getUserGoalCategories,
   createGoal,
   updateGoal,
+  deleteGoal,
   isError,
 } as const;

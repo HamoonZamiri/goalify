@@ -10,6 +10,7 @@ import {
   ListboxOptions,
 } from "@headlessui/vue";
 import { ApiClient } from "@/utils/api";
+import goalState from "@/state/goals";
 const props = defineProps<{
   goal: Goal;
 }>();
@@ -25,16 +26,26 @@ const updates = reactive<{
 });
 
 const isEditing = ref(false);
+const isDeleting = ref(false);
 
 function setIsEditing(value: boolean) {
   isEditing.value = value;
 }
 
-function getStatus(status: string) {
-  if (status === "complete") {
-    return h("p", { class: "rounded-lg bg-green-400 px-2" }, "Complete");
-  }
-  return h("p", { class: "rounded-lg bg-orange-400 px-2" }, "Not Complete");
+function setIsDeleting(value: boolean) {
+  isDeleting.value = value;
+}
+
+async function handleDeleteGoal(e: MouseEvent) {
+  e.preventDefault();
+
+  await ApiClient.deleteGoal(props.goal.id);
+
+  // remove goal from state
+  goalState.deleteGoal(props.goal.category_id, props.goal.id);
+
+  setIsEditing(false);
+  setIsDeleting(false);
 }
 
 // watches for updates on the goal title and description
@@ -97,7 +108,6 @@ const statusMap = { not_complete: "Not Complete", complete: "Complete" };
           />
           <div class="flex gap-x-24 w-full text-gray-200">
             <p class="text-xl">Status</p>
-            <!-- <component :is="getStatus(props.goal.status)" /> -->
             <div class="">
               <Listbox v-model="updates.status">
                 <ListboxButton
@@ -129,6 +139,42 @@ const statusMap = { not_complete: "Not Complete", complete: "Complete" };
             v-model="updates.description"
             class="w-full bg-gray-300 focus:outline-none h-64 p-2"
           />
+          <button
+            class="w-full bg-red-400 hover:bg-red-500 text-gray-300 rounded-sm h-10"
+            @click="setIsDeleting(true)"
+          >
+            Delete This Goal
+          </button>
+
+          <Dialog
+            class="absolute inset-0 h-screen flex justify-center items-center hover:cursor-pointer z-20 w-screen bg-opacity-10 rounded-lg"
+            :open="isDeleting"
+            @close="setIsDeleting(false)"
+          >
+            <DialogPanel class="w-[25%] h-[25%]">
+              <div
+                class="border-2 border-white bg-gray-800 flex flex-col p-4 gap-y-4"
+              >
+                <p class="text-xl text-gray-300 text-center">
+                  Are you sure you want to delete this goal?
+                </p>
+                <div class="flex justify-center gap-4 text-gray-300">
+                  <button
+                    @click="setIsDeleting(false)"
+                    class="bg-gray-400 text-gray-700 rounded-lg p-2 hover:bg-gray-500"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    class="bg-red-400 text-gray-700 rounded-lg p-2 hover:bg-red-500"
+                    @click="handleDeleteGoal"
+                  >
+                    Yes, delete it
+                  </button>
+                </div>
+              </div>
+            </DialogPanel>
+          </Dialog>
         </div>
       </DialogPanel>
     </Dialog>
