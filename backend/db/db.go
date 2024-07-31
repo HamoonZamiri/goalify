@@ -18,6 +18,14 @@ func New(dbname, user, password string) (*sqlx.DB, error) {
 	return db, nil
 }
 
+func NewWithConnString(connStr string) (*sqlx.DB, error) {
+	db, err := sqlx.Connect("postgres", connStr)
+	if err != nil {
+		return nil, err
+	}
+	return db, nil
+}
+
 func BuildUpdateQuery(table string, updates map[string]any, id uuid.UUID) (string, []any) {
 	setClauses := []string{}
 	args := []any{}
