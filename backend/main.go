@@ -17,6 +17,8 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+
+	"github.com/jmoiron/sqlx"
 )
 
 func addRoute(mux *http.ServeMux, method, path string, handler http.HandlerFunc, mwChain middleware.Middleware) {
@@ -34,27 +36,29 @@ func NewServer(userHandler *uh.UserHandler, goalHandler *gh.GoalHandler,
 func Run() error {
 	// instantiate config service
 	configService := config.NewConfigService(options.None[string]())
+	var dbInstance *sqlx.DB
 
-	var dbName string
 	if configService.MustGetEnv("ENV") == "test" {
-		dbName = configService.MustGetEnv("TEST_DB_NAME")
+		dbInstance, _ = db.NewWithConnString(configService.MustGetEnv("TEST_DB_CONN_STRING"))
 	} else {
-		dbName = configService.MustGetEnv("DB_NAME")
+		dbInstance, _ = db.New(configService.MustGetEnv("DB_NAME"), configService.MustGetEnv("DB_PASSWORD"),
+			configService.MustGetEnv("DB_NAME"))
 	}
-	db, _ := db.New(dbName, configService.MustGetEnv("DB_PASSWORD"),
-		configService.MustGetEnv("DB_NAME"))
+	if dbInstance == nil {
+		panic("db instance is nil")
+	}
 
 	// logs for stack trace implementing stacktrace.TraceLogger
 	goalDomainLogger := stacktrace.NewDomainStackTraceLogger("Goals")
 
 	eventManager := events.NewEventManager()
 
-	userStore := us.NewUserStore(db)
+	userStore := us.NewUserStore(dbInstance)
 	userService := usrSrv.NewUserService(userStore, eventManager)
 	userHandler := uh.NewUserHandler(userService)
 
-	goalStore := gs.NewGoalStore(db)
-	goalCategoryStore := gs.NewGoalCategoryStore(db)
+	goalStore := gs.NewGoalStore(dbInstance)
+	goalCategoryStore := gs.NewGoalCategoryStore(dbInstance)
 	goalService := gSrv.NewGoalService(goalStore, goalCategoryStore,
 		goalDomainLogger, eventManager)
 	goalHandler := gh.NewGoalHandler(goalService, goalDomainLogger)

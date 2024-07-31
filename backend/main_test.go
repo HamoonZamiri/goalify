@@ -2,6 +2,7 @@ package main_test
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	main "goalify"
@@ -12,6 +13,7 @@ import (
 	"goalify/utils/options"
 	"goalify/utils/responses"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"testing"
@@ -21,7 +23,58 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/testcontainers/testcontainers-go"
+	"github.com/testcontainers/testcontainers-go/modules/postgres"
+	"github.com/testcontainers/testcontainers-go/wait"
 )
+
+const MIGRATION_STR string = `
+CREATE TABLE levels  (
+    id SERIAL PRIMARY KEY,
+    level_up_xp INTEGER NOT NULL,
+    cash_reward INTEGER NOT NULL,
+    created_at TIMESTAMP DEFAULT now(),
+    updated_at TIMESTAMP DEFAULT now()
+);
+
+CREATE TABLE users  (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    email VARCHAR(255) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    xp INTEGER DEFAULT 0,
+    level_id SERIAL REFERENCES levels(id),
+    cash_available INTEGER DEFAULT 0,
+    refresh_token UUID DEFAULT gen_random_uuid(),
+    refresh_token_expiry TIMESTAMP NOT NULL,
+    created_at TIMESTAMP DEFAULT now(),
+    updated_at TIMESTAMP DEFAULT now()
+);
+
+CREATE TABLE goal_categories  (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    title VARCHAR(255) NOT NULL,
+    xp_per_goal INTEGER NOT NULL,
+    user_id UUID REFERENCES users(id),
+    created_at TIMESTAMP DEFAULT now(),
+    updated_at TIMESTAMP DEFAULT now()
+);
+
+CREATE TYPE goal_status AS ENUM ('complete', 'not_complete');
+
+CREATE TABLE goals (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    title VARCHAR(255) NOT NULL,
+    description VARCHAR(255) DEFAULT '',
+    user_id UUID REFERENCES users(id),
+    category_id UUID REFERENCES goal_categories(id) ON DELETE CASCADE,
+    status goal_status DEFAULT 'not_complete',
+    created_at TIMESTAMP DEFAULT now(),
+    updated_at TIMESTAMP DEFAULT now()
+);
+
+-- Insert Default Levels
+INSERT INTO levels (id, level_up_xp, cash_reward) VALUES (1, 100, 10);
+`
 
 const BASE_URL = "http://localhost:8080"
 
@@ -39,22 +92,52 @@ func setup() {
 }
 
 func TestMain(m *testing.M) {
+	ctx := context.Background()
+
 	var err error
 	configService = config.NewConfigService(options.None[string]())
 	configService.SetEnv("ENV", "test")
+	dbName := configService.MustGetEnv("TEST_DB_NAME")
+	dbUser := configService.MustGetEnv("DB_USER")
+	dbPassword := configService.MustGetEnv("DB_PASSWORD")
 
-	dbx, err = db.New(configService.MustGetEnv("TEST_DB_NAME"),
-		configService.MustGetEnv("DB_USER"), configService.MustGetEnv("DB_PASSWORD"))
+	pgContainer, err := postgres.Run(ctx, "docker.io/postgres:16-alpine",
+		postgres.WithDatabase(dbName),
+		postgres.WithUsername(dbUser),
+		postgres.WithPassword(dbPassword),
+		testcontainers.WithWaitStrategy(
+			wait.ForLog("database system is ready to accept connections").
+				WithOccurrence(2).
+				WithStartupTimeout(5*time.Second)),
+	)
 	if err != nil {
 		panic(err)
 	}
-	query := `DELETE from goals; DELETE FROM goal_categories; DELETE from users;`
-	dbx.MustExec(query)
+	defer func() {
+		if err = pgContainer.Terminate(ctx); err != nil {
+			log.Fatalf("Failed to terminate container: %s", err)
+		}
+	}()
 
+	connStr, err := pgContainer.ConnectionString(ctx, "sslmode=disable")
+	if err != nil {
+		panic(err)
+	}
+	configService.SetEnv("TEST_DB_CONN_STRING", connStr)
+
+	dbx, err = db.NewWithConnString(connStr)
+	if err != nil {
+		panic(err)
+	}
+
+	dbx.MustExec(MIGRATION_STR)
+
+	// start server in a goroutine
 	setup()
 	code := m.Run()
 
-	dbx.MustExec(query)
+	cleanup := `DELETE from goals; DELETE FROM goal_categories; DELETE from users;`
+	dbx.MustExec(cleanup)
 	os.Exit(code)
 }
 
