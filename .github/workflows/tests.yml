@@ -23,6 +23,8 @@ jobs:
           DB_PASSWORD: goalify
           JWT_SECRET: somesecret
           PORT: 8080
+          CI: "true"
         run: |
           cd backend
+          go mod download
           make test

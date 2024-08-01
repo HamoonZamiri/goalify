@@ -13,6 +13,9 @@ type ConfigService struct {
 }
 
 func NewConfigService(envFilePath options.Option[string]) *ConfigService {
+	if os.Getenv("CI") == "true" {
+		return &ConfigService{envFilePath: ""}
+	}
 	var err error
 	if envFilePath.IsPresent() {
 		err = godotenv.Load(envFilePath.ValueOrZero())
