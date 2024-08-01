@@ -19,7 +19,7 @@ jobs:
       - name: cd into backend
         run: cd backend
       - name: Run all tests
-        run: make test
+        run: go test -v ./...
         env:
           TEST_DB_NAME: goalify_test
           DB_USER: goalify
