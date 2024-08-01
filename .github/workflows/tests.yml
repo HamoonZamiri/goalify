@@ -1,0 +1,28 @@
+name: AllTests Action
+run-name: test containers running on GitHub Actions
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+jobs:
+  backend-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Starting backend tests"
+      - name: Checkout repo code
+        uses: actions/checkout@v4
+      - name: Setup Go 1.22
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.22..x"
+      - name: cd into backend
+        run: cd backend
+      - name: Run all tests
+        run: make test
+        env:
+          TEST_DB_NAME: goalify_test
+          DB_USER: goalify
+          DB_PASSWORD: goalify
+          JWT_SECRET: somesecret
+          PORT: 8080
