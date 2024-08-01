@@ -16,13 +16,13 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: "1.22.1"
-      - name: cd into backend
-        run: cd backend
       - name: Run all tests
-        run: go test -v ./...
         env:
           TEST_DB_NAME: goalify_test
           DB_USER: goalify
           DB_PASSWORD: goalify
           JWT_SECRET: somesecret
           PORT: 8080
+        run: |
+          cd backend
+          make test
