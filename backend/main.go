@@ -39,10 +39,10 @@ func Run() error {
 	var dbInstance *sqlx.DB
 
 	if configService.MustGetEnv("ENV") == "test" {
-		dbInstance, _ = db.NewWithConnString(configService.MustGetEnv("TEST_DB_CONN_STRING"))
+		dbInstance, _ = db.NewWithConnString(configService.MustGetEnv(config.TEST_DB_CONN_STRING))
 	} else {
-		dbInstance, _ = db.New(configService.MustGetEnv("DB_NAME"), configService.MustGetEnv("DB_PASSWORD"),
-			configService.MustGetEnv("DB_NAME"))
+		dbInstance, _ = db.New(configService.MustGetEnv(config.DB_NAME), configService.MustGetEnv(config.DB_PASSWORD),
+			configService.MustGetEnv(config.DB_NAME))
 	}
 	if dbInstance == nil {
 		panic("db instance is nil")
@@ -64,7 +64,7 @@ func Run() error {
 	goalHandler := gh.NewGoalHandler(goalService, goalDomainLogger)
 
 	srv := NewServer(userHandler, goalHandler, configService)
-	port := configService.MustGetEnv("PORT")
+	port := configService.MustGetEnv(config.PORT)
 	httpServer := &http.Server{
 		Addr:    ":" + port,
 		Handler: srv,
