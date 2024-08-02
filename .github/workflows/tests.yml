@@ -1,4 +1,4 @@
-name: AllTests Action
+name: All tests action
 run-name: test containers running on GitHub Actions
 on:
   push:
