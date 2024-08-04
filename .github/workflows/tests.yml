@@ -1,5 +1,5 @@
-name: all tests Action
-run-name: test containers running on GitHub Actions
+name: All tests action
+run-name: Test containers running on GitHub Actions
 on:
   pull_request:
     branches: [main]

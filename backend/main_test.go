@@ -96,10 +96,10 @@ func TestMain(m *testing.M) {
 
 	var err error
 	configService = config.NewConfigService(options.None[string]())
-	configService.SetEnv("ENV", "test")
-	dbName := configService.MustGetEnv("TEST_DB_NAME")
-	dbUser := configService.MustGetEnv("DB_USER")
-	dbPassword := configService.MustGetEnv("DB_PASSWORD")
+	configService.SetEnv(config.ENV, "test")
+	dbName := configService.MustGetEnv(config.TEST_DB_NAME)
+	dbUser := configService.MustGetEnv(config.DB_USER)
+	dbPassword := configService.MustGetEnv(config.DB_PASSWORD)
 
 	pgContainer, err := postgres.Run(ctx, "docker.io/postgres:16-alpine",
 		postgres.WithDatabase(dbName),
@@ -123,7 +123,7 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		panic(err)
 	}
-	configService.SetEnv("TEST_DB_CONN_STRING", connStr)
+	configService.SetEnv(config.TEST_DB_CONN_STRING, connStr)
 
 	dbx, err = db.NewWithConnString(connStr)
 	if err != nil {
