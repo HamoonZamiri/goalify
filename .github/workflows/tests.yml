@@ -1,8 +1,6 @@
-name: AllTests Action
+name: all tests Action
 run-name: test containers running on GitHub Actions
 on:
-  push:
-    branches: [main]
   pull_request:
     branches: [main]
 jobs:
