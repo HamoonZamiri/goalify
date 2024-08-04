@@ -10,8 +10,8 @@ function handleLogout(e: MouseEvent) {
 </script>
 
 <template>
-  <div class="bg-gray-900 w-[100vw] h-[100vh]">
-    <header class="bg-gray-800 mb-2">
+  <div class="bg-gray-900 h-screen w-screen flex flex-col">
+    <header class="bg-gray-800 mb-2 h-auto">
       <div class="flex text-gray-200 justify-between p-6">
         <RouterLink to="/">
           <h1 class="font-semibold text-3xl hover:text-gray-300">Goalify</h1>
@@ -33,6 +33,6 @@ function handleLogout(e: MouseEvent) {
         </nav>
       </div>
     </header>
-    <main><RouterView /></main>
+    <div class="w-full h-full"><RouterView /></div>
   </div>
 </template>

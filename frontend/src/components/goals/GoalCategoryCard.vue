@@ -49,7 +49,7 @@ async function handleDeleteCategory(e: MouseEvent) {
             </svg>
           </MenuButton>
           <MenuItems
-            class="absolute flex flex-col items-start w-56 bg-gray-300 p-1 rounded-md"
+            class="absolute flex flex-col items-start w-56 bg-gray-300 p-1 rounded-md justify-self-start"
           >
             <MenuItem
               as="button"
@@ -101,7 +101,7 @@ async function handleDeleteCategory(e: MouseEvent) {
         </Menu>
       </div>
     </header>
-    <div class="mb-4 w-full" v-for="goal in goalCategory.goals">
+    <div class="w-full flex flex-col gap-2" v-for="goal in goalCategory.goals">
       <GoalCard :goal="goal" />
     </div>
   </div>
