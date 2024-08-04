@@ -1,7 +1,7 @@
 build:
 	@go build -o bin/goalify
 
-run: build
+run: build up
 	@./bin/goalify
 unit:
 	@echo "Running unit tests..."
