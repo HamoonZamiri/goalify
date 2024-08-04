@@ -32,8 +32,12 @@ onMounted(async () => {
     v-else
     class="flex flex-col bg-gray-900 items-center sm:items-start px-6 w-auto"
   >
-    <section class="flex-col sm:flex-row flex gap-4 w-full">
-      <div class="w-full sm:w-1/3" v-for="cat in goalState.categories">
+    <section class="flex-col sm:flex-row flex gap-4 w-full overflow-x-auto">
+      <div
+        class="w-full sm:w-1/3 flex-shrink-0"
+        v-for="cat in goalState.categories"
+        key="cat.id"
+      >
         <GoalCategoryCard :goalCategory="cat" />
       </div>
       <ModalForm
