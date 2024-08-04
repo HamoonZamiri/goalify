@@ -167,6 +167,19 @@ async function deleteGoal(goalId: string): Promise<void> {
   }
 }
 
+async function deleteCategory(categoryId: string): Promise<void> {
+  const res = await fetch(`${API_BASE}/goals/categories/${categoryId}`, {
+    method: http.MethodDelete,
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${authState.user?.access_token}`,
+    },
+  });
+  if (!res.ok) {
+    throw new Error("Failed to delete category");
+  }
+}
+
 // async function deleteGoal(goalId: string)
 
 export const ApiClient = {
@@ -177,5 +190,6 @@ export const ApiClient = {
   createGoal,
   updateGoal,
   deleteGoal,
+  deleteCategory,
   isError,
 } as const;

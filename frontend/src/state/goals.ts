@@ -19,16 +19,24 @@ function deleteGoal(categoryId: string, goalId: string) {
   }
 }
 
+function deleteCategory(categoryId: string) {
+  goalState.categories = goalState.categories.filter(
+    (c) => c.id !== categoryId,
+  );
+}
+
 const goalState = reactive<{
   categories: GoalCategory[];
   addCategory: (category: GoalCategory) => void;
   addGoal: (categoryId: string, goal: Goal) => void;
   deleteGoal: (categoryId: string, goalId: string) => void;
+  deleteCategory: (categoryId: string) => void;
 }>({
   categories: [],
   addCategory,
   addGoal,
   deleteGoal,
+  deleteCategory,
 });
 
 export default goalState;
