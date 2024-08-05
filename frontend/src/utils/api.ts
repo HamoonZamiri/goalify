@@ -68,7 +68,7 @@ async function zodFetch<T>(
         Authorization: `Bearer ${authState.user?.access_token}`,
       },
     });
-    router.push(RouteNames.HOME);
+    router.push({ name: RouteNames.HOME });
   }
   if (!res.ok) {
     const error = json as ErrorResponse;
@@ -180,6 +180,23 @@ async function deleteCategory(categoryId: string): Promise<void> {
   }
 }
 
+async function updateCategory(
+  categoryId: string,
+  updates: Partial<GoalCategory>,
+) {
+  const res = await fetch(`${API_BASE}/goals/categories/${categoryId}`, {
+    method: http.MethodPut,
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${authState.user?.access_token}`,
+    },
+    body: JSON.stringify(updates),
+  });
+  if (!res.ok) {
+    throw new Error("Failed to update category");
+  }
+}
+
 // async function deleteGoal(goalId: string)
 
 export const ApiClient = {
@@ -191,5 +208,6 @@ export const ApiClient = {
   updateGoal,
   deleteGoal,
   deleteCategory,
+  updateCategory,
   isError,
 } as const;

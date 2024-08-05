@@ -125,7 +125,7 @@ const statusMap = { not_complete: "Not Complete", complete: "Complete" };
                     :value="status.value"
                     :disabled="status.value === updates.status"
                     :class="{
-                      'w-56 h-8 bg-gray-300 text-gray-600 text-center hover:bg-gray-400': true,
+                      'w-56 hover:cursor-pointer h-8 bg-gray-300 text-gray-600 text-center hover:bg-gray-400': true,
                       hidden: updates.status === status.value,
                     }"
                   >

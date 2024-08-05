@@ -7,6 +7,7 @@ import CreateGoalButton from "./CreateGoalButton.vue";
 import { Menu, MenuButton, MenuItems, MenuItem } from "@headlessui/vue";
 import { ApiClient } from "@/utils/api";
 import goalState from "@/state/goals";
+import { watch, watchEffect } from "vue";
 const props = defineProps<{
   goalCategory: GoalCategory;
 }>();
@@ -18,13 +19,23 @@ async function handleDeleteCategory(e: MouseEvent) {
   // remove category from state
   goalState.deleteCategory(props.goalCategory.id);
 }
+
+watch(props.goalCategory, async (category) => {
+  if (!category.title) {
+    return;
+  }
+  await ApiClient.updateCategory(props.goalCategory.id, {
+    title: category.title,
+  });
+});
 </script>
 <template>
   <div class="flex flex-col">
     <header class="flex justify-between">
-      <span class="text-xl text-gray-200 pb-2">{{
-        props.goalCategory.title
-      }}</span>
+      <input
+        v-model="props.goalCategory.title"
+        class="w-full text-gray-200 bg-gray-900 pb-2 text-xl focus:outline-none"
+      />
       <div class="flex">
         <ModalForm
           :FormComponent="CreateGoalForm"
@@ -49,7 +60,7 @@ async function handleDeleteCategory(e: MouseEvent) {
             </svg>
           </MenuButton>
           <MenuItems
-            class="absolute flex flex-col items-start w-56 bg-gray-300 p-1 rounded-md"
+            class="absolute flex flex-col items-start w-56 bg-gray-300 p-1 rounded-md justify-self-start"
           >
             <MenuItem
               as="button"
@@ -101,7 +112,7 @@ async function handleDeleteCategory(e: MouseEvent) {
         </Menu>
       </div>
     </header>
-    <div class="mb-4 w-full" v-for="goal in goalCategory.goals">
+    <div class="w-full flex flex-col gap-2" v-for="goal in goalCategory.goals">
       <GoalCard :goal="goal" />
     </div>
   </div>
