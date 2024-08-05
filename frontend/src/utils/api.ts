@@ -68,7 +68,7 @@ async function zodFetch<T>(
         Authorization: `Bearer ${authState.user?.access_token}`,
       },
     });
-    router.push({ name: RouteNames.HOME });
+    router.go(0);
   }
   if (!res.ok) {
     const error = json as ErrorResponse;

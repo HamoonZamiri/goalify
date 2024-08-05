@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import type { GoalCategory } from "@/utils/schemas";
 import GoalCard from "./GoalCard.vue";
-import ModalForm from "../ModalForm.vue";
-import CreateGoalForm from "./CreateGoalForm.vue";
-import CreateGoalButton from "./CreateGoalButton.vue";
+import ModalForm from "@/components/ModalForm.vue";
+import CreateGoalForm from "@/components/goals/forms/CreateGoalForm.vue";
+import CreateGoalButton from "@/components/goals/buttons/CreateGoalButton.vue";
 import { Menu, MenuButton, MenuItems, MenuItem } from "@headlessui/vue";
 import { ApiClient } from "@/utils/api";
 import goalState from "@/state/goals";
