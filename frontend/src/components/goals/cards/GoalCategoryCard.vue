@@ -1,16 +1,24 @@
 <script setup lang="ts">
 import type { GoalCategory } from "@/utils/schemas";
 import GoalCard from "./GoalCard.vue";
-import ModalForm from "../ModalForm.vue";
-import CreateGoalForm from "./CreateGoalForm.vue";
-import CreateGoalButton from "./CreateGoalButton.vue";
+import ModalForm from "@/components/ModalForm.vue";
+import CreateGoalForm from "@/components/goals/forms/CreateGoalForm.vue";
+import CreateGoalButton from "@/components/goals/buttons/CreateGoalButton.vue";
 import { Menu, MenuButton, MenuItems, MenuItem } from "@headlessui/vue";
 import { ApiClient } from "@/utils/api";
 import goalState from "@/state/goals";
-import { watch, watchEffect } from "vue";
+import { reactive, watch } from "vue";
 const props = defineProps<{
   goalCategory: GoalCategory;
 }>();
+
+const XP_PER_GOAL_MAX = 100;
+const XP_PER_GOAL_MIN = 1;
+
+const updates = reactive({
+  title: props.goalCategory.title,
+  xp_per_goal: props.goalCategory.xp_per_goal,
+});
 
 async function handleDeleteCategory(e: MouseEvent) {
   e.preventDefault();
@@ -20,22 +28,64 @@ async function handleDeleteCategory(e: MouseEvent) {
   goalState.deleteCategory(props.goalCategory.id);
 }
 
-watch(props.goalCategory, async (category) => {
-  if (!category.title) {
-    return;
+async function handleNumericInput(payload: Event) {
+  const value = (payload.target as HTMLInputElement).value;
+  const parsedVal = parseInt(value);
+  if (parsedVal > XP_PER_GOAL_MAX) {
+    updates.xp_per_goal = XP_PER_GOAL_MAX;
+  } else {
+    updates.xp_per_goal = parsedVal;
   }
+}
+
+watch(updates, async (category) => {
+  props.goalCategory.title = category.title;
+  props.goalCategory.xp_per_goal = category.xp_per_goal;
+
+  if (
+    category.title === "" ||
+    category.xp_per_goal < XP_PER_GOAL_MIN ||
+    category.xp_per_goal > XP_PER_GOAL_MAX ||
+    isNaN(category.xp_per_goal)
+  )
+    return;
+
   await ApiClient.updateCategory(props.goalCategory.id, {
     title: category.title,
+    xp_per_goal: category.xp_per_goal,
   });
 });
 </script>
 <template>
   <div class="flex flex-col">
     <header class="flex justify-between">
-      <input
-        v-model="props.goalCategory.title"
-        class="w-full text-gray-200 bg-gray-900 pb-2 text-xl focus:outline-none"
-      />
+      <div class="flex flex-col">
+        <input
+          v-model="updates.title"
+          class="w-auto text-gray-200 bg-gray-900 text-xl focus:outline-none"
+        />
+        <div class="flex gap-1">
+          <span class="text-xs text-gray-300">Earn</span>
+          <input
+            type="number"
+            min="1"
+            max="100"
+            @input="handleNumericInput"
+            class="num-input focus:outline-none text-xs bg-gray-900 font-semibold text-green-500"
+            :class="{
+              'w-2':
+                props.goalCategory.xp_per_goal < 10 ||
+                isNaN(props.goalCategory.xp_per_goal),
+              'w-4':
+                props.goalCategory.xp_per_goal >= 10 &&
+                props.goalCategory.xp_per_goal < 100,
+              'w-6': props.goalCategory.xp_per_goal == 100,
+            }"
+            v-model="updates.xp_per_goal"
+          />
+          <span class="text-xs text-gray-300">xp/goal</span>
+        </div>
+      </div>
       <div class="flex">
         <ModalForm
           :FormComponent="CreateGoalForm"
@@ -117,3 +167,16 @@ watch(props.goalCategory, async (category) => {
     </div>
   </div>
 </template>
+<style scoped>
+/* Hide default increment and decrement arrows */
+.num-input::-webkit-outer-spin-button,
+.num-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.num-input {
+  -moz-appearance: textfield; /* Hides the arrows in Firefox */
+  appearance: textfield; /* Hides the arrows in other browsers */
+}
+</style>
