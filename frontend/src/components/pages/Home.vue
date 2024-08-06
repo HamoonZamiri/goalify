@@ -3,7 +3,7 @@ import GoalCategoryCard from "@/components/goals/cards/GoalCategoryCard.vue";
 import { onMounted, ref } from "vue";
 import { type ErrorResponse, ApiClient } from "@/utils/api";
 import ModalForm from "@/components/ModalForm.vue";
-import CreateGoalCategoryForm from "@/components/goals/forms/CreateGoalForm.vue";
+import CreateGoalCategoryForm from "@/components/goals/forms/CreateGoalCategoryForm.vue";
 import CreateCategoryButton from "@/components/goals/buttons/CreateCategoryButton.vue";
 import goalState from "@/state/goals";
 
