@@ -48,11 +48,17 @@ async function handleDeleteGoal(e: MouseEvent) {
   setIsDeleting(false);
 }
 
+async function handleToggleStatus(e: MouseEvent) {
+  e.preventDefault();
+  updates.status = updates.status === "complete" ? "not_complete" : "complete";
+}
+
 // watches for updates on the goal title and description
 watch(updates, async (newUpdates) => {
   // syncronhize state passed in from props with local reactive updates
   props.goal.title = newUpdates.title;
   props.goal.description = newUpdates.description;
+  props.goal.status = newUpdates.status;
   // do not send updates with empty strings, titles and descriptions cannot be empty
   if (!newUpdates.title || !newUpdates.description) return;
 
@@ -83,13 +89,25 @@ const statusMap = { not_complete: "Not Complete", complete: "Complete" };
   <header
     @click="setIsEditing(true)"
     class="flex p-4 w-full h-full bg-gray-700 hover:cursor-pointer hover:bg-gray-600 gap-x-2 items-center rounded-sm"
+    :class="{
+      'bg-green-600 hover:bg-green-700': props.goal.status === 'complete',
+    }"
   >
-    <v-icon
-      class="hover:cursor-pointer"
-      name="io-checkmark-circle-outline"
-      animation="wrench"
-      hover
-    />
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke-width="1.5"
+      stroke="currentColor"
+      class="size-6"
+      @click.stop="handleToggleStatus"
+    >
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+      />
+    </svg>
     <span class="font-semibold text-gray-300">{{ props.goal.title }}</span>
   </header>
   <section>
