@@ -38,6 +38,27 @@ func AuthenticatedOnly(next http.Handler) http.Handler {
 	)
 }
 
+func QueryTokenAuth(next http.Handler) http.Handler {
+	return http.HandlerFunc(
+		func(w http.ResponseWriter, r *http.Request) {
+			token := r.URL.Query().Get("token")
+			if token == "" {
+				responses.SendAPIError(w, r, http.StatusUnauthorized, "empty query: unauthorized request", nil)
+				return
+			}
+
+			id, err := service.VerifyToken(token)
+			if err != nil {
+				slog.Error("middleware.QueryTokenAuth: service.VerifyToken:", "err", err)
+				responses.SendAPIError(w, r, http.StatusUnauthorized, "invalid access token: unauthorized request", nil)
+				return
+			}
+
+			r.Header.Set("user_id", id)
+			next.ServeHTTP(w, r)
+		})
+}
+
 func GetIdFromHeader(r *http.Request) (string, error) {
 	id := r.Header.Get("user_id")
 	if id == "" {
