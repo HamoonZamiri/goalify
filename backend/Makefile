@@ -11,7 +11,7 @@ inte:
 	@go test -count=1 -v ./main_test.go
 test: unit inte
 up:
-	@docker-compose up -d
+	@docker compose up -d
 down: 
-	@docker-compose down
+	@docker compose down
 
