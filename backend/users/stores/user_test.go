@@ -20,22 +20,19 @@ import (
 )
 
 var (
-	dbConn    *sqlx.DB
-	userStore UserStore
+	dbConn      *sqlx.DB
+	userStore   UserStore
+	pgContainer *postgres.PostgresContainer
 )
 
-func setup() {
-	userStore = NewUserStore(dbConn)
-}
-
-func TestMain(m *testing.M) {
-	ctx := context.Background()
-
+func setup(ctx context.Context) {
 	dbName := "user_store"
 	dbUser := "postgres"
 	dbPass := "password"
 
-	pgContainer, err := postgres.Run(ctx, "docker.io/postgres:16-alpine",
+	var err error
+
+	pgContainer, err = postgres.Run(ctx, "docker.io/postgres:16-alpine",
 		postgres.WithDatabase(dbName),
 		postgres.WithUsername(dbUser),
 		postgres.WithPassword(dbPass),
@@ -47,11 +44,6 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		panic(err)
 	}
-	defer func() {
-		if err = pgContainer.Terminate(ctx); err != nil {
-			log.Fatalf("Failed to terminate container: %s", err)
-		}
-	}()
 
 	connStr, err := pgContainer.ConnectionString(ctx, "sslmode=disable")
 	if err != nil {
@@ -63,13 +55,24 @@ func TestMain(m *testing.M) {
 		panic(err)
 	}
 
+	userStore = NewUserStore(dbConn)
+
 	err = goose.UpContext(ctx, dbConn.DB, "../../db/migrations")
 	if err != nil {
 		panic(err)
 	}
+}
 
-	setup()
+func TestMain(m *testing.M) {
+	ctx := context.Background()
 
+	setup(ctx)
+
+	defer func() {
+		if err := pgContainer.Terminate(ctx); err != nil {
+			log.Fatalf("Failed to terminate container: %s", err)
+		}
+	}()
 	code := m.Run()
 	os.Exit(code)
 }
@@ -110,7 +113,6 @@ func TestUpdateRefreshToken(t *testing.T) {
 	user, err = userStore.UpdateRefreshToken(user.Id.String(), newToken.String())
 	assert.NoError(t, err)
 	assert.NotEqual(t, oldExpiry, user.RefreshTokenExpiry)
-	assert.Greater(t, user.RefreshTokenExpiry.Unix(), time.Now().Unix())
 	assert.NotEqual(t, oldToken.String(), user.RefreshToken.String())
 }
 

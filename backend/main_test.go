@@ -37,16 +37,10 @@ var (
 	refreshToken  string
 	userId        string
 	configService *config.ConfigService
+	pgContainer   *postgres.PostgresContainer
 )
 
-func setup() {
-	go main.Run()
-	time.Sleep(250 * time.Millisecond)
-}
-
-func TestMain(m *testing.M) {
-	ctx := context.Background()
-
+func setup(ctx context.Context) {
 	var err error
 	configService = config.NewConfigService(options.None[string]())
 	configService.SetEnv(config.ENV, "test")
@@ -54,7 +48,7 @@ func TestMain(m *testing.M) {
 	dbUser := configService.MustGetEnv(config.DB_USER)
 	dbPassword := configService.MustGetEnv(config.DB_PASSWORD)
 
-	pgContainer, err := postgres.Run(ctx, "docker.io/postgres:16-alpine",
+	pgContainer, err = postgres.Run(ctx, "docker.io/postgres:16-alpine",
 		postgres.WithDatabase(dbName),
 		postgres.WithUsername(dbUser),
 		postgres.WithPassword(dbPassword),
@@ -66,11 +60,6 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		panic(err)
 	}
-	defer func() {
-		if err = pgContainer.Terminate(ctx); err != nil {
-			log.Fatalf("Failed to terminate container: %s", err)
-		}
-	}()
 
 	connStr, err := pgContainer.ConnectionString(ctx, "sslmode=disable")
 	if err != nil {
@@ -88,13 +77,24 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		panic(err)
 	}
+	go main.Run()
+	time.Sleep(250 * time.Millisecond)
+}
+
+func TestMain(m *testing.M) {
+	ctx := context.Background()
 
 	// start server in a goroutine
-	setup()
+	setup(ctx)
 	code := m.Run()
 
-	cleanup := `DELETE from goals; DELETE FROM goal_categories; DELETE from users;`
-	dbx.MustExec(cleanup)
+	var err error
+	defer func() {
+		if err = pgContainer.Terminate(ctx); err != nil {
+			log.Fatalf("Failed to terminate container: %s", err)
+		}
+	}()
+
 	os.Exit(code)
 }
 
