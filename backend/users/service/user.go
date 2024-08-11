@@ -18,6 +18,14 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+type UserService interface {
+	SignUp(email, password string) (*entities.UserDTO, error)
+	Login(email, password string) (*entities.UserDTO, error)
+	Refresh(email, refreshToken string) (*entities.UserDTO, error)
+	DeleteUserById(id string) error
+	UpdateUserById(id uuid.UUID, updates map[string]interface{}) (*entities.UserDTO, error)
+}
+
 type UserServiceImpl struct {
 	userStore      stores.UserStore
 	eventPublisher events.EventPublisher
