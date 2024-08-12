@@ -84,7 +84,6 @@ func (s *UserServiceImpl) SignUp(email, password string) (*entities.UserDTO, err
 	}
 
 	cleanedEmail := strings.TrimSpace(email)
-	cleanedEmail = strings.ToLower(cleanedEmail)
 	if cleanedEmail == "" {
 		return nil, fmt.Errorf("%w: email cannot be empty", svcerror.ErrBadRequest)
 	}
