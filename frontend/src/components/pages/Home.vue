@@ -21,6 +21,7 @@ onMounted(async () => {
 
   goalState.categories = res.data;
   isLoading.value = false;
+  ApiClient.openSSEConnection();
 });
 </script>
 

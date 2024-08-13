@@ -13,9 +13,9 @@ import (
 )
 
 type Event struct {
-	Data      any                       `json:"data"`
-	EventType string                    `json:"event_type"`
-	UserId    options.Option[uuid.UUID] `json:"user_id"`
+	Data      any                    `json:"data"`
+	EventType string                 `json:"event_type"`
+	UserId    options.Option[string] `json:"user_id"`
 }
 
 const (
@@ -55,7 +55,7 @@ type EventPublisher interface {
 type EventManager struct {
 	eventQueue  chan Event
 	subscribers map[string]*lists.TypedList[Subscriber]
-	sseConnMap  map[uuid.UUID][]*SSEConn
+	sseConnMap  map[string][]*SSEConn
 	mu          sync.Mutex
 }
 
@@ -63,7 +63,7 @@ func NewEvent(eventType string, data any) Event {
 	return Event{
 		Data:      data,
 		EventType: eventType,
-		UserId:    options.None[uuid.UUID](),
+		UserId:    options.None[string](),
 	}
 }
 
@@ -71,7 +71,7 @@ func NewEventWithUserId(eventType string, data any, userId uuid.UUID) Event {
 	return Event{
 		Data:      data,
 		EventType: eventType,
-		UserId:    options.Some(userId),
+		UserId:    options.Some(userId.String()),
 	}
 }
 
@@ -80,7 +80,7 @@ func NewEventManager() *EventManager {
 		eventQueue:  make(chan Event, QUEUE_MAX_SIZE),
 		subscribers: make(map[string]*lists.TypedList[Subscriber]),
 		mu:          sync.Mutex{},
-		sseConnMap:  make(map[uuid.UUID][]*SSEConn),
+		sseConnMap:  make(map[string][]*SSEConn),
 	}
 	go em.processEvents()
 	return em
@@ -130,6 +130,15 @@ func (em *EventManager) processEvents() {
 				slog.Warn("EventManager.Publish: type assertion failed", "subscriber", e.Value)
 			}
 			sub.HandleEvent(event)
+		}
+
+		sseConns, ok := em.sseConnMap[event.UserId.ValueOrZero()]
+		if !ok {
+			em.mu.Unlock()
+			continue
+		}
+		for _, sseConn := range sseConns {
+			sseConn.eventQueue <- event
 		}
 		em.mu.Unlock()
 

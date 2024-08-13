@@ -24,12 +24,12 @@ func AddRoutes(
 	configService config.ConfigService,
 	em *events.EventManager,
 ) http.Handler {
-	var corsDebug bool
-	if configService.MustGetEnv("ENV") == "dev" {
-		corsDebug = true
-	} else {
-		corsDebug = false
-	}
+	// // var corsDebug bool
+	// if configService.MustGetEnv("ENV") == "dev" {
+	// 	corsDebug = true
+	// } else {
+	// 	corsDebug = false
+	// }
 
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{"http://localhost:5173"},
@@ -42,12 +42,12 @@ func AddRoutes(
 			http.MethodOptions,
 		},
 		AllowCredentials: true,
-		Debug:            corsDebug,
+		Debug:            false,
 		AllowedHeaders:   []string{"*"},
 	})
 	CorsChain := middleware.CreateChain(middleware.Logging, c.Handler)
 	AuthChain := middleware.CreateChain(middleware.Logging, c.Handler, middleware.AuthenticatedOnly)
-	QueryTokenAuthChain := middleware.CreateChain(middleware.Logging, c.Handler, middleware.QueryTokenAuth)
+	QueryTokenAuthChain := middleware.CreateChain(c.Handler, middleware.QueryTokenAuth)
 
 	mux.Handle("GET /health", CorsChain(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.Write([]byte("Hello\n"))

@@ -8,7 +8,7 @@ import {
 } from "@/utils/schemas";
 import authState from "@/state/auth";
 import { ref } from "vue";
-import type { ErrorResponse } from "@/utils/api";
+import { ApiClient, type ErrorResponse } from "@/utils/api";
 
 const error = ref<ErrorResponse | null>(null);
 const formData = ref<{
@@ -38,6 +38,7 @@ async function signup(payload: MouseEvent) {
   const parsed = createServerResponseSchema(UserSchema).parse(json);
   authState.setUser(parsed.data as User);
   error.value = null;
+  await ApiClient.openSSEConnection();
   router.push({ name: "Home" });
 }
 </script>

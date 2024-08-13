@@ -1,26 +1,36 @@
 package events
 
 import (
+	"fmt"
+	"log"
+	"log/slog"
 	"net/http"
 
 	"github.com/google/uuid"
 )
 
 type SSEConn struct {
-	writer http.ResponseWriter
-	userId uuid.UUID
+	eventQueue chan Event
+	writer     http.ResponseWriter
+	userId     string
 }
 
 func NewSSEConn(writer http.ResponseWriter, userId uuid.UUID) *SSEConn {
 	return &SSEConn{
-		writer: writer,
-		userId: userId,
+		writer:     writer,
+		userId:     userId.String(),
+		eventQueue: make(chan Event, 10),
 	}
 }
 
-func (s *SSEConn) WriteEvent(event []byte) error {
-	_, err := s.writer.Write(event)
-	return err
+func (s *SSEConn) WriteEvent(event Event) error {
+	eventId := uuid.New().String()
+	eventData, err := event.EncodeEvent()
+	if err != nil {
+		return err
+	}
+	fmt.Fprintf(s.writer, "id: %s\nevent: %s\ndata: %s\n\n", eventId, event.EventType, eventData)
+	return nil
 }
 
 func (em *EventManager) AddSSEConn(conn *SSEConn) {
@@ -48,8 +58,8 @@ func (em *EventManager) RemoveSSEConn(conn *SSEConn) {
 
 func (em *EventManager) SSEHandler(w http.ResponseWriter, r *http.Request) {
 	userId := r.Header.Get("user_id")
-	parsedUserId, _ := uuid.Parse(userId)
-	if userId == "" || parsedUserId == uuid.Nil {
+	parsedUserId, err := uuid.Parse(userId)
+	if userId == "" || parsedUserId == uuid.Nil || err != nil {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
@@ -57,7 +67,6 @@ func (em *EventManager) SSEHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/event-stream")
 	w.Header().Set("Cache-Control", "no-cache")
 	w.Header().Set("Connection", "keep-alive")
-	w.Header().Set("X-Accel-Buffering", "no")
 
 	conn := NewSSEConn(w, parsedUserId)
 	em.AddSSEConn(conn)
@@ -65,11 +74,16 @@ func (em *EventManager) SSEHandler(w http.ResponseWriter, r *http.Request) {
 
 	for {
 		select {
-		case event := <-em.eventQueue:
+		case event := <-conn.eventQueue:
+			log.Println("event:", event)
+			log.Println(event.Data)
 			userId := event.UserId
-			encoded, err := event.EncodeEvent()
-			if userId.ValueOrZero() == conn.userId && err == nil {
-				conn.WriteEvent(encoded)
+			if userId.ValueOrZero() == conn.userId {
+				err := conn.WriteEvent(event)
+				if err != nil {
+					slog.Error("SSEHandler: conn.WriteEvent:", "err", err)
+				}
+				w.(http.Flusher).Flush()
 			}
 		case <-r.Context().Done():
 			return

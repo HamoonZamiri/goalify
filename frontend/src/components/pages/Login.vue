@@ -8,6 +8,7 @@ import {
 } from "@/utils/schemas";
 import authState from "@/state/auth";
 import { ref } from "vue";
+import { ApiClient } from "@/utils/api";
 
 const error = ref<string | null>(null);
 const formData = ref<{ email: string; password: string }>({
@@ -32,6 +33,7 @@ async function login(payload: MouseEvent) {
   const parsed = createServerResponseSchema(UserSchema).parse(json);
   authState.setUser(parsed.data as User);
   error.value = null;
+  ApiClient.openSSEConnection();
   router.push({ name: "Home" });
 }
 </script>

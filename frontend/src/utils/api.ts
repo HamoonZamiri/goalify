@@ -3,6 +3,7 @@ import { API_BASE, http } from "./constants";
 import { Schemas, type Goal, type GoalCategory } from "./schemas";
 import type { z } from "zod";
 import router, { RouteNames } from "@/router";
+import { fetchEventSource } from "@microsoft/fetch-event-source";
 
 type ServerResponse<T> = {
   message: string;
@@ -197,6 +198,27 @@ async function updateCategory(
   }
 }
 
+let eventSource: EventSource | null = null;
+async function openSSEConnection() {
+  if (!authState.user || eventSource !== null) {
+    return;
+  }
+  eventSource = new EventSource(
+    `${API_BASE}/events?token=${authState.user?.access_token}`,
+  );
+  eventSource.onmessage = (event) => {
+    console.log(event);
+  };
+
+  eventSource.onerror = (event) => {
+    console.error(event);
+  };
+
+  eventSource.onopen = (event) => {
+    console.log(event);
+  };
+}
+
 // async function deleteGoal(goalId: string)
 
 export const ApiClient = {
@@ -209,5 +231,7 @@ export const ApiClient = {
   deleteGoal,
   deleteCategory,
   updateCategory,
+  openSSEConnection,
+  eventSource,
   isError,
 } as const;
