@@ -114,7 +114,7 @@ func (gs *GoalServiceImpl) CreateGoalCategory(title string, xpPerGoal int, userI
 		return nil, fmt.Errorf("%w: error creating goal category", svcerror.ErrInternalServer)
 	}
 
-	e := events.NewEventWithUserId(events.GOAL_CATEGORY_CREATED, cat, cat.UserId)
+	e := events.NewEventWithUserId(events.GOAL_CATEGORY_CREATED, cat, cat.UserId.String())
 	gs.eventPublisher.Publish(e)
 
 	return cat, nil

@@ -74,6 +74,7 @@ func AddRoutes(
 	addRoute(mux, "OPTIONS", "/api/*", nil, CorsChain)
 
 	// Server Sent Events endpoint
+	addRoute(mux, http.MethodOptions, "/api/events", nil, CorsChain)
 	addRoute(mux, http.MethodGet, "/api/events", em.SSEHandler, QueryTokenAuthChain)
 	return mux
 }

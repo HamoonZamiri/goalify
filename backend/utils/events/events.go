@@ -8,8 +8,6 @@ import (
 	"log/slog"
 	"reflect"
 	"sync"
-
-	"github.com/google/uuid"
 )
 
 type Event struct {
@@ -39,7 +37,7 @@ func ParseEventData[T any](event Event) (T, error) {
 }
 
 func (e *Event) EncodeEvent() ([]byte, error) {
-	return json.Marshal(e)
+	return json.Marshal(e.Data)
 }
 
 type Subscriber interface {
@@ -67,11 +65,11 @@ func NewEvent(eventType string, data any) Event {
 	}
 }
 
-func NewEventWithUserId(eventType string, data any, userId uuid.UUID) Event {
+func NewEventWithUserId(eventType string, data any, userId string) Event {
 	return Event{
 		Data:      data,
 		EventType: eventType,
-		UserId:    options.Some(userId.String()),
+		UserId:    options.Some(userId),
 	}
 }
 
