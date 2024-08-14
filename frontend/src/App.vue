@@ -17,7 +17,7 @@ function handleLogout(e: MouseEvent) {
           <h1 class="font-semibold text-3xl hover:text-gray-300">Goalify</h1>
         </RouterLink>
         <nav class="flex gap-4">
-          <div v-if="!authState.user" class="flex gap-2">
+          <div v-if="!authState.getUser" class="flex gap-2">
             <RouterLink class="text-xl hover:text-gray-300" to="/login"
               >Login</RouterLink
             >

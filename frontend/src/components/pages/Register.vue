@@ -38,7 +38,6 @@ async function signup(payload: MouseEvent) {
   const parsed = createServerResponseSchema(UserSchema).parse(json);
   authState.setUser(parsed.data as User);
   error.value = null;
-  await ApiClient.openSSEConnection();
   router.push({ name: "Home" });
 }
 </script>

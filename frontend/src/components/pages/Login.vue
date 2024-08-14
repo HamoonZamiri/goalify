@@ -33,7 +33,6 @@ async function login(payload: MouseEvent) {
   const parsed = createServerResponseSchema(UserSchema).parse(json);
   authState.setUser(parsed.data as User);
   error.value = null;
-  ApiClient.openSSEConnection();
   router.push({ name: "Home" });
 }
 </script>
