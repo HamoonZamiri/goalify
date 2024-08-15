@@ -2,23 +2,27 @@ import { onUnmounted, ref } from "vue";
 
 export function useSSE(url: string) {
   const eventSource = ref<EventSource | null>(null);
+  const messages = ref<string[]>([]);
 
   const connect = () => {
     if (eventSource.value) {
       return;
     }
 
-    eventSource.value = new EventSource(url);
-    eventSource.value.onopen = () => {
+    const es = new EventSource(url);
+    es.onopen = () => {
       console.log("connected");
     };
-    eventSource.value.onerror = () => {
+    es.onerror = () => {
       console.log("error");
     };
-    eventSource.value.onmessage = (event) => {
+    es.onmessage = (event) => {
       console.log(event);
       console.log(event.data);
+      messages.value.push(event.data);
     };
+
+    eventSource.value = es;
   };
 
   onUnmounted(() => {
@@ -30,5 +34,6 @@ export function useSSE(url: string) {
   return {
     eventSource,
     connect,
+    messages,
   };
 }

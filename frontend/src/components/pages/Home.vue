@@ -1,21 +1,15 @@
 <script setup lang="ts">
 import GoalCategoryCard from "@/components/goals/cards/GoalCategoryCard.vue";
-import { onMounted, ref } from "vue";
+import { onMounted, ref, watch } from "vue";
 import { type ErrorResponse, ApiClient } from "@/utils/api";
 import ModalForm from "@/components/ModalForm.vue";
 import CreateGoalCategoryForm from "@/components/goals/forms/CreateGoalCategoryForm.vue";
 import CreateCategoryButton from "@/components/goals/buttons/CreateCategoryButton.vue";
 import goalState from "@/state/goals";
-import { useSSE } from "@/utils/sse";
-import { API_BASE } from "@/utils/constants";
-import authState from "@/state/auth";
 
 // State
 const error = ref<ErrorResponse | null>(null);
 const isLoading = ref<boolean>(true);
-const { connect } = useSSE(
-  `${API_BASE}/events?token=${authState.getUser()?.access_token}`,
-);
 
 onMounted(async () => {
   const res = await ApiClient.getUserGoalCategories();
@@ -27,7 +21,6 @@ onMounted(async () => {
 
   goalState.categories = res.data;
   isLoading.value = false;
-  connect();
 });
 </script>
 

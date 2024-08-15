@@ -2,9 +2,9 @@ package events
 
 import (
 	"fmt"
-	"log"
 	"log/slog"
 	"net/http"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -19,10 +19,10 @@ type SSEConn struct {
 	userId     string
 }
 
-func newSSEConn(writer http.ResponseWriter, userId uuid.UUID) *SSEConn {
+func newSSEConn(writer http.ResponseWriter, userId string) *SSEConn {
 	return &SSEConn{
 		writer:     writer,
-		userId:     userId.String(),
+		userId:     userId,
 		eventQueue: make(chan Event, SSE_BUFFER_SIZE),
 	}
 }
@@ -62,27 +62,27 @@ func (em *EventManager) removeSSEConn(conn *SSEConn) {
 
 func (em *EventManager) SSEHandler(w http.ResponseWriter, r *http.Request) {
 	userId := r.Header.Get("user_id")
-	parsedUserId, err := uuid.Parse(userId)
-	if userId == "" || parsedUserId == uuid.Nil || err != nil {
+	if userId == "" {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
+	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:5173")
+	w.Header().Set("Access-Control-Allow-Credentials", "true")
+	w.Header().Set("Access-Control-Expose-Headers", "Content-Type")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 
 	w.Header().Set("Content-Type", "text/event-stream")
 	w.Header().Set("Cache-Control", "no-cache")
 	w.Header().Set("Connection", "keep-alive")
-	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:5173")
-	w.Header().Set("Access-Control-Allow-Credentials", "true")
 
-	conn := newSSEConn(w, parsedUserId)
+	conn := newSSEConn(w, userId)
 	em.addSSEConn(conn)
 	defer em.removeSSEConn(conn)
 
 	for {
 		select {
 		case event := <-conn.eventQueue:
-			log.Println("event:", event)
-			log.Println(event.Data)
 			userId := event.UserId
 			if userId.ValueOrZero() == conn.userId {
 				err := conn.writeEvent(event)
@@ -91,6 +91,10 @@ func (em *EventManager) SSEHandler(w http.ResponseWriter, r *http.Request) {
 				}
 				w.(http.Flusher).Flush()
 			}
+		case <-time.After(10 * time.Second):
+			// Send a keep-alive message
+			fmt.Fprintf(w, ": keep-alive\n\n")
+			w.(http.Flusher).Flush()
 		case <-r.Context().Done():
 			return
 		}
