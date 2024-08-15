@@ -8,7 +8,7 @@ import {
 } from "@/utils/schemas";
 import authState from "@/state/auth";
 import { ref } from "vue";
-import type { ErrorResponse } from "@/utils/api";
+import { ApiClient, type ErrorResponse } from "@/utils/api";
 
 const error = ref<ErrorResponse | null>(null);
 const formData = ref<{

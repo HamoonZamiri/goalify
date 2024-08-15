@@ -9,6 +9,15 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+type GoalStore interface {
+	CreateGoal(title, description string, userId, categoryId uuid.UUID) (*entities.Goal, error)
+	UpdateGoalStatus(goalId uuid.UUID, status string) (*entities.Goal, error)
+	GetGoalsByUserId(userId uuid.UUID) ([]*entities.Goal, error)
+	GetGoalById(goalId uuid.UUID) (*entities.Goal, error)
+	UpdateGoalById(goalId uuid.UUID, updates map[string]interface{}) (*entities.Goal, error)
+	DeleteGoalById(goalId uuid.UUID) error
+}
+
 type GoalStoreImpl struct {
 	db *sqlx.DB
 }
@@ -50,28 +59,6 @@ func (s *GoalStoreImpl) GetGoalsByUserId(userId uuid.UUID) ([]*entities.Goal, er
 		return nil, err
 	}
 	return goals, nil
-}
-
-func (s *GoalStoreImpl) UpdateGoalTitle(title string, goalId uuid.UUID) (*entities.Goal, error) {
-	query := `UPDATE goals SET title = $1 WHERE id = $2 RETURNING *`
-	var goal entities.Goal
-	err := s.db.QueryRowx(query, title, goalId).StructScan(&goal)
-	if err != nil {
-		return nil, err
-	}
-	return &goal, err
-}
-
-func (s *GoalStoreImpl) UpdateGoalDescription(description string, goalId uuid.UUID) (*entities.Goal, error) {
-	query := `UPDATE goals SET description = $1 WHERE id = $2 RETURNING *`
-
-	var goal entities.Goal
-	err := s.db.QueryRowx(query, description, goalId).StructScan(&goal)
-	if err != nil {
-		return nil, err
-	}
-
-	return &goal, nil
 }
 
 func (s *GoalStoreImpl) GetGoalById(goalId uuid.UUID) (*entities.Goal, error) {

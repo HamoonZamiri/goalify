@@ -14,10 +14,10 @@ const router = createRouter({
 });
 
 router.beforeEach((to, _) => {
-  if (!authState.user && to.name !== "Login" && to.name !== "Register") {
+  if (!authState.getUser && to.name !== "Login" && to.name !== "Register") {
     return { name: "Login" };
   } else if (
-    authState.user &&
+    authState.getUser() &&
     (to.name === "Login" || to.name === "Register")
   ) {
     return { name: "Home", path: "/" };

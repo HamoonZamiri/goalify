@@ -18,6 +18,14 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+type UserService interface {
+	SignUp(email, password string) (*entities.UserDTO, error)
+	Login(email, password string) (*entities.UserDTO, error)
+	Refresh(email, refreshToken string) (*entities.UserDTO, error)
+	DeleteUserById(id string) error
+	UpdateUserById(id uuid.UUID, updates map[string]interface{}) (*entities.UserDTO, error)
+}
+
 type UserServiceImpl struct {
 	userStore      stores.UserStore
 	eventPublisher events.EventPublisher
@@ -76,7 +84,6 @@ func (s *UserServiceImpl) SignUp(email, password string) (*entities.UserDTO, err
 	}
 
 	cleanedEmail := strings.TrimSpace(email)
-	cleanedEmail = strings.ToLower(cleanedEmail)
 	if cleanedEmail == "" {
 		return nil, fmt.Errorf("%w: email cannot be empty", svcerror.ErrBadRequest)
 	}
@@ -97,7 +104,7 @@ func (s *UserServiceImpl) SignUp(email, password string) (*entities.UserDTO, err
 		slog.Error("Users: service.Refresh: service.SignUp:", "err", err.Error())
 		return nil, fmt.Errorf("%w: error generating access token", svcerror.ErrInternalServer)
 	}
-	s.eventPublisher.Publish(events.NewEvent(events.USER_CREATED, user))
+	s.eventPublisher.Publish(events.NewEventWithUserId(events.USER_CREATED, user, user.Id.String()))
 	return user.ToUserDTO(accessToken), nil
 }
 

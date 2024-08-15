@@ -5,6 +5,7 @@ import (
 	gh "goalify/goals/handler"
 	"goalify/middleware"
 	uh "goalify/users/handler"
+	"goalify/utils/events"
 	"net/http"
 
 	"github.com/rs/cors"
@@ -16,15 +17,19 @@ func addRoute(mux *http.ServeMux, method, path string,
 	mux.Handle(method+" "+path, mwChain(http.HandlerFunc(handler)))
 }
 
-func AddRoutes(mux *http.ServeMux, userHandler *uh.UserHandler,
-	goalHandler *gh.GoalHandler, configService config.ConfigService,
+func AddRoutes(
+	mux *http.ServeMux,
+	userHandler *uh.UserHandler,
+	goalHandler *gh.GoalHandler,
+	configService config.ConfigService,
+	em *events.EventManager,
 ) http.Handler {
-	var corsDebug bool
-	if configService.MustGetEnv("ENV") == "dev" {
-		corsDebug = true
-	} else {
-		corsDebug = false
-	}
+	// // var corsDebug bool
+	// if configService.MustGetEnv("ENV") == "dev" {
+	// 	corsDebug = true
+	// } else {
+	// 	corsDebug = false
+	// }
 
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{"http://localhost:5173"},
@@ -37,11 +42,12 @@ func AddRoutes(mux *http.ServeMux, userHandler *uh.UserHandler,
 			http.MethodOptions,
 		},
 		AllowCredentials: true,
-		Debug:            corsDebug,
+		Debug:            false,
 		AllowedHeaders:   []string{"*"},
 	})
 	CorsChain := middleware.CreateChain(middleware.Logging, c.Handler)
 	AuthChain := middleware.CreateChain(middleware.Logging, c.Handler, middleware.AuthenticatedOnly)
+	QueryTokenAuthChain := middleware.CreateChain(middleware.QueryTokenAuth)
 
 	mux.Handle("GET /health", CorsChain(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.Write([]byte("Hello\n"))
@@ -66,5 +72,9 @@ func AddRoutes(mux *http.ServeMux, userHandler *uh.UserHandler,
 
 	// need options method available on all endpoints for CORS
 	addRoute(mux, "OPTIONS", "/api/*", nil, CorsChain)
+
+	// Server Sent Events endpoint
+	addRoute(mux, http.MethodOptions, "/api/events", nil, CorsChain)
+	addRoute(mux, http.MethodGet, "/api/events", em.SSEHandler, QueryTokenAuthChain)
 	return mux
 }

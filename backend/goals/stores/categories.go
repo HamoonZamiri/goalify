@@ -11,6 +11,14 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+type GoalCategoryStore interface {
+	CreateGoalCategory(title string, xpPerGoal int, userId uuid.UUID) (*entities.GoalCategory, error)
+	GetGoalCategoriesByUserId(userId uuid.UUID) ([]*entities.GoalCategory, error)
+	GetGoalCategoryById(categoryId uuid.UUID) (*entities.GoalCategory, error)
+	UpdateGoalCategoryById(categoryId uuid.UUID, updates map[string]any) (*entities.GoalCategory, error)
+	DeleteGoalCategoryById(categoryId uuid.UUID) error
+}
+
 type GoalCategoryStoreImpl struct {
 	db *sqlx.DB
 }
@@ -23,15 +31,6 @@ const category_join_goals_query string = `SELECT gc.id, gc.title, gc.xp_per_goal
   g.title as goal_title, g.description, g.status, g.created_at as goal_created_at, g.updated_at as goal_updated_at
   FROM goal_categories gc LEFT JOIN goals g 
   ON gc.id = g.category_id`
-
-func (s *GoalCategoryStoreImpl) UpdateGoalCategory(categoryId uuid.UUID, goalId uuid.UUID) (*entities.GoalCategory, error) {
-	var goalCategory entities.GoalCategory
-	err := s.db.QueryRowx("UPDATE goals SET category_id = $1 WHERE id = $2 RETURNING *", categoryId, goalId).StructScan(&goalCategory)
-	if err != nil {
-		return nil, err
-	}
-	return &goalCategory, err
-}
 
 func (s *GoalCategoryStoreImpl) CreateGoalCategory(title string, xpPerGoal int, userId uuid.UUID) (*entities.GoalCategory, error) {
 	query := `INSERT INTO goal_categories (title, xp_per_goal, user_id) 

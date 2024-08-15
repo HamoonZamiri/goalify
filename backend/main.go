@@ -26,10 +26,10 @@ func addRoute(mux *http.ServeMux, method, path string, handler http.HandlerFunc,
 }
 
 func NewServer(userHandler *uh.UserHandler, goalHandler *gh.GoalHandler,
-	configService *config.ConfigService,
+	configService *config.ConfigService, em *events.EventManager,
 ) http.Handler {
 	mux := http.NewServeMux()
-	routes.AddRoutes(mux, userHandler, goalHandler, *configService)
+	routes.AddRoutes(mux, userHandler, goalHandler, *configService, em)
 	return mux
 }
 
@@ -63,7 +63,7 @@ func Run() error {
 		goalDomainLogger, eventManager)
 	goalHandler := gh.NewGoalHandler(goalService, goalDomainLogger)
 
-	srv := NewServer(userHandler, goalHandler, configService)
+	srv := NewServer(userHandler, goalHandler, configService, eventManager)
 	port := configService.MustGetEnv(config.PORT)
 	httpServer := &http.Server{
 		Addr:    ":" + port,

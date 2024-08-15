@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import GoalCategoryCard from "@/components/goals/cards/GoalCategoryCard.vue";
-import { onMounted, ref } from "vue";
+import { onMounted, ref, watch } from "vue";
 import { type ErrorResponse, ApiClient } from "@/utils/api";
 import ModalForm from "@/components/ModalForm.vue";
 import CreateGoalCategoryForm from "@/components/goals/forms/CreateGoalCategoryForm.vue";

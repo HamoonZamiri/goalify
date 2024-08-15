@@ -21,6 +21,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
+	"github.com/pressly/goose/v3"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/testcontainers/testcontainers-go"
@@ -28,72 +29,15 @@ import (
 	"github.com/testcontainers/testcontainers-go/wait"
 )
 
-const MIGRATION_STR string = `
-CREATE TABLE levels  (
-    id SERIAL PRIMARY KEY,
-    level_up_xp INTEGER NOT NULL,
-    cash_reward INTEGER NOT NULL,
-    created_at TIMESTAMP DEFAULT now(),
-    updated_at TIMESTAMP DEFAULT now()
-);
-
-CREATE TABLE users  (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    email VARCHAR(255) NOT NULL UNIQUE,
-    password VARCHAR(255) NOT NULL,
-    xp INTEGER DEFAULT 0,
-    level_id SERIAL REFERENCES levels(id),
-    cash_available INTEGER DEFAULT 0,
-    refresh_token UUID DEFAULT gen_random_uuid(),
-    refresh_token_expiry TIMESTAMP NOT NULL,
-    created_at TIMESTAMP DEFAULT now(),
-    updated_at TIMESTAMP DEFAULT now()
-);
-
-CREATE TABLE goal_categories  (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    title VARCHAR(255) NOT NULL,
-    xp_per_goal INTEGER NOT NULL,
-    user_id UUID REFERENCES users(id),
-    created_at TIMESTAMP DEFAULT now(),
-    updated_at TIMESTAMP DEFAULT now()
-);
-
-CREATE TYPE goal_status AS ENUM ('complete', 'not_complete');
-
-CREATE TABLE goals (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    title VARCHAR(255) NOT NULL,
-    description VARCHAR(255) DEFAULT '',
-    user_id UUID REFERENCES users(id),
-    category_id UUID REFERENCES goal_categories(id) ON DELETE CASCADE,
-    status goal_status DEFAULT 'not_complete',
-    created_at TIMESTAMP DEFAULT now(),
-    updated_at TIMESTAMP DEFAULT now()
-);
-
--- Insert Default Levels
-INSERT INTO levels (id, level_up_xp, cash_reward) VALUES (1, 100, 10);
-`
-
 const BASE_URL = "http://localhost:8080"
 
 var (
 	dbx           *sqlx.DB
-	accessToken   string
-	refreshToken  string
-	userId        string
 	configService *config.ConfigService
+	pgContainer   *postgres.PostgresContainer
 )
 
-func setup() {
-	go main.Run()
-	time.Sleep(250 * time.Millisecond)
-}
-
-func TestMain(m *testing.M) {
-	ctx := context.Background()
-
+func setup(ctx context.Context) {
 	var err error
 	configService = config.NewConfigService(options.None[string]())
 	configService.SetEnv(config.ENV, "test")
@@ -101,7 +45,7 @@ func TestMain(m *testing.M) {
 	dbUser := configService.MustGetEnv(config.DB_USER)
 	dbPassword := configService.MustGetEnv(config.DB_PASSWORD)
 
-	pgContainer, err := postgres.Run(ctx, "docker.io/postgres:16-alpine",
+	pgContainer, err = postgres.Run(ctx, "docker.io/postgres:16-alpine",
 		postgres.WithDatabase(dbName),
 		postgres.WithUsername(dbUser),
 		postgres.WithPassword(dbPassword),
@@ -113,11 +57,6 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		panic(err)
 	}
-	defer func() {
-		if err = pgContainer.Terminate(ctx); err != nil {
-			log.Fatalf("Failed to terminate container: %s", err)
-		}
-	}()
 
 	connStr, err := pgContainer.ConnectionString(ctx, "sslmode=disable")
 	if err != nil {
@@ -130,18 +69,34 @@ func TestMain(m *testing.M) {
 		panic(err)
 	}
 
-	dbx.MustExec(MIGRATION_STR)
+	// using goose run migrations from db/migrations
+	err = goose.UpContext(ctx, dbx.DB, "./db/migrations/")
+	if err != nil {
+		panic(err)
+	}
+	go main.Run()
+	time.Sleep(50 * time.Millisecond)
+}
+
+func TestMain(m *testing.M) {
+	ctx := context.Background()
 
 	// start server in a goroutine
-	setup()
+	setup(ctx)
 	code := m.Run()
 
-	cleanup := `DELETE from goals; DELETE FROM goal_categories; DELETE from users;`
-	dbx.MustExec(cleanup)
+	var err error
+	defer func() {
+		if err = pgContainer.Terminate(ctx); err != nil {
+			log.Fatalf("Failed to terminate container: %s", err)
+		}
+	}()
+
 	os.Exit(code)
 }
 
 func TestHealth(t *testing.T) {
+	t.Parallel()
 	res, err := http.Get(BASE_URL + "/health")
 	assert.Nil(t, err)
 	assert.Equal(t, 200, res.StatusCode)
@@ -152,7 +107,10 @@ func TestHealth(t *testing.T) {
  */
 
 func TestSignup(t *testing.T) {
-	reqBody := handler.SignupRequest{Email: "user@mail.com", Password: "password123!"}
+	t.Parallel()
+
+	email := t.Name() + "@mail.com"
+	reqBody := handler.SignupRequest{Email: email, Password: "password123!"}
 	stringifiedBody, err := json.Marshal(reqBody)
 	assert.Nil(t, err)
 
@@ -165,14 +123,15 @@ func TestSignup(t *testing.T) {
 
 	serverResponse, err := UnmarshalServerResponse[entities.UserDTO](res)
 	assert.Nil(t, err)
-	assert.Equal(t, "user@mail.com", serverResponse.Data.Email)
-
-	refreshToken = serverResponse.Data.RefreshToken.String()
-	userId = serverResponse.Data.Id.String()
+	assert.Equal(t, email, serverResponse.Data.Email)
 }
 
 func TestSignupEmailExists(t *testing.T) {
-	reqBody := handler.SignupRequest{Email: "user@mail.com", Password: "password"}
+	t.Parallel()
+
+	email := t.Name() + "@mail.com"
+	createUser(email, "password123!")
+	reqBody := handler.SignupRequest{Email: email, Password: "password"}
 	stringifiedBody, err := json.Marshal(reqBody)
 	assert.Nil(t, err)
 
@@ -181,30 +140,48 @@ func TestSignupEmailExists(t *testing.T) {
 }
 
 func TestLogin(t *testing.T) {
-	reqBody := handler.LoginRequest{Email: "user@mail.com", Password: "password123!"}
+	t.Parallel()
+
+	email := t.Name() + "@mail.com"
+	createUser(email, "password123!")
+	reqBody := handler.LoginRequest{Email: email, Password: "password123!"}
 	stringifiedBody, err := json.Marshal(reqBody)
 	assert.Nil(t, err)
 
 	res, _ := http.Post(BASE_URL+"/api/users/login", "application/json", bytes.NewReader(stringifiedBody))
-	assert.Equal(t, res.StatusCode, http.StatusOK)
+	assert.Equal(t, http.StatusOK, res.StatusCode)
 	assert.Nil(t, err)
-	serverResponse, err := UnmarshalServerResponse[entities.UserDTO](res)
-	assert.Nil(t, err)
-	refreshToken = serverResponse.Data.RefreshToken.String()
 }
 
 func TestLoginIncorrectPassword(t *testing.T) {
-	reqBody := handler.LoginRequest{Email: "user@mail.com", Password: "password123!!"}
+	t.Parallel()
+
+	email := t.Name() + "@mail.com"
+	createUser(email, "password123!")
+	reqBody := handler.LoginRequest{Email: email, Password: "password123!!"}
 	stringifiedBody, err := json.Marshal(reqBody)
 	assert.Nil(t, err)
 
 	res, _ := http.Post(BASE_URL+"/api/users/login", "application/json", bytes.NewReader(stringifiedBody))
-	assert.Equal(t, res.StatusCode, http.StatusBadRequest)
+	assert.Equal(t, http.StatusBadRequest, res.StatusCode)
+}
+
+func createUser(email, password string) *entities.UserDTO {
+	reqBody := handler.SignupRequest{Email: email, Password: password}
+	stringifiedBody, _ := json.Marshal(reqBody)
+	res, _ := http.Post(BASE_URL+"/api/users/signup", "application/json", bytes.NewReader(stringifiedBody))
+
+	servRes, _ := UnmarshalServerResponse[*entities.UserDTO](res)
+	return servRes.Data
 }
 
 func TestRefresh(t *testing.T) {
-	prevToken := refreshToken
-	reqBody := map[string]any{"user_id": userId, "refresh_token": refreshToken}
+	t.Parallel()
+
+	email := t.Name() + "@mail.com"
+	user := createUser(email, "password123!")
+	prevToken := user.RefreshToken
+	reqBody := map[string]any{"user_id": user.Id, "refresh_token": prevToken}
 	stringifiedBody, err := json.Marshal(reqBody)
 	assert.Nil(t, err)
 
@@ -217,22 +194,30 @@ func TestRefresh(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, res.StatusCode)
 
-	accessToken = serverResponse.Data.AccessToken
-	refreshToken = serverResponse.Data.RefreshToken.String()
 	assert.NotEqual(t, prevToken, serverResponse.Data.RefreshToken.String())
 }
 
 func TestIncorrectRefresh(t *testing.T) {
-	reqBody := map[string]any{"user_id": userId, "refresh": "incorrect"}
-	res, err := buildAndSendRequest("POST", fmt.Sprintf("%s/api/users/refresh", BASE_URL), reqBody)
+	t.Parallel()
+
+	email := t.Name() + "@mail.com"
+	userDto := createUser(email, "password123!")
+
+	reqBody := map[string]any{"user_id": userDto.Id, "refresh": "incorrect"}
+	res, err := buildAndSendRequest("POST", fmt.Sprintf("%s/api/users/refresh", BASE_URL), reqBody, userDto.AccessToken)
 	assert.Nil(t, err)
 
 	assert.Equal(t, http.StatusBadRequest, res.StatusCode)
 }
 
 func TestUpdateUserById(t *testing.T) {
+	t.Parallel()
+
+	email := t.Name() + "@mail.com"
+	userDto := createUser(email, "password123!")
+
 	reqBody := map[string]any{"xp": 100, "cash_available": 100}
-	res, err := buildAndSendRequest("PUT", fmt.Sprintf("%s/api/users", BASE_URL), reqBody)
+	res, err := buildAndSendRequest("PUT", fmt.Sprintf("%s/api/users", BASE_URL), reqBody, userDto.AccessToken)
 	require.Nil(t, err)
 
 	resBody, err := UnmarshalServerResponse[entities.UserDTO](res)
@@ -242,8 +227,13 @@ func TestUpdateUserById(t *testing.T) {
 }
 
 func TestIncorrectUpdateUserById(t *testing.T) {
+	t.Parallel()
+
+	email := t.Name() + "@mail.com"
+	userDto := createUser(email, "password123!")
+
 	reqBody := map[string]any{"xp": "incorrect", "cash_available": "incorrect"}
-	res, err := buildAndSendRequest("PUT", fmt.Sprintf("%s/api/users", BASE_URL), reqBody)
+	res, err := buildAndSendRequest("PUT", fmt.Sprintf("%s/api/users", BASE_URL), reqBody, userDto.AccessToken)
 	require.Nil(t, err)
 
 	assert.Equal(t, http.StatusBadRequest, res.StatusCode)
@@ -254,8 +244,13 @@ func TestIncorrectUpdateUserById(t *testing.T) {
  */
 
 func TestGoalCategoryCreate(t *testing.T) {
+	t.Parallel()
+
+	email := t.Name() + "@mail.com"
+	userDto := createUser(email, "password123!")
+
 	reqBody := map[string]any{"title": "goal cat", "xp_per_goal": 100}
-	res, err := buildAndSendRequest("POST", fmt.Sprintf("%s/api/goals/categories", BASE_URL), reqBody)
+	res, err := buildAndSendRequest("POST", fmt.Sprintf("%s/api/goals/categories", BASE_URL), reqBody, userDto.AccessToken)
 	assert.Nil(t, err)
 	assert.Equal(t, http.StatusOK, res.StatusCode)
 
@@ -264,46 +259,69 @@ func TestGoalCategoryCreate(t *testing.T) {
 	assert.Equal(t, "goal cat", gc.Data.Title)
 	assert.Equal(t, 100, gc.Data.Xp_per_goal)
 	assert.NotNil(t, gc.Data.Goals)
-	assert.Equal(t, userId, gc.Data.UserId.String())
+	assert.Equal(t, userDto.Id.String(), gc.Data.UserId.String())
 }
 
 func TestGoalCategoryCreateInvalidFields(t *testing.T) {
+	t.Parallel()
+
+	email := t.Name() + "@mail.com"
+	userDto := createUser(email, "password123!")
 	reqBody := map[string]any{"title": "goal cat", "xp_per_goal": -10}
-	res, err := buildAndSendRequest("POST", fmt.Sprintf("%s/api/goals/categories", BASE_URL), reqBody)
+	res, err := buildAndSendRequest("POST", fmt.Sprintf("%s/api/goals/categories", BASE_URL), reqBody, userDto.AccessToken)
 	assert.Nil(t, err)
 	assert.Equal(t, http.StatusBadRequest, res.StatusCode)
 }
 
 func TestGetGoalCategories(t *testing.T) {
-	res, err := buildAndSendRequest("GET", fmt.Sprintf("%s/api/goals/categories", BASE_URL), nil)
+	t.Parallel()
+
+	email := t.Name() + "@mail.com"
+	userDto := createUser(email, "password123!")
+
+	for i := 0; i < 5; i++ {
+		createTestGoalCategory("create goal category", userDto.Id)
+		time.Sleep(20 * time.Millisecond)
+	}
+	res, err := buildAndSendRequest("GET", fmt.Sprintf("%s/api/goals/categories", BASE_URL), nil, userDto.AccessToken)
 	assert.Nil(t, err)
 
 	assert.Equal(t, http.StatusOK, res.StatusCode)
 	resBody, err := UnmarshalServerResponse[[]entities.GoalCategory](res)
 	assert.Nil(t, err)
 
-	// previously was asserting this value as 1, but since we have a user_created
-	// event that creates a goal category, we should expect 2
-	assert.Equal(t, 2, len(resBody.Data))
+	// expecting 5 inserted category + 1 default from user_created event
+	assert.Equal(t, 6, len(resBody.Data))
 }
 
 func TestGetGoalCategoryById(t *testing.T) {
-	gc := createTestGoalCategory("create goal category", uuid.MustParse(userId))
+	t.Parallel()
 
-	res, err := buildAndSendRequest("GET", fmt.Sprintf("%s/api/goals/categories/%s", BASE_URL, gc.Id), nil)
+	email := t.Name() + "@mail.com"
+	userDto := createUser(email, "password123!")
+	gc := createTestGoalCategory("create goal category", userDto.Id)
+	url := fmt.Sprintf("%s/api/goals/categories/%s", BASE_URL, gc.Id)
+
+	res, err := buildAndSendRequest("GET", url, nil, userDto.AccessToken)
 	assert.Nil(t, err)
 	assert.Equal(t, http.StatusOK, res.StatusCode)
 
 	resBody, err := UnmarshalServerResponse[entities.GoalCategory](res)
 	assert.Nil(t, err)
 	assert.Equal(t, gc.Id, resBody.Data.Id)
+	assert.Equal(t, gc.UserId, resBody.Data.UserId)
 }
 
 func TestUpdateGoalCategoryById(t *testing.T) {
-	gc := createTestGoalCategory("update goal category", uuid.MustParse(userId))
+	t.Parallel()
 
+	email := t.Name() + "@mail.com"
+	userDto := createUser(email, "password123!")
+	gc := createTestGoalCategory("update goal category", userDto.Id)
+
+	url := fmt.Sprintf("%s/api/goals/categories/%s", BASE_URL, gc.Id)
 	reqBody := map[string]any{"title": "updated title", "xp_per_goal": 69}
-	res, err := buildAndSendRequest("PUT", fmt.Sprintf("%s/api/goals/categories/%s", BASE_URL, gc.Id), reqBody)
+	res, err := buildAndSendRequest("PUT", url, reqBody, userDto.AccessToken)
 	assert.Nil(t, err)
 	assert.Equal(t, http.StatusOK, res.StatusCode)
 
@@ -314,27 +332,42 @@ func TestUpdateGoalCategoryById(t *testing.T) {
 }
 
 func TestUpdateGoalCategoryByIdInvalidFields(t *testing.T) {
-	gc := createTestGoalCategory("update goal category", uuid.MustParse(userId))
+	t.Parallel()
+
+	email := t.Name() + "@mail.com"
+	userDto := createUser(email, "password123!")
+	gc := createTestGoalCategory("update goal category", userDto.Id)
 	reqBody := map[string]any{"title": "updated title", "xp_per_goal": -1}
-	res, err := buildAndSendRequest("PUT", fmt.Sprintf("%s/api/goals/categories/%s", BASE_URL, gc.Id), reqBody)
+
+	url := fmt.Sprintf("%s/api/goals/categories/%s", BASE_URL, gc.Id)
+	res, err := buildAndSendRequest("PUT", url, reqBody, userDto.AccessToken)
 	require.Nil(t, err)
 	assert.Equal(t, http.StatusBadRequest, res.StatusCode)
 }
 
 func TestDeleteGoalCategoryById(t *testing.T) {
-	cat := createTestGoalCategory("delete goal category", uuid.MustParse(userId))
+	t.Parallel()
 
-	res, err := buildAndSendRequest("DELETE", fmt.Sprintf("%s/api/goals/categories/%s", BASE_URL, cat.Id), nil)
+	email := t.Name() + "@mail.com"
+	userDto := createUser(email, "password123!")
+	cat := createTestGoalCategory("delete goal category", userDto.Id)
+
+	res, err := buildAndSendRequest("DELETE", fmt.Sprintf("%s/api/goals/categories/%s", BASE_URL, cat.Id), nil, userDto.AccessToken)
 	assert.Nil(t, err)
 
 	assert.Equal(t, http.StatusOK, res.StatusCode)
 }
 
 func TestDeleteGoalCategoryByIdNotAuthorized(t *testing.T) {
-	gc := createTestGoalCategory("delete goal category", uuid.MustParse(userId))
+	t.Parallel()
+
+	email := t.Name() + "@mail.com"
+	userDto := createUser(email, "password123!")
+	userId := userDto.Id
+	gc := createTestGoalCategory("delete goal category", userId)
 	req, err := http.NewRequest("DELETE", fmt.Sprintf("%s/api/goals/categories/%s", BASE_URL, gc.Id), nil)
 	require.Nil(t, err)
-	req.Header.Add("Authorization", "Bearer "+accessToken+"1")
+	req.Header.Add("Authorization", "Bearer "+userDto.AccessToken+"1")
 	res, err := http.DefaultClient.Do(req)
 
 	require.Nil(t, err)
@@ -342,37 +375,50 @@ func TestDeleteGoalCategoryByIdNotAuthorized(t *testing.T) {
 }
 
 func TestCreateGoal(t *testing.T) {
-	cat := createTestGoalCategory("create goal", uuid.MustParse(userId))
+	t.Parallel()
+
+	email := t.Name() + "@mail.com"
+	userDto := createUser(email, "password123!")
+	cat := createTestGoalCategory("create goal", userDto.Id)
 	reqBody := map[string]any{
 		"title": "goal title", "description": "goal description", "category_id": cat.Id,
-		"user_id": userId,
+		"user_id": userDto.Id,
 	}
-	res, err := buildAndSendRequest("POST", BASE_URL+"/api/goals", reqBody)
+	res, err := buildAndSendRequest("POST", BASE_URL+"/api/goals", reqBody, userDto.AccessToken)
 	assert.Nil(t, err)
 	assert.Equal(t, http.StatusOK, res.StatusCode)
 
 	resBody, err := UnmarshalServerResponse[entities.Goal](res)
 	assert.Nil(t, err)
 	assert.Equal(t, cat.Id.String(), resBody.Data.CategoryId.String())
-	assert.Equal(t, userId, resBody.Data.UserId.String())
+	assert.Equal(t, userDto.Id, resBody.Data.UserId)
 	assert.Equal(t, "goal title", resBody.Data.Title)
 	assert.Equal(t, "goal description", resBody.Data.Description)
 }
 
 func TestCreateGoalInvalidFields(t *testing.T) {
+	t.Parallel()
+
+	email := t.Name() + "@mail.com"
+	userDto := createUser(email, "password123!")
 	reqBody := map[string]any{
 		"title": "goal title", "description": "goal description", "category_id": "not a uuid",
 	}
-	res, err := buildAndSendRequest("POST", BASE_URL+"/api/goals", reqBody)
+	res, err := buildAndSendRequest("POST", BASE_URL+"/api/goals", reqBody, userDto.AccessToken)
 	require.Nil(t, err)
 	assert.Equal(t, http.StatusBadRequest, res.StatusCode)
 }
 
 func TestUpdateGoalById(t *testing.T) {
-	cat := createTestGoalCategory("update goal", uuid.MustParse(userId))
-	goal := createTestGoal("goal title", "goal description", cat.Id, uuid.MustParse(userId))
+	t.Parallel()
+
+	email := t.Name() + "@mail.com"
+	userDto := createUser(email, "password123!")
+
+	cat := createTestGoalCategory("update goal", userDto.Id)
+	goal := createTestGoal("goal title", "goal description", cat.Id, userDto.Id)
 	reqBody := map[string]any{"title": "updated title", "description": "updated description"}
-	res, err := buildAndSendRequest("PUT", fmt.Sprintf("%s/api/goals/%s", BASE_URL, goal.Id), reqBody)
+	res, err := buildAndSendRequest("PUT", fmt.Sprintf("%s/api/goals/%s", BASE_URL, goal.Id), reqBody, userDto.AccessToken)
 	require.Nil(t, err)
 
 	assert.Equal(t, http.StatusOK, res.StatusCode)
@@ -383,26 +429,18 @@ func TestUpdateGoalById(t *testing.T) {
 }
 
 func TestUserCreatedEvent(t *testing.T) {
-	reqBody := handler.SignupRequest{Email: "user2@mail.com", Password: "password123!"}
-	stringifiedBody, err := json.Marshal(reqBody)
-	assert.Nil(t, err)
+	t.Parallel()
 
-	res, err := http.Post(BASE_URL+"/api/users/signup", "application/json", bytes.NewReader(stringifiedBody))
-	assert.Nil(t, err)
-
-	assert.Equal(t, 200, res.StatusCode)
-
-	defer res.Body.Close()
-
-	serverResponse, err := UnmarshalServerResponse[entities.UserDTO](res)
-	assert.Nil(t, err)
+	email := t.Name() + "@mail.com"
+	userDto := createUser(email, "password123!")
 
 	var resBody responses.ServerResponse[[]*entities.GoalCategory]
 	req, err := http.NewRequest("GET", fmt.Sprintf("%s/api/goals/categories", BASE_URL), nil)
 	assert.Nil(t, err)
-	req.Header.Add("Authorization", "Bearer "+serverResponse.Data.AccessToken)
+	req.Header.Add("Authorization", "Bearer "+userDto.AccessToken)
+
 	for i := 0; i < 5; i++ {
-		res, err = http.DefaultClient.Do(req)
+		res, err := http.DefaultClient.Do(req)
 		assert.Nil(t, err)
 
 		assert.Equal(t, http.StatusOK, res.StatusCode)
@@ -411,17 +449,22 @@ func TestUserCreatedEvent(t *testing.T) {
 		if len(resBody.Data) == 1 {
 			break
 		}
-		time.Sleep(200 * time.Millisecond)
+		time.Sleep(50 * time.Millisecond)
 	}
 
 	assert.Equal(t, 1, len(resBody.Data))
 }
 
 func TestGoalCategoryCreatedEvent(t *testing.T) {
+	t.Parallel()
+
+	email := t.Name() + "@mail.com"
+	userDto := createUser(email, "password123!")
+
 	// create a goal category
 	body := map[string]any{"title": "testing create category event", "xp_per_goal": 100}
 	url := fmt.Sprintf("%s/api/goals/categories", BASE_URL)
-	res, err := buildAndSendRequest("POST", url, body)
+	res, err := buildAndSendRequest("POST", url, body, userDto.AccessToken)
 	assert.Nil(t, err)
 	assert.Equal(t, http.StatusOK, res.StatusCode)
 
@@ -433,8 +476,9 @@ func TestGoalCategoryCreatedEvent(t *testing.T) {
 	// check if the default goal was created
 
 	var serverResponse responses.ServerResponse[*entities.GoalCategory]
+	url = fmt.Sprintf("%s/api/goals/categories/%s", BASE_URL, gc.Id)
 	for i := 0; i < 5; i++ {
-		res, err = buildAndSendRequest("GET", fmt.Sprintf("%s/api/goals/categories/%s", BASE_URL, gc.Id), nil)
+		res, err = buildAndSendRequest("GET", url, nil, userDto.AccessToken)
 		assert.Nil(t, err)
 		serverResponse, err = UnmarshalServerResponse[*entities.GoalCategory](res)
 		assert.Nil(t, err)
@@ -447,13 +491,18 @@ func TestGoalCategoryCreatedEvent(t *testing.T) {
 }
 
 func TestDeleteGoal(t *testing.T) {
+	t.Parallel()
+
+	email := t.Name() + "@mail.com"
+	userDto := createUser(email, "password123!")
+
 	// create category and goal to be deleted
 	body := map[string]any{
 		"title":       "some title",
 		"xp_per_goal": 50,
 	}
 	url := fmt.Sprintf("%s/api/goals/categories", BASE_URL)
-	res, err := buildAndSendRequest("POST", url, body)
+	res, err := buildAndSendRequest("POST", url, body, userDto.AccessToken)
 	assert.Nil(t, err)
 	assert.Equal(t, http.StatusOK, res.StatusCode)
 	gc, err := UnmarshalServerResponse[entities.GoalCategory](res)
@@ -465,7 +514,7 @@ func TestDeleteGoal(t *testing.T) {
 		"description": "some description",
 		"category_id": gc.Data.Id,
 	}
-	res, err = buildAndSendRequest("POST", url, body)
+	res, err = buildAndSendRequest("POST", url, body, userDto.AccessToken)
 	assert.Nil(t, err)
 	assert.Equal(t, http.StatusOK, res.StatusCode)
 	goal, err := UnmarshalServerResponse[entities.Goal](res)
@@ -474,22 +523,22 @@ func TestDeleteGoal(t *testing.T) {
 	// rerun requests until goal category created event triggers
 	url = fmt.Sprintf("%s/api/goals/categories/%s", BASE_URL, gc.Data.Id)
 	for i := 0; i < 5; i++ {
-		res, _ = buildAndSendRequest("GET", url, nil)
+		res, _ = buildAndSendRequest("GET", url, nil, userDto.AccessToken)
 		gc, _ = UnmarshalServerResponse[entities.GoalCategory](res)
 		if len(gc.Data.Goals) == 2 {
 			break
 		}
-		time.Sleep(200 * time.Millisecond)
+		time.Sleep(50 * time.Millisecond)
 	}
 	assert.Equal(t, 2, len(gc.Data.Goals))
 
 	deleteUrl := fmt.Sprintf("%s/api/goals/%s", BASE_URL, goal.Data.Id)
-	res, err = buildAndSendRequest("DELETE", deleteUrl, nil)
+	res, err = buildAndSendRequest("DELETE", deleteUrl, nil, userDto.AccessToken)
 	assert.Nil(t, err)
 	assert.Equal(t, http.StatusOK, res.StatusCode)
 
 	// rerun request to get goal category by id
-	res, err = buildAndSendRequest("GET", url, nil)
+	res, err = buildAndSendRequest("GET", url, nil, userDto.AccessToken)
 	assert.Nil(t, err)
 	gc, err = UnmarshalServerResponse[entities.GoalCategory](res)
 	assert.Nil(t, err)
@@ -497,14 +546,19 @@ func TestDeleteGoal(t *testing.T) {
 }
 
 func TestDeleteGoalNotFound(t *testing.T) {
+	t.Parallel()
+
+	email := t.Name() + "@mail.com"
+	userDto := createUser(email, "password123!")
+
 	deleteUrl := fmt.Sprintf("%s/api/goals/%s", BASE_URL, uuid.New())
-	res, err := buildAndSendRequest("DELETE", deleteUrl, nil)
+	res, err := buildAndSendRequest("DELETE", deleteUrl, nil, userDto.AccessToken)
 	assert.Nil(t, err)
 	assert.Equal(t, http.StatusNotFound, res.StatusCode)
 }
 
 // utility functions
-func buildAndSendRequest(method, url string, body map[string]any) (*http.Response, error) {
+func buildAndSendRequest(method, url string, body map[string]any, accessToken string) (*http.Response, error) {
 	var buf bytes.Buffer
 	json.NewEncoder(&buf).Encode(body)
 	req, err := http.NewRequest(method, url, &buf)
@@ -532,20 +586,6 @@ func printErrResponse(res *http.Response) error {
 		return err
 	}
 
-	return nil
-}
-
-func printSuccessResponse[T any](res *http.Response) error {
-	body, err := io.ReadAll(res.Body)
-	if err != nil {
-		return err
-	}
-
-	var successRes responses.ServerResponse[T]
-	err = json.Unmarshal(body, &successRes)
-	if err != nil {
-		return err
-	}
 	return nil
 }
 

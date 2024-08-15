@@ -9,8 +9,8 @@ import (
 )
 
 type CountEventHandler struct {
-	count int
 	wg    *sync.WaitGroup
+	count int
 }
 
 func (h *CountEventHandler) HandleIncrementEvent(event Event) {

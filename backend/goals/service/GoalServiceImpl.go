@@ -89,32 +89,6 @@ func (gs *GoalServiceImpl) GetGoalsByUserId(userId uuid.UUID) ([]*entities.Goal,
 	return goals, nil
 }
 
-func (gs *GoalServiceImpl) UpdateGoalTitle(title string, goalId, userId uuid.UUID) (*entities.Goal, error) {
-	if title == "" {
-		return nil, errors.New("title cannot be empty")
-	}
-	goal, err := gs.goalStore.GetGoalById(goalId)
-	if err != nil {
-		return nil, err
-	}
-	if goal.UserId != userId {
-		return nil, errors.New("user does not own this goal")
-	}
-
-	return gs.goalStore.UpdateGoalTitle(title, goalId)
-}
-
-func (gs *GoalServiceImpl) UpdateGoalDescription(description string, goalId, userId uuid.UUID) (*entities.Goal, error) {
-	goal, err := gs.goalStore.GetGoalById(goalId)
-	if err != nil {
-		return nil, err
-	}
-	if goal.UserId != userId {
-		return nil, errors.New("user does not own this goal")
-	}
-	return gs.goalStore.UpdateGoalDescription(description, goalId)
-}
-
 func (gs *GoalServiceImpl) GetGoalById(goalId uuid.UUID) (*entities.Goal, error) {
 	funcStr := gs.traceLogger.GetTrace("service.GetGoalById")
 	goal, err := gs.goalStore.GetGoalById(goalId)
@@ -140,7 +114,7 @@ func (gs *GoalServiceImpl) CreateGoalCategory(title string, xpPerGoal int, userI
 		return nil, fmt.Errorf("%w: error creating goal category", svcerror.ErrInternalServer)
 	}
 
-	e := events.NewEvent(events.GOAL_CATEGORY_CREATED, cat)
+	e := events.NewEventWithUserId(events.GOAL_CATEGORY_CREATED, cat, cat.UserId.String())
 	gs.eventPublisher.Publish(e)
 
 	return cat, nil
@@ -158,21 +132,6 @@ func (gs *GoalServiceImpl) GetGoalCategoriesByUserId(userId uuid.UUID) ([]*entit
 		return nil, fmt.Errorf("%w: error fetching goal categories", svcerror.ErrInternalServer)
 	}
 	return categories, nil
-}
-
-func (gs *GoalServiceImpl) UpdateGoalCategory(categoryId, goalId, userId uuid.UUID) (*entities.GoalCategory, error) {
-	gc, err := gs.goalCategoryStore.GetGoalCategoryById(categoryId)
-	if err != nil {
-		slog.Error("service.UpdateGoalCategory: store.GetGoalCategoryById:", "err", err)
-		return nil, fmt.Errorf("%w: error fetching goal category", svcerror.ErrInternalServer)
-	}
-
-	if gc.UserId != userId {
-		slog.Error("service.UpdateGoalCategory: user does not own this category", "userId", userId, "categoryId", categoryId, "ownerId", gc.UserId)
-		return nil, errors.New("user does not own this category")
-	}
-
-	return gs.goalCategoryStore.UpdateGoalCategory(categoryId, goalId)
 }
 
 func (gs *GoalServiceImpl) GetGoalCategoryById(categoryId, userId uuid.UUID) (*entities.GoalCategory, error) {
