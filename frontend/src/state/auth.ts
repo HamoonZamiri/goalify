@@ -20,17 +20,15 @@ function userCookieExists(): boolean {
 }
 
 const authState = reactive({
-  user: getUserFromCookie(),
+  getUser: getUserFromCookie,
   isLoggedIn() {
-    return userCookieExists() && !!this.user;
+    return userCookieExists() && !!this.getUser;
   },
   setUser(user: User) {
     setUserCookie(user);
-    this.user = user;
   },
   logout() {
     removeUserFromCookie();
-    this.user = null;
   },
 });
 

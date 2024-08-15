@@ -1,29 +1,43 @@
 package events
 
 import (
+	"fmt"
+	"log/slog"
 	"net/http"
+	"time"
 
 	"github.com/google/uuid"
 )
 
+const (
+	SSE_BUFFER_SIZE = 10
+)
+
 type SSEConn struct {
-	writer http.ResponseWriter
-	userId uuid.UUID
+	eventQueue chan Event
+	writer     http.ResponseWriter
+	userId     string
 }
 
-func NewSSEConn(writer http.ResponseWriter, userId uuid.UUID) *SSEConn {
+func newSSEConn(writer http.ResponseWriter, userId string) *SSEConn {
 	return &SSEConn{
-		writer: writer,
-		userId: userId,
+		writer:     writer,
+		userId:     userId,
+		eventQueue: make(chan Event, SSE_BUFFER_SIZE),
 	}
 }
 
-func (s *SSEConn) WriteEvent(event []byte) error {
-	_, err := s.writer.Write(event)
-	return err
+func (s *SSEConn) writeEvent(event Event) error {
+	eventId := uuid.New().String()
+	eventData, err := event.EncodeEvent()
+	if err != nil {
+		return err
+	}
+	fmt.Fprintf(s.writer, "id: %s\nevent: %s\ndata: %s\n\n", eventId, event.EventType, eventData)
+	return nil
 }
 
-func (em *EventManager) AddSSEConn(conn *SSEConn) {
+func (em *EventManager) addSSEConn(conn *SSEConn) {
 	em.mu.Lock()
 	defer em.mu.Unlock()
 	if _, ok := em.sseConnMap[conn.userId]; !ok {
@@ -32,7 +46,7 @@ func (em *EventManager) AddSSEConn(conn *SSEConn) {
 	em.sseConnMap[conn.userId] = append(em.sseConnMap[conn.userId], conn)
 }
 
-func (em *EventManager) RemoveSSEConn(conn *SSEConn) {
+func (em *EventManager) removeSSEConn(conn *SSEConn) {
 	em.mu.Lock()
 	defer em.mu.Unlock()
 	if _, ok := em.sseConnMap[conn.userId]; !ok {
@@ -48,29 +62,39 @@ func (em *EventManager) RemoveSSEConn(conn *SSEConn) {
 
 func (em *EventManager) SSEHandler(w http.ResponseWriter, r *http.Request) {
 	userId := r.Header.Get("user_id")
-	parsedUserId, _ := uuid.Parse(userId)
-	if userId == "" || parsedUserId == uuid.Nil {
+	if userId == "" {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
+	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:5173")
+	w.Header().Set("Access-Control-Allow-Credentials", "true")
+	w.Header().Set("Access-Control-Expose-Headers", "Content-Type")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 
 	w.Header().Set("Content-Type", "text/event-stream")
 	w.Header().Set("Cache-Control", "no-cache")
 	w.Header().Set("Connection", "keep-alive")
-	w.Header().Set("X-Accel-Buffering", "no")
 
-	conn := NewSSEConn(w, parsedUserId)
-	em.AddSSEConn(conn)
-	defer em.RemoveSSEConn(conn)
+	conn := newSSEConn(w, userId)
+	em.addSSEConn(conn)
+	defer em.removeSSEConn(conn)
 
 	for {
 		select {
-		case event := <-em.eventQueue:
+		case event := <-conn.eventQueue:
 			userId := event.UserId
-			encoded, err := event.EncodeEvent()
-			if userId.ValueOrZero() == conn.userId && err == nil {
-				conn.WriteEvent(encoded)
+			if userId.ValueOrZero() == conn.userId {
+				err := conn.writeEvent(event)
+				if err != nil {
+					slog.Error("SSEHandler: conn.WriteEvent:", "err", err)
+				}
+				w.(http.Flusher).Flush()
 			}
+		case <-time.After(10 * time.Second):
+			// Send a keep-alive message
+			fmt.Fprintf(w, ": keep-alive\n\n")
+			w.(http.Flusher).Flush()
 		case <-r.Context().Done():
 			return
 		}

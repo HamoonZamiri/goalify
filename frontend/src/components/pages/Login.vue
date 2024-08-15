@@ -8,6 +8,7 @@ import {
 } from "@/utils/schemas";
 import authState from "@/state/auth";
 import { ref } from "vue";
+import { ApiClient } from "@/utils/api";
 
 const error = ref<string | null>(null);
 const formData = ref<{ email: string; password: string }>({

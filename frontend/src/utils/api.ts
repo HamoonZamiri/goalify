@@ -3,6 +3,7 @@ import { API_BASE, http } from "./constants";
 import { Schemas, type Goal, type GoalCategory } from "./schemas";
 import type { z } from "zod";
 import router, { RouteNames } from "@/router";
+import { fetchEventSource } from "@microsoft/fetch-event-source";
 
 type ServerResponse<T> = {
   message: string;
@@ -30,12 +31,12 @@ function isError(
 }
 
 async function refreshUserToken(): Promise<void> {
-  if (!authState.user) return;
+  if (!authState.getUser) return;
   const res = await fetch(`${API_BASE}/users/refresh`, {
     method: "POST",
     body: JSON.stringify({
-      user_id: authState.user.id,
-      refresh_token: authState.user.refresh_token,
+      user_id: authState.getUser()?.id,
+      refresh_token: authState.getUser()?.refresh_token,
     }),
   });
   const json: unknown = await res.json();
@@ -65,7 +66,7 @@ async function zodFetch<T>(
       ...options,
       headers: {
         ...options?.headers,
-        Authorization: `Bearer ${authState.user?.access_token}`,
+        Authorization: `Bearer ${authState.getUser()?.access_token}`,
       },
     });
     router.go(0);
@@ -93,7 +94,7 @@ async function createGoalCategory(
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${authState.user?.access_token}`,
+        Authorization: `Bearer ${authState.getUser()?.access_token}`,
       },
       body: JSON.stringify({
         title,
@@ -110,7 +111,9 @@ async function getUserGoalCategories(): Promise<
   const res = await zodFetch(
     `${API_BASE}/goals/categories`,
     Schemas.GoalCategoryResponseArraySchema,
-    { headers: { Authorization: `Bearer ${authState.user?.access_token}` } },
+    {
+      headers: { Authorization: `Bearer ${authState.getUser()?.access_token}` },
+    },
   );
   return res;
 }
@@ -124,7 +127,7 @@ async function createGoal(
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${authState.user?.access_token}`,
+      Authorization: `Bearer ${authState.getUser()?.access_token}`,
     },
     body: JSON.stringify({
       title,
@@ -146,7 +149,7 @@ async function updateGoal(
       method: http.MethodPut,
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${authState.user?.access_token}`,
+        Authorization: `Bearer ${authState.getUser()?.access_token}`,
       },
       body: JSON.stringify(updates),
     },
@@ -159,7 +162,7 @@ async function deleteGoal(goalId: string): Promise<void> {
     method: http.MethodDelete,
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${authState.user?.access_token}`,
+      Authorization: `Bearer ${authState.getUser()?.access_token}`,
     },
   });
   if (!res.ok) {
@@ -172,7 +175,7 @@ async function deleteCategory(categoryId: string): Promise<void> {
     method: http.MethodDelete,
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${authState.user?.access_token}`,
+      Authorization: `Bearer ${authState.getUser()?.access_token}`,
     },
   });
   if (!res.ok) {
@@ -188,7 +191,7 @@ async function updateCategory(
     method: http.MethodPut,
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${authState.user?.access_token}`,
+      Authorization: `Bearer ${authState.getUser()?.access_token}`,
     },
     body: JSON.stringify(updates),
   });
