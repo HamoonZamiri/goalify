@@ -163,3 +163,68 @@ func TestDeleteGoalCategoryById(t *testing.T) {
 	_, err = gcStore.GetGoalCategoryById(category.Id)
 	assert.Error(t, err)
 }
+
+func TestCreateGoal(t *testing.T) {
+	t.Parallel()
+	user, err := userStore.CreateUser(t.Name()+"@mail.com", password)
+	assert.NoError(t, err)
+	category, err := gcStore.CreateGoalCategory(t.Name(), 50, user.Id)
+	assert.NoError(t, err)
+
+	goal, err := goalStore.CreateGoal(t.Name(), "desc", user.Id, category.Id)
+	assert.NoError(t, err)
+	assert.Equal(t, t.Name(), goal.Title)
+	assert.Equal(t, category.Id, goal.CategoryId)
+	assert.Equal(t, user.Id, goal.UserId)
+	assert.Equal(t, "desc", goal.Description)
+}
+
+func TestGetGoalById(t *testing.T) {
+	t.Parallel()
+	user, err := userStore.CreateUser(t.Name()+"@mail.com", password)
+	assert.NoError(t, err)
+	category, _ := gcStore.CreateGoalCategory(t.Name(), 50, user.Id)
+	goal, _ := goalStore.CreateGoal(t.Name(), "desc", user.Id, category.Id)
+
+	foundGoal, err := goalStore.GetGoalById(goal.Id)
+	assert.NoError(t, err)
+	assert.Equal(t, goal.Id, foundGoal.Id)
+	assert.Equal(t, goal.Title, foundGoal.Title)
+	assert.Equal(t, goal.Description, foundGoal.Description)
+	assert.Equal(t, goal.UserId, foundGoal.UserId)
+	assert.Equal(t, goal.CategoryId, foundGoal.CategoryId)
+}
+
+func TestUpdateGoalById(t *testing.T) {
+	t.Parallel()
+	user, err := userStore.CreateUser(t.Name()+"@mail.com", password)
+	assert.NoError(t, err)
+	category, _ := gcStore.CreateGoalCategory(t.Name(), 50, user.Id)
+	goal, _ := goalStore.CreateGoal(t.Name(), "desc", user.Id, category.Id)
+
+	updates := map[string]any{
+		"title":       "new title",
+		"description": "new desc",
+	}
+	updated, err := goalStore.UpdateGoalById(goal.Id, updates)
+	assert.NoError(t, err)
+	assert.Equal(t, "new title", updated.Title)
+	assert.Equal(t, "new desc", updated.Description)
+}
+
+func TestDeleteGoalById(t *testing.T) {
+	t.Parallel()
+	user, err := userStore.CreateUser(t.Name()+"@mail.com", password)
+	assert.NoError(t, err)
+	category, _ := gcStore.CreateGoalCategory(t.Name(), 50, user.Id)
+	goal, _ := goalStore.CreateGoal(t.Name(), "desc", user.Id, category.Id)
+
+	_, err = goalStore.GetGoalById(goal.Id)
+	assert.NoError(t, err)
+
+	err = goalStore.DeleteGoalById(goal.Id)
+	assert.NoError(t, err)
+
+	_, err = goalStore.GetGoalById(goal.Id)
+	assert.Error(t, err)
+}
