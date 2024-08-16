@@ -12,8 +12,9 @@ inte:
 	@go test -count=1 -v ./goals/stores/...
 	@go test -count=1 -v ./main_test.go
 test: unit inte
+testall:
+	@go test -count=1 -v ./...
 up:
 	@docker compose up -d
 down: 
 	@docker compose down
-

@@ -25,4 +25,4 @@ jobs:
         run: |
           cd backend
           go mod download
-          make test
+          make testall
