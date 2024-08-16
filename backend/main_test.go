@@ -9,6 +9,7 @@ import (
 	"goalify/config"
 	"goalify/db"
 	"goalify/entities"
+	"goalify/testsetup"
 	"goalify/users/handler"
 	"goalify/utils/options"
 	"goalify/utils/responses"
@@ -21,12 +22,9 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
-	"github.com/pressly/goose/v3"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
-	"github.com/testcontainers/testcontainers-go/wait"
 )
 
 const BASE_URL = "http://localhost:8080"
@@ -41,19 +39,8 @@ func setup(ctx context.Context) {
 	var err error
 	configService = config.NewConfigService(options.None[string]())
 	configService.SetEnv(config.ENV, "test")
-	dbName := configService.MustGetEnv(config.TEST_DB_NAME)
-	dbUser := configService.MustGetEnv(config.DB_USER)
-	dbPassword := configService.MustGetEnv(config.DB_PASSWORD)
 
-	pgContainer, err = postgres.Run(ctx, "docker.io/postgres:16-alpine",
-		postgres.WithDatabase(dbName),
-		postgres.WithUsername(dbUser),
-		postgres.WithPassword(dbPassword),
-		testcontainers.WithWaitStrategy(
-			wait.ForLog("database system is ready to accept connections").
-				WithOccurrence(2).
-				WithStartupTimeout(5*time.Second)),
-	)
+	pgContainer, err = testsetup.GetPgContainer()
 	if err != nil {
 		panic(err)
 	}
@@ -62,18 +49,12 @@ func setup(ctx context.Context) {
 	if err != nil {
 		panic(err)
 	}
-	configService.SetEnv(config.TEST_DB_CONN_STRING, connStr)
 
 	dbx, err = db.NewWithConnString(connStr)
 	if err != nil {
 		panic(err)
 	}
 
-	// using goose run migrations from db/migrations
-	err = goose.UpContext(ctx, dbx.DB, "./db/migrations/")
-	if err != nil {
-		panic(err)
-	}
 	go main.Run()
 	time.Sleep(50 * time.Millisecond)
 }

@@ -3,19 +3,16 @@ package stores
 import (
 	"context"
 	"goalify/db"
+	"goalify/testsetup"
 	us "goalify/users/stores"
 	"log"
 	"os"
 	"slices"
 	"testing"
-	"time"
 
 	"github.com/jmoiron/sqlx"
-	"github.com/pressly/goose/v3"
 	"github.com/stretchr/testify/assert"
-	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
-	"github.com/testcontainers/testcontainers-go/wait"
 )
 
 const password = "Password123!"
@@ -29,21 +26,9 @@ var (
 )
 
 func setup(ctx context.Context) {
-	dbName := "user_store"
-	dbUser := "postgres"
-	dbPass := "password"
-
 	var err error
 
-	pgContainer, err = postgres.Run(ctx, "docker.io/postgres:16-alpine",
-		postgres.WithDatabase(dbName),
-		postgres.WithUsername(dbUser),
-		postgres.WithPassword(dbPass),
-		testcontainers.WithWaitStrategy(
-			wait.ForLog("database system is ready to accept connections").
-				WithOccurrence(2).
-				WithStartupTimeout(5*time.Second)),
-	)
+	pgContainer, err = testsetup.GetPgContainer()
 	if err != nil {
 		panic(err)
 	}
@@ -61,11 +46,6 @@ func setup(ctx context.Context) {
 	userStore = us.NewUserStore(dbConn)
 	goalStore = NewGoalStore(dbConn)
 	gcStore = NewGoalCategoryStore(dbConn)
-
-	err = goose.UpContext(ctx, dbConn.DB, "../../db/migrations")
-	if err != nil {
-		panic(err)
-	}
 }
 
 func TestMain(m *testing.M) {
