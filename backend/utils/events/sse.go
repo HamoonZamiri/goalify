@@ -27,6 +27,11 @@ func newSSEConn(writer http.ResponseWriter, userId string) *SSEConn {
 	}
 }
 
+// to conform to the EventClient interface
+func (s *SSEConn) HandleEvent(event Event) {
+	s.eventQueue <- event
+}
+
 func (s *SSEConn) writeEvent(event Event) error {
 	eventId := uuid.New().String()
 	eventData, err := event.EncodeEvent()
@@ -35,29 +40,6 @@ func (s *SSEConn) writeEvent(event Event) error {
 	}
 	fmt.Fprintf(s.writer, "id: %s\nevent: %s\ndata: %s\n\n", eventId, event.EventType, eventData)
 	return nil
-}
-
-func (em *EventManager) addSSEConn(conn *SSEConn) {
-	em.mu.Lock()
-	defer em.mu.Unlock()
-	if _, ok := em.sseConnMap[conn.userId]; !ok {
-		em.sseConnMap[conn.userId] = make([]*SSEConn, 0)
-	}
-	em.sseConnMap[conn.userId] = append(em.sseConnMap[conn.userId], conn)
-}
-
-func (em *EventManager) removeSSEConn(conn *SSEConn) {
-	em.mu.Lock()
-	defer em.mu.Unlock()
-	if _, ok := em.sseConnMap[conn.userId]; !ok {
-		return
-	}
-	for i, c := range em.sseConnMap[conn.userId] {
-		if c == conn {
-			em.sseConnMap[conn.userId] = append(em.sseConnMap[conn.userId][:i], em.sseConnMap[conn.userId][i+1:]...)
-			break
-		}
-	}
 }
 
 func (em *EventManager) SSEHandler(w http.ResponseWriter, r *http.Request) {
@@ -77,8 +59,8 @@ func (em *EventManager) SSEHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Connection", "keep-alive")
 
 	conn := newSSEConn(w, userId)
-	em.addSSEConn(conn)
-	defer em.removeSSEConn(conn)
+	em.SubscribeToUserEvents(conn.userId, conn)
+	defer em.UnsubscribeFromUserEvents(conn.userId, conn)
 
 	for {
 		select {
