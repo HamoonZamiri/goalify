@@ -37,8 +37,9 @@ func (gs *GoalServiceImpl) handleGoalCategoryCreatedEvent(event events.Event) {
 		return
 	}
 
-	_, err = gs.CreateGoal("example", "This is an example goal/task!", category.UserId, category.Id)
+	defaultGoal, err := gs.CreateGoal("example", "This is an example goal/task!", category.UserId, category.Id)
 	if err != nil {
 		slog.Error("service.handleGoalCategoryCreatedEvent: CreateGoal:", "err", err)
 	}
+	gs.eventPublisher.Publish(events.NewEventWithUserId(events.DEFAULT_GOAL_CREATED, defaultGoal, defaultGoal.UserId.String()))
 }
