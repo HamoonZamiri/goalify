@@ -23,6 +23,7 @@ const (
 	GOAL_UPDATED          string = "goal_updated"
 	USER_UPDATED          string = "user_updated"
 	GOAL_CATEGORY_CREATED string = "goal_category_created"
+	DEFAULT_GOAL_CREATED  string = "default_goal_created"
 )
 
 func ParseEventData[T any](event Event) (T, error) {
@@ -115,40 +116,59 @@ func (em *EventManager) Publish(event Event) {
 	em.eventQueue <- event
 }
 
+func (em *EventManager) publishWithType(event Event) {
+	sublist, ok := em.subscribers[event.EventType]
+	if !ok {
+		return
+	}
+	underlyingList := sublist.GetList()
+	for e := underlyingList.Front(); e != nil; e = e.Next() {
+		sub, ok := e.Value.(Subscriber)
+		if !ok {
+			slog.Warn("EventManager.Publish: type assertion failed", "subscriber", e.Value)
+		}
+		sub.HandleEvent(event)
+	}
+}
+
+func (em *EventManager) publishWithUserId(event Event) {
+	if !event.UserId.IsPresent() {
+		return
+	}
+
+	userId := event.UserId.ValueOrZero()
+	userSubList, ok := em.userSubs[userId]
+	if !ok {
+		return
+	}
+	underlyingList := userSubList.GetList()
+	for e := underlyingList.Front(); e != nil; e = e.Next() {
+		sub, ok := e.Value.(Subscriber)
+		if !ok {
+			slog.Warn("EventManager.Publish: type assertion failed", "subscriber", e.Value)
+		}
+		sub.HandleEvent(event)
+	}
+}
+
 func (em *EventManager) processEvents() {
 	for event := range em.eventQueue {
 		em.mu.Lock()
-		subList, ok := em.subscribers[event.EventType]
-		if !ok {
-			em.mu.Unlock()
-			continue
-		}
-		underlyingList := subList.GetList()
-		for e := underlyingList.Front(); e != nil; e = e.Next() {
-			sub, ok := e.Value.(Subscriber)
-			if !ok {
-				slog.Warn("EventManager.Publish: type assertion failed", "subscriber", e.Value)
-			}
-			sub.HandleEvent(event)
-		}
-		if event.UserId.Valid {
-			userId := event.UserId.ValueOrZero()
-			userSubList, ok := em.userSubs[userId]
-			if !ok {
-				em.mu.Unlock()
-				continue
-			}
-			underlyingList = userSubList.GetList()
-			for e := underlyingList.Front(); e != nil; e = e.Next() {
-				sub, ok := e.Value.(Subscriber)
-				if !ok {
-					slog.Warn("EventManager.Publish: type assertion failed", "subscriber", e.Value)
-				}
-				sub.HandleEvent(event)
-			}
-		}
-		em.mu.Unlock()
+		var wg sync.WaitGroup
+		wg.Add(2)
 
+		// publish events based on their event type (internal to the monolith)
+		go func() {
+			em.publishWithType(event)
+			wg.Done()
+		}()
+		// publish events based on userId external clients such as the frontend
+		go func() {
+			em.publishWithUserId(event)
+			wg.Done()
+		}()
+		wg.Wait()
+		em.mu.Unlock()
 	}
 }
 
