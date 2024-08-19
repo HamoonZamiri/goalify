@@ -82,6 +82,7 @@ func (em *EventManager) WebSocketHandler(w http.ResponseWriter, r *http.Request)
 				err := conn.WriteJSON(event)
 				if err != nil {
 					slog.Error("WebSocketHandler: conn.WriteJSON:", "err", err)
+					return
 				}
 			}
 		case <-r.Context().Done():
