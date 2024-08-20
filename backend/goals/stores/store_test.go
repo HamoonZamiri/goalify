@@ -20,7 +20,7 @@ const password = "Password123!"
 var (
 	dbConn      *sqlx.DB
 	userStore   us.UserStore
-	goalStore   GoalStore
+	gStore      GoalStore
 	gcStore     GoalCategoryStore
 	pgContainer *postgres.PostgresContainer
 )
@@ -44,7 +44,7 @@ func setup(ctx context.Context) {
 	}
 
 	userStore = us.NewUserStore(dbConn)
-	goalStore = NewGoalStore(dbConn)
+	gStore = NewGoalStore(dbConn)
 	gcStore = NewGoalCategoryStore(dbConn)
 }
 
@@ -151,7 +151,7 @@ func TestCreateGoal(t *testing.T) {
 	category, err := gcStore.CreateGoalCategory(t.Name(), 50, user.Id)
 	assert.NoError(t, err)
 
-	goal, err := goalStore.CreateGoal(t.Name(), "desc", user.Id, category.Id)
+	goal, err := gStore.CreateGoal(t.Name(), "desc", user.Id, category.Id)
 	assert.NoError(t, err)
 	assert.Equal(t, t.Name(), goal.Title)
 	assert.Equal(t, category.Id, goal.CategoryId)
@@ -164,9 +164,9 @@ func TestGetGoalById(t *testing.T) {
 	user, err := userStore.CreateUser(t.Name()+"@mail.com", password)
 	assert.NoError(t, err)
 	category, _ := gcStore.CreateGoalCategory(t.Name(), 50, user.Id)
-	goal, _ := goalStore.CreateGoal(t.Name(), "desc", user.Id, category.Id)
+	goal, _ := gStore.CreateGoal(t.Name(), "desc", user.Id, category.Id)
 
-	foundGoal, err := goalStore.GetGoalById(goal.Id)
+	foundGoal, err := gStore.GetGoalById(goal.Id)
 	assert.NoError(t, err)
 	assert.Equal(t, goal.Id, foundGoal.Id)
 	assert.Equal(t, goal.Title, foundGoal.Title)
@@ -180,13 +180,13 @@ func TestUpdateGoalById(t *testing.T) {
 	user, err := userStore.CreateUser(t.Name()+"@mail.com", password)
 	assert.NoError(t, err)
 	category, _ := gcStore.CreateGoalCategory(t.Name(), 50, user.Id)
-	goal, _ := goalStore.CreateGoal(t.Name(), "desc", user.Id, category.Id)
+	goal, _ := gStore.CreateGoal(t.Name(), "desc", user.Id, category.Id)
 
 	updates := map[string]any{
 		"title":       "new title",
 		"description": "new desc",
 	}
-	updated, err := goalStore.UpdateGoalById(goal.Id, updates)
+	updated, err := gStore.UpdateGoalById(goal.Id, updates)
 	assert.NoError(t, err)
 	assert.Equal(t, "new title", updated.Title)
 	assert.Equal(t, "new desc", updated.Description)
@@ -197,14 +197,14 @@ func TestDeleteGoalById(t *testing.T) {
 	user, err := userStore.CreateUser(t.Name()+"@mail.com", password)
 	assert.NoError(t, err)
 	category, _ := gcStore.CreateGoalCategory(t.Name(), 50, user.Id)
-	goal, _ := goalStore.CreateGoal(t.Name(), "desc", user.Id, category.Id)
+	goal, _ := gStore.CreateGoal(t.Name(), "desc", user.Id, category.Id)
 
-	_, err = goalStore.GetGoalById(goal.Id)
+	_, err = gStore.GetGoalById(goal.Id)
 	assert.NoError(t, err)
 
-	err = goalStore.DeleteGoalById(goal.Id)
+	err = gStore.DeleteGoalById(goal.Id)
 	assert.NoError(t, err)
 
-	_, err = goalStore.GetGoalById(goal.Id)
+	_, err = gStore.GetGoalById(goal.Id)
 	assert.Error(t, err)
 }

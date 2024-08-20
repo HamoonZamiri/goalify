@@ -18,15 +18,15 @@ type GoalStore interface {
 	DeleteGoalById(goalId uuid.UUID) error
 }
 
-type GoalStoreImpl struct {
+type goalStore struct {
 	db *sqlx.DB
 }
 
-func NewGoalStore(db *sqlx.DB) *GoalStoreImpl {
-	return &GoalStoreImpl{db: db}
+func NewGoalStore(db *sqlx.DB) GoalStore {
+	return &goalStore{db: db}
 }
 
-func (s *GoalStoreImpl) CreateGoal(title, description string, userId, categoryId uuid.UUID) (*entities.Goal, error) {
+func (s *goalStore) CreateGoal(title, description string, userId, categoryId uuid.UUID) (*entities.Goal, error) {
 	query := `INSERT INTO goals (title, description, user_id, category_id)
   VALUES ($1, $2, $3, $4)
   RETURNING *`
@@ -39,7 +39,7 @@ func (s *GoalStoreImpl) CreateGoal(title, description string, userId, categoryId
 	return &goal, nil
 }
 
-func (s *GoalStoreImpl) UpdateGoalStatus(goalId uuid.UUID, status string) (*entities.Goal, error) {
+func (s *goalStore) UpdateGoalStatus(goalId uuid.UUID, status string) (*entities.Goal, error) {
 	query := `UPDATE goals SET status = $1 WHERE id = $2 RETURNING *`
 
 	var goal entities.Goal
@@ -51,7 +51,7 @@ func (s *GoalStoreImpl) UpdateGoalStatus(goalId uuid.UUID, status string) (*enti
 	return &goal, nil
 }
 
-func (s *GoalStoreImpl) GetGoalsByUserId(userId uuid.UUID) ([]*entities.Goal, error) {
+func (s *goalStore) GetGoalsByUserId(userId uuid.UUID) ([]*entities.Goal, error) {
 	goals := make([]*entities.Goal, 0)
 
 	err := s.db.Select(&goals, "SELECT * FROM goals WHERE user_id = $1", userId)
@@ -61,7 +61,7 @@ func (s *GoalStoreImpl) GetGoalsByUserId(userId uuid.UUID) ([]*entities.Goal, er
 	return goals, nil
 }
 
-func (s *GoalStoreImpl) GetGoalById(goalId uuid.UUID) (*entities.Goal, error) {
+func (s *goalStore) GetGoalById(goalId uuid.UUID) (*entities.Goal, error) {
 	var goal entities.Goal
 
 	err := s.db.Get(&goal, "SELECT * FROM goals WHERE id = $1", goalId)
@@ -71,7 +71,7 @@ func (s *GoalStoreImpl) GetGoalById(goalId uuid.UUID) (*entities.Goal, error) {
 	return &goal, nil
 }
 
-func (s *GoalStoreImpl) UpdateGoalById(goalId uuid.UUID, updates map[string]interface{}) (*entities.Goal, error) {
+func (s *goalStore) UpdateGoalById(goalId uuid.UUID, updates map[string]interface{}) (*entities.Goal, error) {
 	query, args := db.BuildUpdateQuery("goals", updates, goalId)
 
 	var goal entities.Goal
@@ -82,7 +82,7 @@ func (s *GoalStoreImpl) UpdateGoalById(goalId uuid.UUID, updates map[string]inte
 	return &goal, nil
 }
 
-func (s *GoalStoreImpl) DeleteGoalById(goalId uuid.UUID) error {
+func (s *goalStore) DeleteGoalById(goalId uuid.UUID) error {
 	_, err := s.db.Exec("DELETE FROM goals WHERE id = $1", goalId)
 	return err
 }
