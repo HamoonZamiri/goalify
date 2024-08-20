@@ -51,12 +51,12 @@ the struct below represents rows returned by this query specifically
 */
 type CategoryWithGoalRow struct {
 	// Category Fields
+	CategoryId        uuid.UUID `db:"id"`
+	CategoryUserId    uuid.UUID `db:"user_id"`
 	CategoryCreatedAt time.Time `db:"created_at"`
 	CategoryUpdatedAt time.Time `db:"updated_at"`
 	CategoryTitle     string    `db:"title"`
 	CategoryXpPerGoal int       `db:"xp_per_goal"`
-	CategoryId        uuid.UUID `db:"id"`
-	CategoryUserId    uuid.UUID `db:"user_id"`
 
 	// Goals Fields
 	GoalCreatedAt   sql.NullTime   `db:"goal_created_at"`
