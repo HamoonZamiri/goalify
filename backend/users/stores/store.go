@@ -20,15 +20,15 @@ type UserStore interface {
 
 const DEFAULT_LEVEL = 1
 
-type UserStoreImpl struct {
+type userStore struct {
 	db *sqlx.DB
 }
 
-func NewUserStore(db *sqlx.DB) *UserStoreImpl {
-	return &UserStoreImpl{db: db}
+func NewUserStore(db *sqlx.DB) UserStore {
+	return &userStore{db: db}
 }
 
-func (s *UserStoreImpl) CreateUser(email string, password string) (*entities.User, error) {
+func (s *userStore) CreateUser(email string, password string) (*entities.User, error) {
 	query := `INSERT INTO users (email, password, refresh_token_expiry, level_id) VALUES ($1, $2, $3, $4) RETURNING *`
 
 	var user entities.User
@@ -41,7 +41,7 @@ func (s *UserStoreImpl) CreateUser(email string, password string) (*entities.Use
 	return &user, nil
 }
 
-func (s *UserStoreImpl) GetUserByEmail(email string) (*entities.User, error) {
+func (s *userStore) GetUserByEmail(email string) (*entities.User, error) {
 	var user entities.User
 
 	// db.get returns an error if no rows are found
@@ -52,7 +52,7 @@ func (s *UserStoreImpl) GetUserByEmail(email string) (*entities.User, error) {
 	return &user, nil
 }
 
-func (s *UserStoreImpl) UpdateRefreshToken(id string, refreshToken string) (*entities.User, error) {
+func (s *userStore) UpdateRefreshToken(id string, refreshToken string) (*entities.User, error) {
 	query := `UPDATE users 
     SET refresh_token = $1,
     refresh_token_expiry = $2
@@ -68,7 +68,7 @@ func (s *UserStoreImpl) UpdateRefreshToken(id string, refreshToken string) (*ent
 	return &user, nil
 }
 
-func (s *UserStoreImpl) GetUserById(id string) (*entities.User, error) {
+func (s *userStore) GetUserById(id string) (*entities.User, error) {
 	var user entities.User
 	err := s.db.Get(&user, "SELECT * FROM users WHERE id = $1", id)
 	if err != nil {
@@ -77,12 +77,12 @@ func (s *UserStoreImpl) GetUserById(id string) (*entities.User, error) {
 	return &user, nil
 }
 
-func (s *UserStoreImpl) DeleteUserById(id string) error {
+func (s *userStore) DeleteUserById(id string) error {
 	_, err := s.db.Exec("DELETE FROM users WHERE id = $1", id)
 	return err
 }
 
-func (s *UserStoreImpl) UpdateUserById(id uuid.UUID, updates map[string]any) (*entities.User, error) {
+func (s *userStore) UpdateUserById(id uuid.UUID, updates map[string]any) (*entities.User, error) {
 	query, args := db.BuildUpdateQuery("users", updates, id)
 	query = query + " RETURNING *"
 

@@ -23,6 +23,7 @@ const (
 	GOAL_UPDATED          string = "goal_updated"
 	USER_UPDATED          string = "user_updated"
 	GOAL_CATEGORY_CREATED string = "goal_category_created"
+	DEFAULT_GOAL_CREATED  string = "default_goal_created"
 )
 
 func ParseEventData[T any](event Event) (T, error) {
@@ -48,12 +49,14 @@ type EventPublisher interface {
 	Subscribe(eventType string, subscriber Subscriber)
 	Publish(event Event)
 	Unsubscribe(eventType string, subscriber Subscriber)
+	SubscribeToUserEvents(userId string, subscriber Subscriber)
+	UnsubscribeFromUserEvents(userId string, subscriber Subscriber)
 }
 
 type EventManager struct {
 	eventQueue  chan Event
 	subscribers map[string]*lists.TypedList[Subscriber]
-	sseConnMap  map[string][]*SSEConn
+	userSubs    map[string]*lists.TypedList[Subscriber]
 	mu          sync.Mutex
 }
 
@@ -77,8 +80,8 @@ func NewEventManager() *EventManager {
 	em := &EventManager{
 		eventQueue:  make(chan Event, QUEUE_MAX_SIZE),
 		subscribers: make(map[string]*lists.TypedList[Subscriber]),
+		userSubs:    make(map[string]*lists.TypedList[Subscriber]),
 		mu:          sync.Mutex{},
-		sseConnMap:  make(map[string][]*SSEConn),
 	}
 	go em.processEvents()
 	return em
@@ -113,33 +116,59 @@ func (em *EventManager) Publish(event Event) {
 	em.eventQueue <- event
 }
 
+func (em *EventManager) publishWithType(event Event) {
+	sublist, ok := em.subscribers[event.EventType]
+	if !ok {
+		return
+	}
+	underlyingList := sublist.GetList()
+	for e := underlyingList.Front(); e != nil; e = e.Next() {
+		sub, ok := e.Value.(Subscriber)
+		if !ok {
+			slog.Warn("EventManager.Publish: type assertion failed", "subscriber", e.Value)
+		}
+		sub.HandleEvent(event)
+	}
+}
+
+func (em *EventManager) publishWithUserId(event Event) {
+	if !event.UserId.IsPresent() {
+		return
+	}
+
+	userId := event.UserId.ValueOrZero()
+	userSubList, ok := em.userSubs[userId]
+	if !ok {
+		return
+	}
+	underlyingList := userSubList.GetList()
+	for e := underlyingList.Front(); e != nil; e = e.Next() {
+		sub, ok := e.Value.(Subscriber)
+		if !ok {
+			slog.Warn("EventManager.Publish: type assertion failed", "subscriber", e.Value)
+		}
+		sub.HandleEvent(event)
+	}
+}
+
 func (em *EventManager) processEvents() {
 	for event := range em.eventQueue {
 		em.mu.Lock()
-		subList, ok := em.subscribers[event.EventType]
-		if !ok {
-			em.mu.Unlock()
-			continue
-		}
-		underlyingList := subList.GetList()
-		for e := underlyingList.Front(); e != nil; e = e.Next() {
-			sub, ok := e.Value.(Subscriber)
-			if !ok {
-				slog.Warn("EventManager.Publish: type assertion failed", "subscriber", e.Value)
-			}
-			sub.HandleEvent(event)
-		}
+		var wg sync.WaitGroup
+		wg.Add(2)
 
-		sseConns, ok := em.sseConnMap[event.UserId.ValueOrZero()]
-		if !ok {
-			em.mu.Unlock()
-			continue
-		}
-		for _, sseConn := range sseConns {
-			sseConn.eventQueue <- event
-		}
+		// publish events based on their event type (internal to the monolith)
+		go func() {
+			em.publishWithType(event)
+			wg.Done()
+		}()
+		// publish events based on userId external clients such as the frontend
+		go func() {
+			em.publishWithUserId(event)
+			wg.Done()
+		}()
+		wg.Wait()
 		em.mu.Unlock()
-
 	}
 }
 
@@ -147,6 +176,27 @@ func (em *EventManager) Unsubscribe(eventType string, subscriber Subscriber) {
 	em.mu.Lock()
 	defer em.mu.Unlock()
 	subList := em.subscribers[eventType].GetList()
+	for e := subList.Front(); e != nil; e = e.Next() {
+		if e.Value == subscriber {
+			subList.Remove(e)
+			break
+		}
+	}
+}
+
+func (em *EventManager) SubscribeToUserEvents(userId string, subscriber Subscriber) {
+	em.mu.Lock()
+	defer em.mu.Unlock()
+	if _, ok := em.userSubs[userId]; !ok {
+		em.userSubs[userId] = lists.New[Subscriber]()
+	}
+	em.userSubs[userId].PushBack(subscriber)
+}
+
+func (em *EventManager) UnsubscribeFromUserEvents(userId string, subscriber Subscriber) {
+	em.mu.Lock()
+	defer em.mu.Unlock()
+	subList := em.userSubs[userId].GetList()
 	for e := subList.Front(); e != nil; e = e.Next() {
 		if e.Value == subscriber {
 			subList.Remove(e)

@@ -19,12 +19,12 @@ type GoalCategoryStore interface {
 	DeleteGoalCategoryById(categoryId uuid.UUID) error
 }
 
-type GoalCategoryStoreImpl struct {
+type goalCategoryStore struct {
 	db *sqlx.DB
 }
 
-func NewGoalCategoryStore(db *sqlx.DB) *GoalCategoryStoreImpl {
-	return &GoalCategoryStoreImpl{db: db}
+func NewGoalCategoryStore(db *sqlx.DB) GoalCategoryStore {
+	return &goalCategoryStore{db: db}
 }
 
 const category_join_goals_query string = `SELECT gc.id, gc.title, gc.xp_per_goal, gc.user_id, gc.created_at, gc.updated_at, g.id as goal_id, 
@@ -32,7 +32,7 @@ const category_join_goals_query string = `SELECT gc.id, gc.title, gc.xp_per_goal
   FROM goal_categories gc LEFT JOIN goals g 
   ON gc.id = g.category_id`
 
-func (s *GoalCategoryStoreImpl) CreateGoalCategory(title string, xpPerGoal int, userId uuid.UUID) (*entities.GoalCategory, error) {
+func (s *goalCategoryStore) CreateGoalCategory(title string, xpPerGoal int, userId uuid.UUID) (*entities.GoalCategory, error) {
 	query := `INSERT INTO goal_categories (title, xp_per_goal, user_id) 
   VALUES ($1, $2, $3) RETURNING *`
 	gc := entities.NewGoalCategory()
@@ -43,7 +43,7 @@ func (s *GoalCategoryStoreImpl) CreateGoalCategory(title string, xpPerGoal int, 
 	return gc, err
 }
 
-func (s *GoalCategoryStoreImpl) GetGoalCategoriesByUserId(userId uuid.UUID) ([]*entities.GoalCategory, error) {
+func (s *goalCategoryStore) GetGoalCategoriesByUserId(userId uuid.UUID) ([]*entities.GoalCategory, error) {
 	query := category_join_goals_query + ` WHERE gc.user_id = $1`
 
 	rows, err := s.db.Queryx(query, userId)
@@ -60,7 +60,7 @@ func (s *GoalCategoryStoreImpl) GetGoalCategoriesByUserId(userId uuid.UUID) ([]*
 	return categorySlice, nil
 }
 
-func (s *GoalCategoryStoreImpl) GetGoalCategoryById(categoryId uuid.UUID) (*entities.GoalCategory, error) {
+func (s *goalCategoryStore) GetGoalCategoryById(categoryId uuid.UUID) (*entities.GoalCategory, error) {
 	query := category_join_goals_query + ` WHERE gc.id = $1`
 
 	rows, err := s.db.Queryx(query, categoryId)
@@ -80,7 +80,7 @@ func (s *GoalCategoryStoreImpl) GetGoalCategoryById(categoryId uuid.UUID) (*enti
 	return categorySlice[0], nil
 }
 
-func (s *GoalCategoryStoreImpl) UpdateGoalCategoryById(categoryId uuid.UUID, updates map[string]any) (*entities.GoalCategory, error) {
+func (s *goalCategoryStore) UpdateGoalCategoryById(categoryId uuid.UUID, updates map[string]any) (*entities.GoalCategory, error) {
 	query, args := db.BuildUpdateQuery("goal_categories", updates, categoryId)
 	gc := entities.NewGoalCategory()
 
@@ -91,7 +91,7 @@ func (s *GoalCategoryStoreImpl) UpdateGoalCategoryById(categoryId uuid.UUID, upd
 	return gc, nil
 }
 
-func (s *GoalCategoryStoreImpl) DeleteGoalCategoryById(categoryId uuid.UUID) error {
+func (s *goalCategoryStore) DeleteGoalCategoryById(categoryId uuid.UUID) error {
 	query := `DELETE FROM goal_categories WHERE id = $1`
 	_, err := s.db.Exec(query, categoryId)
 	if err != nil {

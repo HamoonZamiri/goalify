@@ -6,10 +6,16 @@ import ModalForm from "@/components/ModalForm.vue";
 import CreateGoalCategoryForm from "@/components/goals/forms/CreateGoalCategoryForm.vue";
 import CreateCategoryButton from "@/components/goals/buttons/CreateCategoryButton.vue";
 import goalState from "@/state/goals";
+import useWebSocket from "@/hooks/useWebSocket";
+import { WS_BASE } from "@/utils/constants";
+import authState from "@/state/auth";
 
 // State
 const error = ref<ErrorResponse | null>(null);
 const isLoading = ref<boolean>(true);
+const { connect } = useWebSocket(
+  `ws://localhost:8080/api/ws?token=${authState.getUser()?.access_token}`,
+);
 
 onMounted(async () => {
   const res = await ApiClient.getUserGoalCategories();
@@ -21,6 +27,7 @@ onMounted(async () => {
 
   goalState.categories = res.data;
   isLoading.value = false;
+  connect();
 });
 </script>
 
