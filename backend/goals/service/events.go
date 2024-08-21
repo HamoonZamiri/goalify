@@ -6,7 +6,7 @@ import (
 	"log/slog"
 )
 
-func (gs *GoalServiceImpl) HandleEvent(event events.Event) {
+func (gs *goalService) HandleEvent(event events.Event) {
 	switch event.EventType {
 	case events.USER_CREATED:
 		gs.handleUserCreatedEvent(event)
@@ -17,7 +17,7 @@ func (gs *GoalServiceImpl) HandleEvent(event events.Event) {
 	}
 }
 
-func (gs *GoalServiceImpl) handleUserCreatedEvent(event events.Event) {
+func (gs *goalService) handleUserCreatedEvent(event events.Event) {
 	user, err := events.ParseEventData[*entities.User](event)
 	if err != nil {
 		slog.Error("service.handleUserCreatedEvent: events.ParseEventData:", "err", err)
@@ -30,7 +30,7 @@ func (gs *GoalServiceImpl) handleUserCreatedEvent(event events.Event) {
 	}
 }
 
-func (gs *GoalServiceImpl) handleGoalCategoryCreatedEvent(event events.Event) {
+func (gs *goalService) handleGoalCategoryCreatedEvent(event events.Event) {
 	category, err := events.ParseEventData[*entities.GoalCategory](event)
 	if err != nil {
 		slog.Error("service.handleGoalCategoryCreatedEvent: events.ParseEventData:", "err", err)
