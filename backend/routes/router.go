@@ -24,13 +24,6 @@ func AddRoutes(
 	configService config.ConfigService,
 	em *events.EventManager,
 ) http.Handler {
-	// // var corsDebug bool
-	// if configService.MustGetEnv("ENV") == "dev" {
-	// 	corsDebug = true
-	// } else {
-	// 	corsDebug = false
-	// }
-
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{"http://localhost:5173"},
 		AllowedMethods: []string{
@@ -45,6 +38,7 @@ func AddRoutes(
 		Debug:            false,
 		AllowedHeaders:   []string{"*"},
 	})
+
 	CorsChain := middleware.CreateChain(middleware.Logging, c.Handler)
 	AuthChain := middleware.CreateChain(middleware.Logging, c.Handler, middleware.AuthenticatedOnly)
 	QueryTokenAuthChain := middleware.CreateChain(middleware.QueryTokenAuth)
@@ -71,7 +65,7 @@ func AddRoutes(
 	addRoute(mux, "DELETE", "/api/goals/categories/{categoryId}", goalHandler.HandleDeleteGoalCategoryById, AuthChain)
 
 	// need options method available on all endpoints for CORS
-	addRoute(mux, "OPTIONS", "/api/*", nil, CorsChain)
+	addRoute(mux, "OPTIONS", "/api/{endpoints...}", nil, CorsChain)
 
 	// Server Sent Events endpoint
 	addRoute(mux, http.MethodOptions, "/api/events", nil, CorsChain)
