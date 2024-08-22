@@ -46,3 +46,11 @@ func (u *User) ToUserDTO(accessToken string) *UserDTO {
 		RefreshToken:       u.RefreshToken,
 	}
 }
+
+type Level struct {
+	Id         int32     `db:"id" json:"id"`
+	LevelUpXp  int32     `db:"level_up_xp" json:"level_up_xp"`
+	CashReward int32     `db:"cash_reward" json:"cash_reward"`
+	CreatedAt  time.Time `db:"created_at" json:"created_at"`
+	UpdatedAt  time.Time `db:"updated_at" json:"updated_at"`
+}

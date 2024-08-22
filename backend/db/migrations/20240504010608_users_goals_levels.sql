@@ -43,8 +43,7 @@ CREATE TABLE goals (
 );
 
 -- Insert Default Levels
-INSERT INTO levels (id, level_up_xp, cash_reward) VALUES (1, 100, 10);
-
+DO $$ DECLARE lvl int := 1; xp int := 100; cash int := 100; BEGIN FOR lvl IN 1..100 LOOP INSERT INTO levels (id, level_up_xp, cash_reward, created_at, updated_at) VALUES (lvl, xp, cash, NOW(), NOW()); xp := xp + 10; cash := cash + 10; END LOOP; END $$;
 -- +goose Down
 DROP TABLE goals;
 DROP TABLE goal_categories;
