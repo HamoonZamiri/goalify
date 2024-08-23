@@ -116,7 +116,7 @@ func (em *EventManager) Publish(event Event) {
 	em.eventQueue <- event
 }
 
-func (em *EventManager) publishWithType(event Event) {
+func (em *EventManager) broadcastByType(event Event) {
 	sublist, ok := em.subscribers[event.EventType]
 	if !ok {
 		return
@@ -131,7 +131,7 @@ func (em *EventManager) publishWithType(event Event) {
 	}
 }
 
-func (em *EventManager) publishWithUserId(event Event) {
+func (em *EventManager) broadcastByUser(event Event) {
 	if !event.UserId.IsPresent() {
 		return
 	}
@@ -159,12 +159,12 @@ func (em *EventManager) processEvents() {
 
 		// publish events based on their event type (internal to the monolith)
 		go func() {
-			em.publishWithType(event)
+			em.broadcastByType(event)
 			wg.Done()
 		}()
 		// publish events based on userId external clients such as the frontend
 		go func() {
-			em.publishWithUserId(event)
+			em.broadcastByUser(event)
 			wg.Done()
 		}()
 		wg.Wait()
