@@ -136,3 +136,12 @@ func TestUpdateUser(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "test6@mail.com", user.Email)
 }
+
+func TestGetLevelById(t *testing.T) {
+	t.Parallel()
+	level, err := userStoreVar.GetLevelById(1)
+	assert.NoError(t, err)
+	assert.Equal(t, int32(1), level.Id)
+	assert.Equal(t, int32(100), level.LevelUpXp)
+	assert.Equal(t, int32(100), level.CashReward)
+}
