@@ -139,9 +139,16 @@ func TestUpdateUser(t *testing.T) {
 
 func TestGetLevelById(t *testing.T) {
 	t.Parallel()
-	level, err := userStoreVar.GetLevelById(1)
-	assert.NoError(t, err)
-	assert.Equal(t, int32(1), level.Id)
-	assert.Equal(t, int32(100), level.LevelUpXp)
-	assert.Equal(t, int32(100), level.CashReward)
+	level := 1
+	expectedXp := 100
+	expectedCash := 100
+	for ; level <= 100; level++ {
+		levelObj, err := userStoreVar.GetLevelById(level)
+		assert.NoError(t, err)
+		assert.Equal(t, level, levelObj.Id)
+		assert.Equal(t, expectedXp, levelObj.LevelUpXp)
+		assert.Equal(t, expectedCash, levelObj.CashReward)
+		expectedXp += 10
+		expectedCash += 10
+	}
 }
