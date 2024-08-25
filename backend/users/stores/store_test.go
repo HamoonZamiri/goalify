@@ -152,3 +152,18 @@ func TestGetLevelById(t *testing.T) {
 		expectedCash += 10
 	}
 }
+
+func TestLevelDoesNotExist(t *testing.T) {
+	t.Parallel()
+	_, err := userStoreVar.GetLevelById(0)
+	assert.ErrorIs(t, err, sql.ErrNoRows)
+
+	_, err = userStoreVar.GetLevelById(101)
+	assert.ErrorIs(t, err, sql.ErrNoRows)
+
+	_, err = userStoreVar.GetLevelById(-1000)
+	assert.ErrorIs(t, err, sql.ErrNoRows)
+
+	_, err = userStoreVar.GetLevelById(1000)
+	assert.ErrorIs(t, err, sql.ErrNoRows)
+}
