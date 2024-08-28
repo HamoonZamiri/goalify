@@ -260,12 +260,12 @@ func (gs *goalService) UpdateGoalById(goalId uuid.UUID, updates map[string]inter
 	}
 
 	cat, err := gs.goalCategoryStore.GetGoalCategoryById(updatedGoal.CategoryId)
-	event := events.NewEventWithUserId(events.GOAL_UPDATED, map[string]any{
-		"oldGoal": goal,
-		"newGoal": updatedGoal,
-		"xp":      cat.Xp_per_goal,
-	},
-		userId.String())
+	eventData := &events.GoalUpdatedData{
+		OldGoal: goal,
+		NewGoal: updatedGoal,
+		Xp:      cat.Xp_per_goal,
+	}
+	event := events.NewEventWithUserId(events.GOAL_UPDATED, eventData, userId.String())
 	gs.eventPublisher.Publish(event)
 	return updatedGoal, nil
 }

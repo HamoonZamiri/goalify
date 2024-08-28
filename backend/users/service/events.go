@@ -1,7 +1,6 @@
 package service
 
 import (
-	"goalify/entities"
 	"goalify/utils/events"
 	"log/slog"
 )
@@ -16,27 +15,19 @@ func (us *userService) HandleEvent(event events.Event) {
 }
 
 func (us *userService) handleGoalUpdatedEvent(event events.Event) {
-	eventData, err := events.ParseEventData[map[string]any](event)
+	eventData, err := events.ParseEventData[*events.GoalUpdatedData](event)
 	if err != nil {
 		slog.Error("service.handleGoalUpdatedEvent: events.ParseEventData:", "err", err)
 		return
 	}
 
-	oldGoal := eventData["oldGoal"]
-	newGoal := eventData["newGoal"]
-	goalXp := eventData["xp"]
+	oldGoal := eventData.OldGoal
+	newGoal := eventData.NewGoal
+	xp := eventData.Xp
 
-	assertedOldGoal, ok1 := oldGoal.(*entities.Goal)
-	assertedNewGoal, ok2 := newGoal.(*entities.Goal)
-	assertedXp, ok3 := goalXp.(int)
-	if !ok1 || !ok2 || !ok3 {
-		slog.Error("service.handleGoalUpdatedEvent: type assertion failed")
-		return
-	}
-
-	if assertedOldGoal.Status != assertedNewGoal.Status && assertedNewGoal.Status == "complete" {
+	if oldGoal.Status != newGoal.Status && newGoal.Status == "complete" {
 		// we need to update the xp of the user
-		user, err := us.userStore.GetUserById(assertedOldGoal.UserId.String())
+		user, err := us.userStore.GetUserById(oldGoal.UserId.String())
 		if err != nil {
 			slog.Error("service.handleGoalUpdatedEvent: store.GetUserById:", "err", err)
 			return
@@ -46,7 +37,7 @@ func (us *userService) handleGoalUpdatedEvent(event events.Event) {
 			slog.Error("service.handleGoalUpdatedEvent: store.GetLevelById:", "err", err)
 			return
 		}
-		newXp := user.Xp + assertedXp
+		newXp := user.Xp + xp
 		newLevel := user.LevelId
 		if newXp >= level.LevelUpXp {
 			newXp %= level.LevelUpXp
