@@ -18,6 +18,8 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+var subscribedEvents = []string{events.GOAL_UPDATED}
+
 type UserService interface {
 	SignUp(email, password string) (*entities.UserDTO, error)
 	Login(email, password string) (*entities.UserDTO, error)
@@ -32,7 +34,12 @@ type userService struct {
 }
 
 func NewUserService(userStore stores.UserStore, ep events.EventPublisher) UserService {
-	return &userService{userStore: userStore, eventPublisher: ep}
+	us := &userService{userStore: userStore, eventPublisher: ep}
+
+	for _, event := range subscribedEvents {
+		ep.Subscribe(event, us)
+	}
+	return us
 }
 
 func generateJWTToken(userId uuid.UUID) (string, error) {

@@ -258,6 +258,15 @@ func (gs *goalService) UpdateGoalById(goalId uuid.UUID, updates map[string]inter
 		slog.Error(fmt.Sprintf("%s: store.UpdateGoalById:", funcStr), "err", err)
 		return nil, fmt.Errorf("%w: error updating goal", svcerror.ErrInternalServer)
 	}
+
+	cat, err := gs.goalCategoryStore.GetGoalCategoryById(updatedGoal.CategoryId)
+	event := events.NewEventWithUserId(events.GOAL_UPDATED, map[string]any{
+		"oldGoal": goal,
+		"newGoal": updatedGoal,
+		"xp":      cat.Xp_per_goal,
+	},
+		userId.String())
+	gs.eventPublisher.Publish(event)
 	return updatedGoal, nil
 }
 
