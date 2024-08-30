@@ -6,10 +6,10 @@ import {
   createServerResponseSchema,
   type User,
 } from "@/utils/schemas";
-import authState from "@/state/auth";
 import { ref } from "vue";
-import { ApiClient } from "@/utils/api";
+import useAuth from "@/hooks/auth/useAuth";
 
+const { authState, setUser } = useAuth();
 const error = ref<string | null>(null);
 const formData = ref<{ email: string; password: string }>({
   email: "",
@@ -31,7 +31,7 @@ async function login(payload: MouseEvent) {
     return;
   }
   const parsed = createServerResponseSchema(UserSchema).parse(json);
-  authState.setUser(parsed.data as User);
+  setUser(parsed.data as User);
   error.value = null;
   router.push({ name: "Home" });
 }

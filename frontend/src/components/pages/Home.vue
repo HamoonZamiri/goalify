@@ -5,15 +5,16 @@ import { type ErrorResponse, ApiClient } from "@/utils/api";
 import ModalForm from "@/components/ModalForm.vue";
 import CreateGoalCategoryForm from "@/components/goals/forms/CreateGoalCategoryForm.vue";
 import CreateCategoryButton from "@/components/goals/buttons/CreateCategoryButton.vue";
-import authState from "@/state/auth";
 import { useSSE } from "@/hooks/events/useSse";
 import useGoals from "@/hooks/goals/useGoals";
+import useAuth from "@/hooks/auth/useAuth";
 
 // State
+const { getUser } = useAuth();
 const error = ref<ErrorResponse | null>(null);
 const isLoading = ref<boolean>(true);
 const { connect } = useSSE(
-  `http://localhost:8080/api/events?token=${authState.getUser()?.access_token}`,
+  `http://localhost:8080/api/events?token=${getUser()?.access_token}`,
 );
 const { setCategories, categoryState } = useGoals();
 
