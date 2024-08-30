@@ -16,7 +16,7 @@ const UserEventSchema = createEventSchema(Schemas.UserSchema);
 const GoalEventSchema = createEventSchema(Schemas.GoalSchema);
 const GoalCategoryEventSchema = createEventSchema(Schemas.GoalCategorySchema);
 
-const EventSchemas = {
+export const EventSchemas = {
   [events.USER_CREATED]: UserEventSchema,
   [events.GOAL_CREATED]: GoalEventSchema,
   [events.GOAL_CATEGORY_CREATED]: GoalCategoryEventSchema,
@@ -24,6 +24,11 @@ const EventSchemas = {
   [events.DEFAULT_GOAL_CREATED]: GoalEventSchema,
 } as const;
 
+export function handleDefaultGoalCreated(
+  event: z.infer<(typeof EventSchemas)[typeof events.DEFAULT_GOAL_CREATED]>,
+) {
+  goalState.addGoal(event.data.category_id, event.data);
+}
 export default function useWebSocket(url: string) {
   const websocket = ref<WebSocket | null>(null);
 
@@ -54,17 +59,6 @@ export default function useWebSocket(url: string) {
   return { connect };
 }
 
-function handleGoalCategoryCreated(
-  event: z.infer<(typeof EventSchemas)[typeof events.GOAL_CATEGORY_CREATED]>,
-) {
-  return;
-}
-
-function handleDefaultGoalCreated(
-  event: z.infer<(typeof EventSchemas)[typeof events.DEFAULT_GOAL_CREATED]>,
-) {
-  goalState.addGoal(event.data.category_id, event.data);
-}
 function handleEvent(event: MessageEvent) {
   const json = JSON.parse(event.data);
   const eventType = json.event_type as string;
