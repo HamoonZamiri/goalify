@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import goalState from "@/state/goals";
+import useGoals from "@/hooks/goals/useGoals";
 import { ApiClient, type ErrorResponse } from "@/utils/api";
 import { ref } from "vue";
 
@@ -19,6 +19,8 @@ const props = defineProps<{
   setIsOpen: (value: boolean) => void;
 }>();
 
+const { addCategory } = useGoals();
+
 async function handleSubmit(e: MouseEvent) {
   e.preventDefault();
   const res = await ApiClient.createGoalCategory(
@@ -35,7 +37,7 @@ async function handleSubmit(e: MouseEvent) {
   error.value = null;
 
   // dispatch an event to update the categories
-  goalState.addCategory(res.data);
+  addCategory(res.data);
   props.setIsOpen(false);
 }
 </script>

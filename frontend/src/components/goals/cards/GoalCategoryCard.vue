@@ -6,8 +6,8 @@ import CreateGoalForm from "@/components/goals/forms/CreateGoalForm.vue";
 import CreateGoalButton from "@/components/goals/buttons/CreateGoalButton.vue";
 import { Menu, MenuButton, MenuItems, MenuItem } from "@headlessui/vue";
 import { ApiClient } from "@/utils/api";
-import goalState from "@/state/goals";
 import { reactive, watch } from "vue";
+import useGoals from "@/hooks/goals/useGoals";
 const props = defineProps<{
   goalCategory: GoalCategory;
 }>();
@@ -20,12 +20,14 @@ const updates = reactive({
   xp_per_goal: props.goalCategory.xp_per_goal,
 });
 
+const { deleteCategory } = useGoals();
+
 async function handleDeleteCategory(e: MouseEvent) {
   e.preventDefault();
   await ApiClient.deleteCategory(props.goalCategory.id);
 
   // remove category from state
-  goalState.deleteCategory(props.goalCategory.id);
+  deleteCategory(props.goalCategory.id);
 }
 
 async function handleNumericInput(payload: Event) {

@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import GoalCategoryCard from "@/components/goals/cards/GoalCategoryCard.vue";
-import { onMounted, ref, watch } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import { type ErrorResponse, ApiClient } from "@/utils/api";
 import ModalForm from "@/components/ModalForm.vue";
 import CreateGoalCategoryForm from "@/components/goals/forms/CreateGoalCategoryForm.vue";
 import CreateCategoryButton from "@/components/goals/buttons/CreateCategoryButton.vue";
-import goalState from "@/state/goals";
 import authState from "@/state/auth";
 import { useSSE } from "@/hooks/events/useSse";
+import useGoals from "@/hooks/goals/useGoals";
 
 // State
 const error = ref<ErrorResponse | null>(null);
@@ -15,6 +15,7 @@ const isLoading = ref<boolean>(true);
 const { connect } = useSSE(
   `http://localhost:8080/api/events?token=${authState.getUser()?.access_token}`,
 );
+const { setCategories, categoryState } = useGoals();
 
 onMounted(async () => {
   const res = await ApiClient.getUserGoalCategories();
@@ -24,7 +25,7 @@ onMounted(async () => {
     return;
   }
 
-  goalState.categories = res.data;
+  setCategories(res.data);
   isLoading.value = false;
   connect();
 });
@@ -43,7 +44,7 @@ onMounted(async () => {
     >
       <div
         class="w-full sm:w-1/3 flex-shrink-0"
-        v-for="cat in goalState.categories"
+        v-for="cat in categoryState.categories"
         key="cat.id"
       >
         <GoalCategoryCard :goalCategory="cat" />

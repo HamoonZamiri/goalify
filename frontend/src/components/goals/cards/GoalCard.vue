@@ -10,7 +10,7 @@ import {
   ListboxOptions,
 } from "@headlessui/vue";
 import { ApiClient } from "@/utils/api";
-import goalState from "@/state/goals";
+import useGoals from "@/hooks/goals/useGoals";
 const props = defineProps<{
   goal: Goal;
 }>();
@@ -28,6 +28,8 @@ const updates = reactive<{
 const isEditing = ref(false);
 const isDeleting = ref(false);
 
+const { deleteGoal } = useGoals();
+
 function setIsEditing(value: boolean) {
   isEditing.value = value;
 }
@@ -42,7 +44,7 @@ async function handleDeleteGoal(e: MouseEvent) {
   await ApiClient.deleteGoal(props.goal.id);
 
   // remove goal from state
-  goalState.deleteGoal(props.goal.category_id, props.goal.id);
+  deleteGoal(props.goal.category_id, props.goal.id);
 
   setIsEditing(false);
   setIsDeleting(false);

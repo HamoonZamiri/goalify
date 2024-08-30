@@ -1,9 +1,10 @@
-import goalState from "@/state/goals";
 import { events } from "@/utils/constants";
 import { Schemas } from "@/utils/schemas";
 import { onUnmounted, ref } from "vue";
+import useGoals from "@/hooks/goals/useGoals";
 
 export function useSSE(url: string) {
+  const { addGoal } = useGoals();
   const eventSource = ref<EventSource | null>(null);
 
   const connect = () => {
@@ -23,7 +24,7 @@ export function useSSE(url: string) {
     es.addEventListener(events.DEFAULT_GOAL_CREATED, (event) => {
       const json = JSON.parse(event.data);
       const parsedData = Schemas.GoalSchema.parse(json);
-      goalState.addGoal(parsedData.category_id, parsedData);
+      addGoal(parsedData.category_id, parsedData);
     });
 
     eventSource.value = es;
