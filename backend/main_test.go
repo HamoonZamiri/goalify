@@ -538,6 +538,37 @@ func TestDeleteGoalNotFound(t *testing.T) {
 	assert.Equal(t, http.StatusNotFound, res.StatusCode)
 }
 
+func TestUserLevelUpEvent(t *testing.T) {
+	t.Parallel()
+
+	email := t.Name() + "@mail.com"
+	userDto := createUser(email, "password123!")
+	cat := createTestGoalCategory("create goal category", userDto.Id)
+	goal := createTestGoal("create goal", "desc", cat.Id, userDto.Id)
+
+	reqBody := map[string]any{"status": "complete"}
+	url := fmt.Sprintf("%s/api/goals/%s", BASE_URL, goal.Id)
+	res, err := buildAndSendRequest("PUT", url, reqBody, userDto.AccessToken)
+	require.Nil(t, err)
+	assert.Equal(t, http.StatusOK, res.StatusCode)
+
+	// rerun requests until goal category created event triggers
+	url = fmt.Sprintf("%s/api/goals/categories/%s", BASE_URL, cat.Id)
+	var user *entities.User
+	for i := 0; i < 5; i++ {
+		user, err = getUserById(userDto.Id.String())
+		if err != nil {
+			t.Log(err)
+			break
+		}
+		if user.LevelId == 2 {
+			break
+		}
+		time.Sleep(50 * time.Millisecond)
+	}
+	assert.Equal(t, 2, user.LevelId)
+}
+
 // utility functions
 func buildAndSendRequest(method, url string, body map[string]any, accessToken string) (*http.Response, error) {
 	var buf bytes.Buffer
@@ -574,7 +605,7 @@ func createTestGoalCategory(title string, userId uuid.UUID) *entities.GoalCatego
 	query := `INSERT INTO goal_categories (title, xp_per_goal, user_id) 
   VALUES ($1, $2, $3) RETURNING *`
 	var goalCategory entities.GoalCategory
-	dbx.QueryRowx(query, title, 50, userId).StructScan(&goalCategory)
+	dbx.QueryRowx(query, title, 100, userId).StructScan(&goalCategory)
 	return &goalCategory
 }
 
@@ -584,6 +615,15 @@ func createTestGoal(title, description string, categoryId, userId uuid.UUID) *en
 	var goal entities.Goal
 	dbx.QueryRowx(query, title, description, userId, categoryId).StructScan(&goal)
 	return &goal
+}
+
+func getUserById(id string) (*entities.User, error) {
+	var user entities.User
+	err := dbx.Get(&user, "SELECT * FROM users WHERE id = $1", id)
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
 }
 
 func UnmarshalServerResponse[T any](res *http.Response) (responses.ServerResponse[T], error) {

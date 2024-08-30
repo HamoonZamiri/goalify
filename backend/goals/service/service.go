@@ -38,7 +38,7 @@ type GoalService interface {
 	DeleteGoalCategoryById(categoryId, userId uuid.UUID) error
 }
 
-type GoalServiceImpl struct {
+type goalService struct {
 	goalStore         stores.GoalStore
 	goalCategoryStore stores.GoalCategoryStore
 	traceLogger       stacktrace.TraceLogger
@@ -48,8 +48,8 @@ type GoalServiceImpl struct {
 func NewGoalService(goalStore stores.GoalStore,
 	goalCategoryStore stores.GoalCategoryStore,
 	traceLogger stacktrace.TraceLogger, ep events.EventPublisher,
-) *GoalServiceImpl {
-	gs := &GoalServiceImpl{
+) GoalService {
+	gs := &goalService{
 		goalStore:         goalStore,
 		goalCategoryStore: goalCategoryStore,
 		traceLogger:       traceLogger,
@@ -63,7 +63,7 @@ func NewGoalService(goalStore stores.GoalStore,
 	return gs
 }
 
-func (gs *GoalServiceImpl) CreateGoal(title, description string, userId, categoryId uuid.UUID) (*entities.Goal, error) {
+func (gs *goalService) CreateGoal(title, description string, userId, categoryId uuid.UUID) (*entities.Goal, error) {
 	funcStr := gs.traceLogger.GetTrace("service.CreateGoal")
 
 	createdGoal, err := gs.goalStore.CreateGoal(title, description, userId, categoryId)
@@ -74,7 +74,7 @@ func (gs *GoalServiceImpl) CreateGoal(title, description string, userId, categor
 	return createdGoal, nil
 }
 
-func (gs *GoalServiceImpl) UpdateGoalStatus(status string, goalId, userId uuid.UUID) (*entities.Goal, error) {
+func (gs *goalService) UpdateGoalStatus(status string, goalId, userId uuid.UUID) (*entities.Goal, error) {
 	cleanStatus := strings.ToLower(status)
 
 	if cleanStatus != "completed" && cleanStatus != "not_completed" {
@@ -92,7 +92,7 @@ func (gs *GoalServiceImpl) UpdateGoalStatus(status string, goalId, userId uuid.U
 	return gs.goalStore.UpdateGoalStatus(goalId, status)
 }
 
-func (gs *GoalServiceImpl) GetGoalsByUserId(userId uuid.UUID) ([]*entities.Goal, error) {
+func (gs *goalService) GetGoalsByUserId(userId uuid.UUID) ([]*entities.Goal, error) {
 	funcStr := gs.traceLogger.GetTrace("service.GetGoalsByUserId")
 	goals, err := gs.goalStore.GetGoalsByUserId(userId)
 	if err == sql.ErrNoRows {
@@ -106,7 +106,7 @@ func (gs *GoalServiceImpl) GetGoalsByUserId(userId uuid.UUID) ([]*entities.Goal,
 	return goals, nil
 }
 
-func (gs *GoalServiceImpl) GetGoalById(goalId uuid.UUID) (*entities.Goal, error) {
+func (gs *goalService) GetGoalById(goalId uuid.UUID) (*entities.Goal, error) {
 	funcStr := gs.traceLogger.GetTrace("service.GetGoalById")
 	goal, err := gs.goalStore.GetGoalById(goalId)
 
@@ -122,7 +122,7 @@ func (gs *GoalServiceImpl) GetGoalById(goalId uuid.UUID) (*entities.Goal, error)
 	return goal, nil
 }
 
-func (gs *GoalServiceImpl) CreateGoalCategory(title string, xpPerGoal int, userId uuid.UUID) (*entities.GoalCategory, error) {
+func (gs *goalService) CreateGoalCategory(title string, xpPerGoal int, userId uuid.UUID) (*entities.GoalCategory, error) {
 	funcStr := gs.traceLogger.GetTrace("service.CreateGoalCategory")
 
 	cat, err := gs.goalCategoryStore.CreateGoalCategory(title, xpPerGoal, userId)
@@ -137,7 +137,7 @@ func (gs *GoalServiceImpl) CreateGoalCategory(title string, xpPerGoal int, userI
 	return cat, nil
 }
 
-func (gs *GoalServiceImpl) GetGoalCategoriesByUserId(userId uuid.UUID) ([]*entities.GoalCategory, error) {
+func (gs *goalService) GetGoalCategoriesByUserId(userId uuid.UUID) ([]*entities.GoalCategory, error) {
 	funcStr := gs.traceLogger.GetTrace("service.GetGoalCategoriesByUserId")
 
 	categories, err := gs.goalCategoryStore.GetGoalCategoriesByUserId(userId)
@@ -151,7 +151,7 @@ func (gs *GoalServiceImpl) GetGoalCategoriesByUserId(userId uuid.UUID) ([]*entit
 	return categories, nil
 }
 
-func (gs *GoalServiceImpl) GetGoalCategoryById(categoryId, userId uuid.UUID) (*entities.GoalCategory, error) {
+func (gs *goalService) GetGoalCategoryById(categoryId, userId uuid.UUID) (*entities.GoalCategory, error) {
 	funcStr := gs.traceLogger.GetTrace("service.GetGoalCategoryById")
 
 	gc, err := gs.goalCategoryStore.GetGoalCategoryById(categoryId)
@@ -168,7 +168,7 @@ func (gs *GoalServiceImpl) GetGoalCategoryById(categoryId, userId uuid.UUID) (*e
 	return gc, nil
 }
 
-func (gs *GoalServiceImpl) UpdateGoalCategoryById(categoryId uuid.UUID, updates map[string]interface{}, userId uuid.UUID) (*entities.GoalCategory, error) {
+func (gs *goalService) UpdateGoalCategoryById(categoryId uuid.UUID, updates map[string]interface{}, userId uuid.UUID) (*entities.GoalCategory, error) {
 	funcStr := gs.traceLogger.GetTrace("service.UpdateGoalCategoryById")
 
 	cat, err := gs.goalCategoryStore.GetGoalCategoryById(categoryId)
@@ -190,7 +190,7 @@ func (gs *GoalServiceImpl) UpdateGoalCategoryById(categoryId uuid.UUID, updates 
 	return updatedCat, nil
 }
 
-func (gs *GoalServiceImpl) DeleteGoalCategoryById(categoryId, userId uuid.UUID) error {
+func (gs *goalService) DeleteGoalCategoryById(categoryId, userId uuid.UUID) error {
 	funcStr := gs.traceLogger.GetTrace("service.DeleteGoalCategoryById")
 
 	cat, err := gs.goalCategoryStore.GetGoalCategoryById(categoryId)
@@ -217,7 +217,7 @@ func (gs *GoalServiceImpl) DeleteGoalCategoryById(categoryId, userId uuid.UUID) 
 	return nil
 }
 
-func (gs *GoalServiceImpl) UpdateGoalById(goalId uuid.UUID, updates map[string]interface{}, userId uuid.UUID) (*entities.Goal, error) {
+func (gs *goalService) UpdateGoalById(goalId uuid.UUID, updates map[string]interface{}, userId uuid.UUID) (*entities.Goal, error) {
 	funcStr := gs.traceLogger.GetTrace("service.UpdateGoalById")
 
 	goal, err := gs.goalStore.GetGoalById(goalId)
@@ -258,10 +258,19 @@ func (gs *GoalServiceImpl) UpdateGoalById(goalId uuid.UUID, updates map[string]i
 		slog.Error(fmt.Sprintf("%s: store.UpdateGoalById:", funcStr), "err", err)
 		return nil, fmt.Errorf("%w: error updating goal", svcerror.ErrInternalServer)
 	}
+
+	cat, err := gs.goalCategoryStore.GetGoalCategoryById(updatedGoal.CategoryId)
+	eventData := &events.GoalUpdatedData{
+		OldGoal: goal,
+		NewGoal: updatedGoal,
+		Xp:      cat.Xp_per_goal,
+	}
+	event := events.NewEventWithUserId(events.GOAL_UPDATED, eventData, userId.String())
+	gs.eventPublisher.Publish(event)
 	return updatedGoal, nil
 }
 
-func (gs *GoalServiceImpl) DeleteGoalById(goalId, userId uuid.UUID) error {
+func (gs *goalService) DeleteGoalById(goalId, userId uuid.UUID) error {
 	goal, err := gs.goalStore.GetGoalById(goalId)
 	if err == sql.ErrNoRows {
 		slog.Error("service.handleDeleteGoalById: store.GetGoalById:", "err", err)

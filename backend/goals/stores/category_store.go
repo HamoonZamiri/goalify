@@ -44,7 +44,7 @@ func (s *goalCategoryStore) CreateGoalCategory(title string, xpPerGoal int, user
 }
 
 func (s *goalCategoryStore) GetGoalCategoriesByUserId(userId uuid.UUID) ([]*entities.GoalCategory, error) {
-	query := category_join_goals_query + ` WHERE gc.user_id = $1`
+	query := category_join_goals_query + ` WHERE gc.user_id = $1 ORDER BY gc.created_at`
 
 	rows, err := s.db.Queryx(query, userId)
 	if err != nil {
@@ -114,16 +114,13 @@ func mapGoalCategoryRows(rows *sqlx.Rows) ([]*entities.GoalCategory, error) {
 		gc := result.ToGoalCategory()
 		if _, ok := categoryMap[gc.Id]; !ok {
 			categoryMap[gc.Id] = gc
+			categorySlice = append(categorySlice, gc)
 		}
 
 		if result.GoalId.Valid {
 			goal := result.ToGoal()
 			categoryMap[gc.Id].Goals = append(categoryMap[gc.Id].Goals, goal)
 		}
-	}
-
-	for _, category := range categoryMap {
-		categorySlice = append(categorySlice, category)
 	}
 
 	return categorySlice, nil

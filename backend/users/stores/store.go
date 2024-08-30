@@ -16,6 +16,8 @@ type UserStore interface {
 	GetUserById(id string) (*entities.User, error)
 	DeleteUserById(id string) error
 	UpdateUserById(id uuid.UUID, updates map[string]any) (*entities.User, error)
+
+	GetLevelById(id int) (*entities.Level, error)
 }
 
 const DEFAULT_LEVEL = 1
@@ -93,4 +95,13 @@ func (s *userStore) UpdateUserById(id uuid.UUID, updates map[string]any) (*entit
 	}
 
 	return &user, nil
+}
+
+func (s *userStore) GetLevelById(id int) (*entities.Level, error) {
+	var level entities.Level
+	err := s.db.Get(&level, "SELECT * FROM levels WHERE id = $1", id)
+	if err != nil {
+		return nil, err
+	}
+	return &level, nil
 }

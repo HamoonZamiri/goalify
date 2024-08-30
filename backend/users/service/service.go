@@ -18,6 +18,8 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+var subscribedEvents = []string{events.GOAL_UPDATED}
+
 type UserService interface {
 	SignUp(email, password string) (*entities.UserDTO, error)
 	Login(email, password string) (*entities.UserDTO, error)
@@ -26,13 +28,18 @@ type UserService interface {
 	UpdateUserById(id uuid.UUID, updates map[string]interface{}) (*entities.UserDTO, error)
 }
 
-type UserServiceImpl struct {
+type userService struct {
 	userStore      stores.UserStore
 	eventPublisher events.EventPublisher
 }
 
-func NewUserService(userStore stores.UserStore, ep events.EventPublisher) *UserServiceImpl {
-	return &UserServiceImpl{userStore: userStore, eventPublisher: ep}
+func NewUserService(userStore stores.UserStore, ep events.EventPublisher) UserService {
+	us := &userService{userStore: userStore, eventPublisher: ep}
+
+	for _, event := range subscribedEvents {
+		ep.Subscribe(event, us)
+	}
+	return us
 }
 
 func generateJWTToken(userId uuid.UUID) (string, error) {
@@ -72,7 +79,7 @@ func generateRefreshToken() uuid.UUID {
 	return uuid.New()
 }
 
-func (s *UserServiceImpl) SignUp(email, password string) (*entities.UserDTO, error) {
+func (s *userService) SignUp(email, password string) (*entities.UserDTO, error) {
 	_, err := s.userStore.GetUserByEmail(email)
 	if err == nil {
 		return nil, fmt.Errorf("%w: user with email %s already exists", svcerror.ErrBadRequest, email)
@@ -108,7 +115,7 @@ func (s *UserServiceImpl) SignUp(email, password string) (*entities.UserDTO, err
 	return user.ToUserDTO(accessToken), nil
 }
 
-func (s *UserServiceImpl) Refresh(userId, refreshToken string) (*entities.UserDTO, error) {
+func (s *userService) Refresh(userId, refreshToken string) (*entities.UserDTO, error) {
 	user, err := s.userStore.GetUserById(userId)
 	if err == sql.ErrNoRows {
 		return nil, fmt.Errorf("%w: error finding user", svcerror.ErrNotFound)
@@ -142,7 +149,7 @@ func (s *UserServiceImpl) Refresh(userId, refreshToken string) (*entities.UserDT
 	return user.ToUserDTO(accessToken), nil
 }
 
-func (s *UserServiceImpl) Login(email, password string) (*entities.UserDTO, error) {
+func (s *userService) Login(email, password string) (*entities.UserDTO, error) {
 	user, err := s.userStore.GetUserByEmail(email)
 	if err == sql.ErrNoRows {
 		return nil, fmt.Errorf("%w: user with email %s not found", svcerror.ErrNotFound, email)
@@ -176,7 +183,7 @@ func (s *UserServiceImpl) Login(email, password string) (*entities.UserDTO, erro
 	return user.ToUserDTO(accessToken), nil
 }
 
-func (s *UserServiceImpl) DeleteUserById(id string) error {
+func (s *userService) DeleteUserById(id string) error {
 	err := s.userStore.DeleteUserById(id)
 	if err == sql.ErrNoRows {
 		return fmt.Errorf("%w: user not found", svcerror.ErrNotFound)
@@ -188,7 +195,7 @@ func (s *UserServiceImpl) DeleteUserById(id string) error {
 	return nil
 }
 
-func (s *UserServiceImpl) UpdateUserById(id uuid.UUID, updates map[string]interface{}) (*entities.UserDTO, error) {
+func (s *userService) UpdateUserById(id uuid.UUID, updates map[string]interface{}) (*entities.UserDTO, error) {
 	user, err := s.userStore.UpdateUserById(id, updates)
 	if err == sql.ErrNoRows {
 		return nil, fmt.Errorf("%w: user not found", svcerror.ErrNotFound)

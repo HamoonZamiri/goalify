@@ -136,3 +136,34 @@ func TestUpdateUser(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "test6@mail.com", user.Email)
 }
+
+func TestGetLevelById(t *testing.T) {
+	t.Parallel()
+	level := 1
+	expectedXp := 100
+	expectedCash := 100
+	for ; level <= 100; level++ {
+		levelObj, err := userStoreVar.GetLevelById(level)
+		assert.NoError(t, err)
+		assert.Equal(t, level, levelObj.Id)
+		assert.Equal(t, expectedXp, levelObj.LevelUpXp)
+		assert.Equal(t, expectedCash, levelObj.CashReward)
+		expectedXp += 10
+		expectedCash += 10
+	}
+}
+
+func TestLevelDoesNotExist(t *testing.T) {
+	t.Parallel()
+	_, err := userStoreVar.GetLevelById(0)
+	assert.ErrorIs(t, err, sql.ErrNoRows)
+
+	_, err = userStoreVar.GetLevelById(101)
+	assert.ErrorIs(t, err, sql.ErrNoRows)
+
+	_, err = userStoreVar.GetLevelById(-1000)
+	assert.ErrorIs(t, err, sql.ErrNoRows)
+
+	_, err = userStoreVar.GetLevelById(1000)
+	assert.ErrorIs(t, err, sql.ErrNoRows)
+}
