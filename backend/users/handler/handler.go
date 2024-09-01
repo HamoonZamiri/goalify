@@ -8,6 +8,7 @@ import (
 	"goalify/utils/svcerror"
 	"log/slog"
 	"net/http"
+	"strconv"
 
 	"github.com/google/uuid"
 )
@@ -131,6 +132,32 @@ func (h *UserHandler) HandleUpdateUserById(w http.ResponseWriter, r *http.Reques
 	}
 
 	res := responses.New(user, "successfully updated user")
+	if err := jsonutil.Encode(w, r, http.StatusOK, res); err != nil {
+		responses.SendAPIError(w, r, http.StatusInternalServerError, err.Error(), nil)
+		return
+	}
+}
+
+func (h *UserHandler) GetLevelById(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("levelId")
+	if id == "" {
+		responses.SendAPIError(w, r, http.StatusBadRequest, "url param requires id", nil)
+		return
+	}
+
+	castedId, err := strconv.Atoi(id)
+	if err != nil {
+		responses.SendAPIError(w, r, http.StatusBadRequest, "url param id must be an integer", nil)
+		return
+	}
+
+	level, err := h.userService.GetLevelById(castedId)
+	if err != nil {
+		responses.SendAPIError(w, r, svcerror.GetErrorCode(err), err.Error(), nil)
+		return
+	}
+
+	res := responses.New(level, "level retrieved sucessfully")
 	if err := jsonutil.Encode(w, r, http.StatusOK, res); err != nil {
 		responses.SendAPIError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return

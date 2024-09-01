@@ -52,6 +52,7 @@ func AddRoutes(
 	addRoute(mux, "POST", "/api/users/login", userHandler.HandleLogin, CorsChain)
 	addRoute(mux, "POST", "/api/users/refresh", userHandler.HandleRefresh, CorsChain)
 	addRoute(mux, "PUT", "/api/users", userHandler.HandleUpdateUserById, AuthChain)
+	addRoute(mux, http.MethodGet, "/api/levels/{levelId}", userHandler.GetLevelById, AuthChain)
 
 	// goals domain
 	addRoute(mux, "POST", "/api/goals", goalHandler.HandleCreateGoal, AuthChain)
@@ -65,7 +66,7 @@ func AddRoutes(
 	addRoute(mux, "DELETE", "/api/goals/categories/{categoryId}", goalHandler.HandleDeleteGoalCategoryById, AuthChain)
 
 	// need options method available on all endpoints for CORS
-	addRoute(mux, "OPTIONS", "/api/{endpoints...}", nil, CorsChain)
+	addRoute(mux, "OPTIONS", "/api/{endpoints...}", nil, middleware.CreateChain(c.Handler))
 
 	// Server Sent Events endpoint
 	addRoute(mux, http.MethodOptions, "/api/events", nil, CorsChain)
