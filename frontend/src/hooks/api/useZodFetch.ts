@@ -8,7 +8,7 @@ function useZodFetch() {
   const { setUser, getUser, logout, authState } = useAuth();
 
   async function refreshUserToken(): Promise<void> {
-    if (!getUser) return;
+    if (!getUser()) return;
     const res = await fetch(`${API_BASE}/users/refresh`, {
       method: "POST",
       body: JSON.stringify({
@@ -32,7 +32,7 @@ function useZodFetch() {
     options: RequestInit | undefined,
   ): Promise<T | ErrorResponse> {
     let res = await fetch(url, options);
-    const json = await res.json();
+    let json = await res.json();
 
     if (res.status === http.StatusUnauthorized) {
       await refreshUserToken();
@@ -43,17 +43,15 @@ function useZodFetch() {
           Authorization: `Bearer ${authState.value?.access_token}`,
         },
       });
+      json = await res.json();
     }
     if (!res.ok) {
       const error = json as ErrorResponse;
       error.statusCode = res.status;
       return error;
     }
-    const parsedResponse = schema.safeParse(json);
-    if (!parsedResponse.success) {
-      throw parsedResponse.error;
-    }
-    return parsedResponse.data;
+    const parsedResponse = schema.parse(json);
+    return parsedResponse;
   }
 
   return { zodFetch };
