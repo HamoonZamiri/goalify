@@ -101,8 +101,7 @@ const statusMap = { not_complete: "Not Complete", complete: "Complete" };
       fill="none"
       viewBox="0 0 24 24"
       stroke-width="1.5"
-      stroke="currentColor"
-      class="size-6"
+      class="size-6 stroke-gray-300"
       @click.stop="handleToggleStatus"
     >
       <path
