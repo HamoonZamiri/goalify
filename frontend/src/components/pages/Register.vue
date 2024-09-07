@@ -2,12 +2,13 @@
 import router from "@/router";
 import { API_BASE } from "@/utils/constants";
 import {
+  Schemas,
   UserSchema,
   createServerResponseSchema,
+  type ErrorResponse,
   type User,
 } from "@/utils/schemas";
 import { ref } from "vue";
-import { ApiClient, type ErrorResponse } from "@/utils/api";
 import useAuth from "@/hooks/auth/useAuth";
 
 const { setUser } = useAuth();
@@ -36,7 +37,7 @@ async function signup(payload: MouseEvent) {
     error.value = json as ErrorResponse;
     return;
   }
-  const parsed = createServerResponseSchema(UserSchema).parse(json);
+  const parsed = Schemas.UserResponseSchema.parse(json);
   setUser(parsed.data as User);
   error.value = null;
   router.push({ name: "Home" });

@@ -5,9 +5,9 @@ import ModalForm from "@/components/ModalForm.vue";
 import CreateGoalForm from "@/components/goals/forms/CreateGoalForm.vue";
 import CreateGoalButton from "@/components/goals/buttons/CreateGoalButton.vue";
 import { Menu, MenuButton, MenuItems, MenuItem } from "@headlessui/vue";
-import { ApiClient } from "@/utils/api";
 import { reactive, watch } from "vue";
 import useGoals from "@/hooks/goals/useGoals";
+import useApi from "@/hooks/api/useApi";
 const props = defineProps<{
   goalCategory: GoalCategory;
 }>();
@@ -21,10 +21,12 @@ const updates = reactive({
 });
 
 const { deleteCategory } = useGoals();
+const apiDeleteCategory = useApi().deleteCategory;
+const apiUpdateCategory = useApi().updateCategory;
 
 async function handleDeleteCategory(e: MouseEvent) {
   e.preventDefault();
-  await ApiClient.deleteCategory(props.goalCategory.id);
+  await apiDeleteCategory(props.goalCategory.id);
 
   // remove category from state
   deleteCategory(props.goalCategory.id);
@@ -52,7 +54,7 @@ watch(updates, async (category) => {
   )
     return;
 
-  await ApiClient.updateCategory(props.goalCategory.id, {
+  await apiUpdateCategory(props.goalCategory.id, {
     title: category.title,
     xp_per_goal: category.xp_per_goal,
   });

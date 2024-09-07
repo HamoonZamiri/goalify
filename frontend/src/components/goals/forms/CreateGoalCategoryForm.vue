@@ -1,6 +1,7 @@
 <script setup lang="ts">
+import useApi from "@/hooks/api/useApi";
 import useGoals from "@/hooks/goals/useGoals";
-import { ApiClient, type ErrorResponse } from "@/utils/api";
+import type { ErrorResponse } from "@/utils/schemas";
 import { ref } from "vue";
 
 type CreateCategoryForm = {
@@ -20,14 +21,15 @@ const props = defineProps<{
 }>();
 
 const { addCategory } = useGoals();
+const { createGoalCategory, isError } = useApi();
 
 async function handleSubmit(e: MouseEvent) {
   e.preventDefault();
-  const res = await ApiClient.createGoalCategory(
+  const res = await createGoalCategory(
     formData.value.title,
     formData.value.xp_per_goal,
   );
-  if (ApiClient.isError(res)) {
+  if (isError(res)) {
     error.value = res;
     return;
   }

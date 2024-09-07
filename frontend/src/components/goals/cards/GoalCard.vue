@@ -9,8 +9,8 @@ import {
   ListboxOption,
   ListboxOptions,
 } from "@headlessui/vue";
-import { ApiClient } from "@/utils/api";
 import useGoals from "@/hooks/goals/useGoals";
+import useApi from "@/hooks/api/useApi";
 const props = defineProps<{
   goal: Goal;
 }>();
@@ -29,6 +29,7 @@ const isEditing = ref(false);
 const isDeleting = ref(false);
 
 const { deleteGoal } = useGoals();
+const { deleteGoal: deleteGoalApi, updateGoal: updateGoalApi } = useApi();
 
 function setIsEditing(value: boolean) {
   isEditing.value = value;
@@ -41,7 +42,7 @@ function setIsDeleting(value: boolean) {
 async function handleDeleteGoal(e: MouseEvent) {
   e.preventDefault();
 
-  await ApiClient.deleteGoal(props.goal.id);
+  await deleteGoalApi(props.goal.id);
 
   // remove goal from state
   deleteGoal(props.goal.category_id, props.goal.id);
@@ -65,7 +66,7 @@ watch(updates, async (newUpdates) => {
   if (!newUpdates.title || !newUpdates.description) return;
 
   // in the future we want to use a debouncer to reduce the number of api calls
-  await ApiClient.updateGoal(props.goal.id, {
+  await updateGoalApi(props.goal.id, {
     title: newUpdates.title,
     description: newUpdates.description,
     status: newUpdates.status,
