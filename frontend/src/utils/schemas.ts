@@ -57,6 +57,16 @@ export type User = z.infer<typeof UserSchema>;
 export type Goal = z.infer<typeof GoalSchema>;
 export type GoalCategory = z.infer<typeof GoalCategorySchema>;
 
+type ErrorMap = Record<string, string>;
+export type ErrorResponse = {
+  // we will manually add this field to our errors from the json response
+  statusCode?: number;
+  // message should always be present
+  message: string;
+  // in creation requests the server returns an object mapping field names to error messages
+  errors?: ErrorMap;
+};
+
 export const Schemas = {
   UserSchema,
   createServerResponseSchema,
