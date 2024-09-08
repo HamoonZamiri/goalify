@@ -19,6 +19,7 @@ function useAuth() {
 
   function logout() {
     Cookies.remove("user");
+    authState.value = null;
   }
 
   function isLoggedIn(): boolean {
