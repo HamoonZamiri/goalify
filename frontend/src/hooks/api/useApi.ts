@@ -147,6 +147,17 @@ function useApi() {
     }
   }
 
+  async function getLevel(id: number) {
+    const res = await zodFetch(
+      `${API_BASE}/levels/${id}`,
+      Schemas.LevelResponseSchema,
+      {
+        headers: { Authorization: `Bearer ${authState.value?.access_token}` },
+      },
+    );
+    return res;
+  }
+
   return {
     isError,
     createGoalCategory,
@@ -156,6 +167,7 @@ function useApi() {
     deleteGoal,
     deleteCategory,
     updateCategory,
+    getLevel,
   };
 }
 
