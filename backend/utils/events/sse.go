@@ -56,6 +56,10 @@ func (em *EventManager) SSEHandler(w http.ResponseWriter, r *http.Request) {
 	em.SubscribeToUserEvents(conn.userId, conn)
 	defer em.UnsubscribeFromUserEvents(conn.userId, conn)
 
+	// send an initial event for browser connection
+	conn.writeEvent(NewEventWithUserId(SSE_CONNECTED, nil, conn.userId))
+	w.(http.Flusher).Flush()
+
 	for {
 		select {
 		case event := <-conn.eventQueue:

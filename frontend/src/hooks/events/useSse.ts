@@ -27,6 +27,10 @@ export function useSSE(url: string) {
       addGoal(parsedData.category_id, parsedData);
     });
 
+    es.addEventListener(events.SSE_CONNECTED, () => {
+      console.log("initial sse event");
+    });
+
     eventSource.value = es;
   };
 
