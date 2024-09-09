@@ -9,6 +9,7 @@ import useGoals from "@/hooks/goals/useGoals";
 import useAuth from "@/hooks/auth/useAuth";
 import type { ErrorResponse } from "@/utils/schemas";
 import useApi from "@/hooks/api/useApi";
+import { API_BASE } from "@/utils/constants";
 
 // State
 const { getUser } = useAuth();
@@ -16,7 +17,7 @@ const { getUserGoalCategories, isError } = useApi();
 const error = ref<ErrorResponse | null>(null);
 const isLoading = ref<boolean>(true);
 const { connect } = useSSE(
-  `http://localhost:8080/api/events?token=${getUser()?.access_token}`,
+  `${API_BASE}/events?token=${getUser()?.access_token}`,
 );
 const { setCategories, categoryState } = useGoals();
 
