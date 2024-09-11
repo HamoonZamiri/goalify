@@ -52,5 +52,12 @@ func (us *userService) handleGoalUpdatedEvent(event events.Event) {
 			slog.Error("service.handleGoalUpdatedEvent: store.UpdateUserById:", "err", err)
 			return
 		}
+
+		eventData := &events.XpUpdatedData{
+			LevelId: newLevel,
+			Xp:      newXp,
+		}
+		us.eventPublisher.Publish(events.NewEventWithUserId(events.XP_UPDATED, eventData, oldGoal.UserId.String()))
+
 	}
 }

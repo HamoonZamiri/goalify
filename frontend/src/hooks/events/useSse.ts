@@ -1,10 +1,18 @@
 import { events } from "@/utils/constants";
-import { Schemas } from "@/utils/schemas";
+import { Schemas, type User } from "@/utils/schemas";
 import { onUnmounted, ref } from "vue";
 import useGoals from "@/hooks/goals/useGoals";
+import useAuth from "../auth/useAuth";
+import { z } from "zod";
+
+const xpUpdateSchema = z.object({
+  xp: z.number(),
+  level_id: z.number(),
+});
 
 export function useSSE(url: string) {
   const { addGoal } = useGoals();
+  const { getUser, setUser } = useAuth();
   const eventSource = ref<EventSource | null>(null);
 
   const connect = () => {
@@ -29,6 +37,13 @@ export function useSSE(url: string) {
 
     es.addEventListener(events.SSE_CONNECTED, () => {
       console.log("initial sse event");
+    });
+
+    es.addEventListener(events.XP_UPDATED, (event) => {
+      const json = JSON.parse(event.data);
+      const parsedData = xpUpdateSchema.parse(json);
+      const user = getUser() as User;
+      setUser({ ...user, ...parsedData });
     });
 
     eventSource.value = es;

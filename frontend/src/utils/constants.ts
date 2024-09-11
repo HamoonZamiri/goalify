@@ -9,6 +9,7 @@ export const events = {
   GOAL_CATEGORY_CREATED: "goal_category_created",
   DEFAULT_GOAL_CREATED: "default_goal_created",
   SSE_CONNECTED: "sse_connected",
+  XP_UPDATED: "xp_updated",
 } as const;
 
 export const http = {

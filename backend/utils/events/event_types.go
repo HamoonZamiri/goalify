@@ -7,3 +7,8 @@ type GoalUpdatedData struct {
 	NewGoal *entities.Goal
 	Xp      int
 }
+
+type XpUpdatedData struct {
+	LevelId int `json:"level_id"`
+	Xp      int `json:"xp"`
+}
