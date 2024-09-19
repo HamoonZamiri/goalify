@@ -24,6 +24,8 @@ const (
 	USER_UPDATED          string = "user_updated"
 	GOAL_CATEGORY_CREATED string = "goal_category_created"
 	DEFAULT_GOAL_CREATED  string = "default_goal_created"
+	SSE_CONNECTED         string = "sse_connected"
+	XP_UPDATED            string = "xp_updated"
 )
 
 func ParseEventData[T any](event Event) (T, error) {

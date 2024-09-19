@@ -34,6 +34,12 @@ const GoalSchema = z.object({
   updated_at: z.string(),
 });
 
+const LevelSchema = z.object({
+  id: z.number(),
+  level_up_xp: z.number(),
+  cash_reward: z.number(),
+});
+
 const GoalCategorySchema = z.object({
   id: z.string().uuid(),
   title: z.string(),
@@ -52,10 +58,22 @@ const GoalCategoryResponseArraySchema = createServerResponseSchema(
   GoalCategoryArraySchema,
 );
 const GoalResponseArraySchema = createServerResponseSchema(GoalArraySchema);
+const LevelResponseSchema = createServerResponseSchema(LevelSchema);
 
 export type User = z.infer<typeof UserSchema>;
 export type Goal = z.infer<typeof GoalSchema>;
 export type GoalCategory = z.infer<typeof GoalCategorySchema>;
+export type Level = z.infer<typeof LevelSchema>;
+
+type ErrorMap = Record<string, string>;
+export type ErrorResponse = {
+  // we will manually add this field to our errors from the json response
+  statusCode?: number;
+  // message should always be present
+  message: string;
+  // in creation requests the server returns an object mapping field names to error messages
+  errors?: ErrorMap;
+};
 
 export const Schemas = {
   UserSchema,
@@ -68,4 +86,5 @@ export const Schemas = {
   GoalCategoryArraySchema,
   GoalResponseArraySchema,
   GoalCategoryResponseArraySchema,
+  LevelResponseSchema: LevelResponseSchema,
 } as const;

@@ -48,24 +48,25 @@ func AddRoutes(
 	})))
 
 	// users domain
-	addRoute(mux, "POST", "/api/users/signup", userHandler.HandleSignup, CorsChain)
-	addRoute(mux, "POST", "/api/users/login", userHandler.HandleLogin, CorsChain)
-	addRoute(mux, "POST", "/api/users/refresh", userHandler.HandleRefresh, CorsChain)
-	addRoute(mux, "PUT", "/api/users", userHandler.HandleUpdateUserById, AuthChain)
+	addRoute(mux, http.MethodPost, "/api/users/signup", userHandler.HandleSignup, CorsChain)
+	addRoute(mux, http.MethodPost, "/api/users/login", userHandler.HandleLogin, CorsChain)
+	addRoute(mux, http.MethodPost, "/api/users/refresh", userHandler.HandleRefresh, CorsChain)
+	addRoute(mux, http.MethodPut, "/api/users", userHandler.HandleUpdateUserById, AuthChain)
+	addRoute(mux, http.MethodGet, "/api/levels/{levelId}", userHandler.GetLevelById, AuthChain)
 
 	// goals domain
-	addRoute(mux, "POST", "/api/goals", goalHandler.HandleCreateGoal, AuthChain)
-	addRoute(mux, "PUT", "/api/goals/{goalId}", goalHandler.HandleUpdateGoalById, AuthChain)
+	addRoute(mux, http.MethodPost, "/api/goals", goalHandler.HandleCreateGoal, AuthChain)
+	addRoute(mux, http.MethodPut, "/api/goals/{goalId}", goalHandler.HandleUpdateGoalById, AuthChain)
 	addRoute(mux, http.MethodDelete, "/api/goals/{goalId}", goalHandler.HandleDeleteGoalById, AuthChain)
 
-	addRoute(mux, "POST", "/api/goals/categories", goalHandler.HandleCreateGoalCategory, AuthChain)
-	addRoute(mux, "GET", "/api/goals/categories", goalHandler.HandleGetGoalCategoriesByUserId, AuthChain)
-	addRoute(mux, "GET", "/api/goals/categories/{categoryId}", goalHandler.HandleGetGoalCategoryById, AuthChain)
-	addRoute(mux, "PUT", "/api/goals/categories/{categoryId}", goalHandler.HandleUpdateGoalCategoryById, AuthChain)
-	addRoute(mux, "DELETE", "/api/goals/categories/{categoryId}", goalHandler.HandleDeleteGoalCategoryById, AuthChain)
+	addRoute(mux, http.MethodPost, "/api/goals/categories", goalHandler.HandleCreateGoalCategory, AuthChain)
+	addRoute(mux, http.MethodGet, "/api/goals/categories", goalHandler.HandleGetGoalCategoriesByUserId, AuthChain)
+	addRoute(mux, http.MethodGet, "/api/goals/categories/{categoryId}", goalHandler.HandleGetGoalCategoryById, AuthChain)
+	addRoute(mux, http.MethodPut, "/api/goals/categories/{categoryId}", goalHandler.HandleUpdateGoalCategoryById, AuthChain)
+	addRoute(mux, http.MethodDelete, "/api/goals/categories/{categoryId}", goalHandler.HandleDeleteGoalCategoryById, AuthChain)
 
 	// need options method available on all endpoints for CORS
-	addRoute(mux, "OPTIONS", "/api/{endpoints...}", nil, CorsChain)
+	addRoute(mux, http.MethodOptions, "/api/{endpoints...}", nil, middleware.CreateChain(c.Handler))
 
 	// Server Sent Events endpoint
 	addRoute(mux, http.MethodOptions, "/api/events", nil, CorsChain)

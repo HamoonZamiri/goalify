@@ -569,6 +569,17 @@ func TestUserLevelUpEvent(t *testing.T) {
 	assert.Equal(t, 2, user.LevelId)
 }
 
+func TestGetLevelById(t *testing.T) {
+	t.Parallel()
+	user := createUser(t.Name()+"@mail.com", "Password123!")
+	for level := 1; level <= 100; level++ {
+		url := fmt.Sprintf("%s/api/levels/%d", BASE_URL, level)
+		res, err := buildAndSendRequest("GET", url, nil, user.AccessToken)
+		assert.Nil(t, err)
+		assert.Equal(t, http.StatusOK, res.StatusCode)
+	}
+}
+
 // utility functions
 func buildAndSendRequest(method, url string, body map[string]any, accessToken string) (*http.Response, error) {
 	var buf bytes.Buffer

@@ -1,16 +1,12 @@
 <script setup lang="ts">
 import router from "@/router";
 import { API_BASE } from "@/utils/constants";
-import {
-  UserSchema,
-  createServerResponseSchema,
-  type User,
-} from "@/utils/schemas";
-import authState from "@/state/auth";
+import { Schemas, type ErrorResponse, type User } from "@/utils/schemas";
 import { ref } from "vue";
-import { ApiClient } from "@/utils/api";
+import useAuth from "@/hooks/auth/useAuth";
 
-const error = ref<string | null>(null);
+const { setUser } = useAuth();
+const error = ref<ErrorResponse | null>(null);
 const formData = ref<{ email: string; password: string }>({
   email: "",
   password: "",
@@ -27,11 +23,11 @@ async function login(payload: MouseEvent) {
   });
   const json: unknown = await res.json();
   if (!res.ok) {
-    error.value = (json as { message: string }).message;
+    error.value = json as ErrorResponse;
     return;
   }
-  const parsed = createServerResponseSchema(UserSchema).parse(json);
-  authState.setUser(parsed.data as User);
+  const parsed = Schemas.UserResponseSchema.parse(json);
+  setUser(parsed.data as User);
   error.value = null;
   router.push({ name: "Home" });
 }
@@ -66,6 +62,6 @@ async function login(payload: MouseEvent) {
         Login
       </button>
     </form>
-    <p class="text-red-400 font-semibold">{{ error }}</p>
+    <p class="text-red-400 font-semibold">{{ error?.message }}</p>
   </div>
 </template>

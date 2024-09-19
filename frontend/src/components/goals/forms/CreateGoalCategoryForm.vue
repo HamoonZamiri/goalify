@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import goalState from "@/state/goals";
-import { ApiClient, type ErrorResponse } from "@/utils/api";
+import useApi from "@/hooks/api/useApi";
+import useGoals from "@/hooks/goals/useGoals";
+import type { ErrorResponse } from "@/utils/schemas";
 import { ref } from "vue";
 
 type CreateCategoryForm = {
@@ -19,13 +20,16 @@ const props = defineProps<{
   setIsOpen: (value: boolean) => void;
 }>();
 
+const { addCategory } = useGoals();
+const { createGoalCategory, isError } = useApi();
+
 async function handleSubmit(e: MouseEvent) {
   e.preventDefault();
-  const res = await ApiClient.createGoalCategory(
+  const res = await createGoalCategory(
     formData.value.title,
     formData.value.xp_per_goal,
   );
-  if (ApiClient.isError(res)) {
+  if (isError(res)) {
     error.value = res;
     return;
   }
@@ -35,7 +39,7 @@ async function handleSubmit(e: MouseEvent) {
   error.value = null;
 
   // dispatch an event to update the categories
-  goalState.addCategory(res.data);
+  addCategory(res.data);
   props.setIsOpen(false);
 }
 </script>

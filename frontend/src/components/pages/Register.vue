@@ -2,14 +2,16 @@
 import router from "@/router";
 import { API_BASE } from "@/utils/constants";
 import {
+  Schemas,
   UserSchema,
   createServerResponseSchema,
+  type ErrorResponse,
   type User,
 } from "@/utils/schemas";
-import authState from "@/state/auth";
 import { ref } from "vue";
-import { ApiClient, type ErrorResponse } from "@/utils/api";
+import useAuth from "@/hooks/auth/useAuth";
 
+const { setUser } = useAuth();
 const error = ref<ErrorResponse | null>(null);
 const formData = ref<{
   email: string;
@@ -35,8 +37,8 @@ async function signup(payload: MouseEvent) {
     error.value = json as ErrorResponse;
     return;
   }
-  const parsed = createServerResponseSchema(UserSchema).parse(json);
-  authState.setUser(parsed.data as User);
+  const parsed = Schemas.UserResponseSchema.parse(json);
+  setUser(parsed.data as User);
   error.value = null;
   router.push({ name: "Home" });
 }

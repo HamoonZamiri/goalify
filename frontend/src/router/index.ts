@@ -2,7 +2,9 @@ import { createRouter, createWebHistory } from "vue-router";
 import Login from "@/components/pages/Login.vue";
 import Register from "@/components/pages/Register.vue";
 import Home from "@/components/pages/Home.vue";
-import authState from "@/state/auth";
+import useAuth from "@/hooks/auth/useAuth";
+
+const { getUser } = useAuth();
 const routes = [
   { name: "Login", path: "/login", component: Login },
   { name: "Register", path: "/register", component: Register },
@@ -14,12 +16,9 @@ const router = createRouter({
 });
 
 router.beforeEach((to, _) => {
-  if (!authState.getUser && to.name !== "Login" && to.name !== "Register") {
+  if (!getUser && to.name !== "Login" && to.name !== "Register") {
     return { name: "Login" };
-  } else if (
-    authState.getUser() &&
-    (to.name === "Login" || to.name === "Register")
-  ) {
+  } else if (getUser() && (to.name === "Login" || to.name === "Register")) {
     return { name: "Home", path: "/" };
   }
 });

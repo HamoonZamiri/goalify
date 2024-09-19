@@ -1,30 +1,35 @@
 <script setup lang="ts">
 import GoalCategoryCard from "@/components/goals/cards/GoalCategoryCard.vue";
-import { onMounted, ref, watch } from "vue";
-import { type ErrorResponse, ApiClient } from "@/utils/api";
+import { onMounted, ref } from "vue";
 import ModalForm from "@/components/ModalForm.vue";
 import CreateGoalCategoryForm from "@/components/goals/forms/CreateGoalCategoryForm.vue";
 import CreateCategoryButton from "@/components/goals/buttons/CreateCategoryButton.vue";
-import goalState from "@/state/goals";
-import authState from "@/state/auth";
 import { useSSE } from "@/hooks/events/useSse";
+import useGoals from "@/hooks/goals/useGoals";
+import useAuth from "@/hooks/auth/useAuth";
+import type { ErrorResponse } from "@/utils/schemas";
+import useApi from "@/hooks/api/useApi";
+import { API_BASE } from "@/utils/constants";
 
 // State
+const { getUser } = useAuth();
+const { getUserGoalCategories, isError } = useApi();
 const error = ref<ErrorResponse | null>(null);
 const isLoading = ref<boolean>(true);
 const { connect } = useSSE(
-  `http://localhost:8080/api/events?token=${authState.getUser()?.access_token}`,
+  `${API_BASE}/events?token=${getUser()?.access_token}`,
 );
+const { setCategories, categoryState } = useGoals();
 
 onMounted(async () => {
-  const res = await ApiClient.getUserGoalCategories();
-  if (ApiClient.isError(res)) {
+  const res = await getUserGoalCategories();
+  if (isError(res)) {
     // in this case we are only expecting a message and not input validation errors
     error.value = res;
     return;
   }
 
-  goalState.categories = res.data;
+  setCategories(res.data);
   isLoading.value = false;
   connect();
 });
@@ -43,7 +48,7 @@ onMounted(async () => {
     >
       <div
         class="w-full sm:w-1/3 flex-shrink-0"
-        v-for="cat in goalState.categories"
+        v-for="cat in categoryState.categories"
         key="cat.id"
       >
         <GoalCategoryCard :goalCategory="cat" />

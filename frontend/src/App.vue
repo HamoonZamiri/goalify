@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import router from "./router";
-import authState from "./state/auth";
+import useAuth from "@/hooks/auth/useAuth";
+import router from "@/router/index";
+import Navbar from "@/components/navbar/Navbar.vue";
 
-function handleLogout(e: MouseEvent) {
-  e.preventDefault();
-  authState.logout();
+const { isLoggedIn } = useAuth();
+if (!isLoggedIn()) {
   router.push({ name: "Login" });
 }
 </script>
@@ -16,21 +16,7 @@ function handleLogout(e: MouseEvent) {
         <RouterLink to="/">
           <h1 class="font-semibold text-3xl hover:text-gray-300">Goalify</h1>
         </RouterLink>
-        <nav class="flex gap-4">
-          <div v-if="!authState.getUser" class="flex gap-2">
-            <RouterLink class="text-xl hover:text-gray-300" to="/login"
-              >Login</RouterLink
-            >
-            <RouterLink class="text-xl hover:text-gray-300" to="/register"
-              >Register</RouterLink
-            >
-          </div>
-          <div v-else>
-            <button @click="handleLogout" class="text-xl hover:text-gray-100">
-              Log Out
-            </button>
-          </div>
-        </nav>
+        <Navbar />
       </div>
     </header>
     <div class="w-full h-full"><RouterView /></div>

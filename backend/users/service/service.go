@@ -26,6 +26,8 @@ type UserService interface {
 	Refresh(email, refreshToken string) (*entities.UserDTO, error)
 	DeleteUserById(id string) error
 	UpdateUserById(id uuid.UUID, updates map[string]interface{}) (*entities.UserDTO, error)
+
+	GetLevelById(id int) (*entities.Level, error)
 }
 
 type userService struct {
@@ -212,4 +214,12 @@ func (s *userService) UpdateUserById(id uuid.UUID, updates map[string]interface{
 		return nil, fmt.Errorf("%w: error generating access token", svcerror.ErrInternalServer)
 	}
 	return user.ToUserDTO(accessToken), nil
+}
+
+func (s *userService) GetLevelById(id int) (*entities.Level, error) {
+	level, err := s.userStore.GetLevelById(id)
+	if err != nil {
+		return nil, fmt.Errorf("%w: could not get level information", svcerror.ErrBadRequest)
+	}
+	return level, nil
 }

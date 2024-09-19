@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import goalState from "@/state/goals";
-import { ApiClient, type ErrorResponse } from "@/utils/api";
+import useApi from "@/hooks/api/useApi";
+import useGoals from "@/hooks/goals/useGoals";
+import type { ErrorResponse } from "@/utils/schemas";
 import { ref } from "vue";
 
 type CreateGoalForm = {
@@ -14,6 +15,8 @@ const formData = ref<CreateGoalForm>({
 });
 
 const error = ref<ErrorResponse | null>(null);
+const { addGoal } = useGoals();
+const { createGoal, isError } = useApi();
 
 const CreateGoalFormProps = defineProps<{
   props: {
@@ -26,16 +29,16 @@ const CreateGoalFormProps = defineProps<{
 async function handleSubmit(e: MouseEvent) {
   e.preventDefault();
   const { title, description } = formData.value;
-  const res = await ApiClient.createGoal(
+  const res = await createGoal(
     title,
     description,
     CreateGoalFormProps.props.categoryId,
   );
-  if (ApiClient.isError(res)) {
+  if (isError(res)) {
     error.value = res;
     return;
   }
-  goalState.addGoal(CreateGoalFormProps.props.categoryId, res.data);
+  addGoal(CreateGoalFormProps.props.categoryId, res.data);
   formData.value.title = "";
   formData.value.description = "";
   CreateGoalFormProps.setIsOpen(false);
