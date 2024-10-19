@@ -8,7 +8,7 @@ CREATE TYPE item_type AS ENUM ('common', 'rare', 'epic', 'legendary');  -- Assum
 
 -- Create table `chest_items`
 CREATE TABLE chest_items (
-    id UUID PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     image_url VARCHAR,
     title VARCHAR NOT NULL,
     rarity item_type NOT NULL,
@@ -19,7 +19,7 @@ CREATE TABLE chest_items (
 
 -- Create table `chests`
 CREATE TABLE chests (
-    id UUID PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     type chest_type NOT NULL,
     description TEXT NOT NULL,
     price INTEGER NOT NULL,
@@ -29,7 +29,7 @@ CREATE TABLE chests (
 
 -- Create table `chest_item_drop_rates`
 CREATE TABLE chest_item_drop_rates (
-    id UUID PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     item_id UUID REFERENCES chest_items(id),
     chest_id UUID REFERENCES chests(id),
     drop_rate FLOAT NOT NULL,
@@ -39,7 +39,7 @@ CREATE TABLE chest_item_drop_rates (
 
 -- Create table `user_items`
 CREATE TABLE user_items (
-    id UUID PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES users(id),
     item_id UUID REFERENCES chest_items(id),
     status item_status DEFAULT 'not_equipped',
@@ -49,7 +49,7 @@ CREATE TABLE user_items (
 
 -- Create table `user_chests`
 CREATE TABLE user_chests (
-    id UUID PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES users(id),
     chest_id UUID REFERENCES chests(id),
     quantity_owned INTEGER DEFAULT 0,
