@@ -15,7 +15,7 @@ import (
 
 var (
 	dbConn      *sqlx.DB
-	cStore      ChestStore
+	cStore      LootStore
 	pgContainer *postgres.PostgresContainer
 )
 
