@@ -9,22 +9,23 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-type UserStore interface {
-	CreateUser(email, password string) (*entities.User, error)
-	GetUserByEmail(email string) (*entities.User, error)
-	UpdateRefreshToken(id, refreshToken string) (*entities.User, error)
-	GetUserById(id string) (*entities.User, error)
-	DeleteUserById(id string) error
-	UpdateUserById(id uuid.UUID, updates map[string]any) (*entities.User, error)
+type (
+	UserStore interface {
+		CreateUser(email, password string) (*entities.User, error)
+		GetUserByEmail(email string) (*entities.User, error)
+		UpdateRefreshToken(id, refreshToken string) (*entities.User, error)
+		GetUserById(id string) (*entities.User, error)
+		DeleteUserById(id string) error
+		UpdateUserById(id uuid.UUID, updates map[string]any) (*entities.User, error)
 
-	GetLevelById(id int) (*entities.Level, error)
-}
+		GetLevelById(id int) (*entities.Level, error)
+	}
+	userStore struct {
+		db *sqlx.DB
+	}
+)
 
 const DEFAULT_LEVEL = 1
-
-type userStore struct {
-	db *sqlx.DB
-}
 
 func NewUserStore(db *sqlx.DB) UserStore {
 	return &userStore{db: db}

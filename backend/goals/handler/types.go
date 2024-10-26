@@ -9,40 +9,37 @@ import (
 	"github.com/google/uuid"
 )
 
-type GoalHandler struct {
-	goalService service.GoalService
-	traceLogger stacktrace.TraceLogger
-}
+type (
+	GoalHandler struct {
+		goalService service.GoalService
+		traceLogger stacktrace.TraceLogger
+	}
+	CreateGoalRequest struct {
+		Title       string `json:"title"`
+		Description string `json:"description"`
+		CategoryId  string `json:"category_id"`
+	}
+	CreateGoalCategoryRequest struct {
+		Title     string `json:"title"`
+		XpPerGoal int    `json:"xp_per_goal"`
+	}
+	UpdateGoalCategoryRequest struct {
+		Title     options.Option[string] `json:"title"`
+		XpPerGoal options.Option[int]    `json:"xp_per_goal"`
+	}
+	UpdateGoalRequest struct {
+		Title       options.Option[string] `json:"title"`
+		Description options.Option[string] `json:"description"`
+		CategoryId  options.Option[string] `json:"category_id"`
+		Status      options.Option[string] `json:"status"`
+	}
+	DeleteGoalRequest struct {
+		GoalId string `json:"goal_id"`
+	}
+)
 
 func NewGoalHandler(goalService service.GoalService, traceLogger stacktrace.TraceLogger) *GoalHandler {
 	return &GoalHandler{goalService, traceLogger}
-}
-
-type CreateGoalRequest struct {
-	Title       string `json:"title"`
-	Description string `json:"description"`
-	CategoryId  string `json:"category_id"`
-}
-
-type CreateGoalCategoryRequest struct {
-	Title     string `json:"title"`
-	XpPerGoal int    `json:"xp_per_goal"`
-}
-
-type UpdateGoalCategoryRequest struct {
-	Title     options.Option[string] `json:"title"`
-	XpPerGoal options.Option[int]    `json:"xp_per_goal"`
-}
-
-type UpdateGoalRequest struct {
-	Title       options.Option[string] `json:"title"`
-	Description options.Option[string] `json:"description"`
-	CategoryId  options.Option[string] `json:"category_id"`
-	Status      options.Option[string] `json:"status"`
-}
-
-type DeleteGoalRequest struct {
-	GoalId string `json:"goal_id"`
 }
 
 const (

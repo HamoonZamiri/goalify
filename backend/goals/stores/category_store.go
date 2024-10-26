@@ -11,17 +11,18 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-type GoalCategoryStore interface {
-	CreateGoalCategory(title string, xpPerGoal int, userId uuid.UUID) (*entities.GoalCategory, error)
-	GetGoalCategoriesByUserId(userId uuid.UUID) ([]*entities.GoalCategory, error)
-	GetGoalCategoryById(categoryId uuid.UUID) (*entities.GoalCategory, error)
-	UpdateGoalCategoryById(categoryId uuid.UUID, updates map[string]any) (*entities.GoalCategory, error)
-	DeleteGoalCategoryById(categoryId uuid.UUID) error
-}
-
-type goalCategoryStore struct {
-	db *sqlx.DB
-}
+type (
+	GoalCategoryStore interface {
+		CreateGoalCategory(title string, xpPerGoal int, userId uuid.UUID) (*entities.GoalCategory, error)
+		GetGoalCategoriesByUserId(userId uuid.UUID) ([]*entities.GoalCategory, error)
+		GetGoalCategoryById(categoryId uuid.UUID) (*entities.GoalCategory, error)
+		UpdateGoalCategoryById(categoryId uuid.UUID, updates map[string]any) (*entities.GoalCategory, error)
+		DeleteGoalCategoryById(categoryId uuid.UUID) error
+	}
+	goalCategoryStore struct {
+		db *sqlx.DB
+	}
+)
 
 func NewGoalCategoryStore(db *sqlx.DB) GoalCategoryStore {
 	return &goalCategoryStore{db: db}
