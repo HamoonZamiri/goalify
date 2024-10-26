@@ -5,26 +5,25 @@ import (
 	"strings"
 )
 
-type SignupRequest struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
-}
-
-type LoginRequest struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
-}
-
-type RefreshRequest struct {
-	UserId       string `json:"user_id"`
-	RefreshToken string `json:"refresh_token"`
-}
-
-type UpdateRequest struct {
-	Xp            options.Option[int] `json:"xp"`
-	LevelId       options.Option[int] `json:"level_id"`
-	CashAvailable options.Option[int] `json:"cash_available"`
-}
+type (
+	SignupRequest struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
+	LoginRequest struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
+	RefreshRequest struct {
+		UserId       string `json:"user_id"`
+		RefreshToken string `json:"refresh_token"`
+	}
+	UpdateRequest struct {
+		Xp            options.Option[int] `json:"xp"`
+		LevelId       options.Option[int] `json:"level_id"`
+		CashAvailable options.Option[int] `json:"cash_available"`
+	}
+)
 
 const (
 	PASSWORD_MIN_LEN = 8
