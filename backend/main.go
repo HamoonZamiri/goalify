@@ -1,13 +1,14 @@
 package main
 
 import (
+	"context"
 	"goalify/config"
-	"goalify/db"
 	gh "goalify/goals/handler"
 	gSrv "goalify/goals/service"
 	gs "goalify/goals/stores"
 	"goalify/middleware"
 	"goalify/routes"
+	"goalify/testsetup"
 	uh "goalify/users/handler"
 	usrSrv "goalify/users/service"
 	us "goalify/users/stores"
@@ -17,6 +18,9 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -35,17 +39,16 @@ func NewServer(userHandler *uh.UserHandler, goalHandler *gh.GoalHandler,
 
 func Run() error {
 	// instantiate config service
-	configService := config.NewConfigService(options.None[string]())
+	var err error
 	var dbInstance *sqlx.DB
+	configService := config.NewConfigService(options.None[string]())
+	dbInstance, err = testsetup.GetDbInstance()
 
-	if configService.MustGetEnv("ENV") == "test" {
-		dbInstance, _ = db.NewWithConnString(configService.MustGetEnv(config.TEST_DB_CONN_STRING))
-	} else {
-		dbInstance, _ = db.New(configService.MustGetEnv(config.DB_NAME), configService.MustGetEnv(config.DB_PASSWORD),
-			configService.MustGetEnv(config.DB_NAME))
-	}
 	if dbInstance == nil {
 		panic("db instance is nil")
+	}
+	if err != nil {
+		panic(err)
 	}
 
 	// logs for stack trace implementing stacktrace.TraceLogger
@@ -70,7 +73,7 @@ func Run() error {
 		Handler: srv,
 	}
 
-	var err error = nil
+	err = nil
 	slog.Info("Listening on " + port)
 
 	if err = httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
@@ -81,8 +84,43 @@ func Run() error {
 }
 
 func main() {
-	if err := Run(); err != nil {
-		slog.Error("run: ", "err", err)
+	_, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	container, err := testsetup.GetPgContainer()
+	if err != nil {
+		slog.Error("Failed to create container: ", "err", err)
+		os.Exit(1)
+	}
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
+	done := make(chan bool)
+
+	go func() {
+		sig := <-sigChan
+		slog.Info("Received signal: ", "sig", sig)
+		cancel()
+
+		slog.Info("Cleaning up resources")
+		if err := container.Terminate(context.Background()); err != nil {
+			slog.Error("Failed to terminate container: ", "err", err)
+		}
+
+		close(done)
+	}()
+
+	go func() {
+		if err := Run(); err != nil {
+			slog.Error("run: ", "err", err)
+			os.Exit(1)
+		}
+	}()
+
+	select {
+	case <-done:
+		slog.Info("Cleanup complete")
+		os.Exit(0)
+	case <-time.After(10 * time.Second):
+		slog.Error("timeout")
 		os.Exit(1)
 	}
 }
