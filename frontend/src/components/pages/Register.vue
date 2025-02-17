@@ -1,13 +1,7 @@
 <script setup lang="ts">
 import router from "@/router";
 import { API_BASE } from "@/utils/constants";
-import {
-  Schemas,
-  UserSchema,
-  createServerResponseSchema,
-  type ErrorResponse,
-  type User,
-} from "@/utils/schemas";
+import { Schemas, type ErrorResponse, type User } from "@/utils/schemas";
 import { ref } from "vue";
 import useAuth from "@/hooks/auth/useAuth";
 
@@ -25,12 +19,18 @@ const formData = ref<{
 
 async function signup(payload: MouseEvent) {
   payload.preventDefault();
+  const reqBody = {
+    email: formData.value.email,
+    password: formData.value.password,
+    confirm_password: formData.value.confirmPassword,
+  };
+
   const res = await fetch(`${API_BASE}/users/signup`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(formData.value),
+    body: JSON.stringify(reqBody),
   });
   const json: unknown = await res.json();
   if (!res.ok) {
@@ -77,8 +77,8 @@ async function signup(payload: MouseEvent) {
           class="block h-10 w-full bg-gray-300 rounded-md border-0 px-1.5 py-1.5 text-gray-900 shadow-sm placeholder:text-gray-400 sm:text-sm sm:leading-6 focus:outline-none"
           type="password"
         />
-        <p class="text-red-400" v-if="error?.errors?.password">
-          {{ error.errors.password }}
+        <p class="text-red-400" v-if="error?.errors?.confirm_password">
+          {{ error.errors.confirm_password }}
         </p>
       </div>
       <button

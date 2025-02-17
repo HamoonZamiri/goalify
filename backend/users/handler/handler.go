@@ -24,7 +24,7 @@ func NewUserHandler(userService service.UserService) *UserHandler {
 func (h *UserHandler) HandleSignup(w http.ResponseWriter, r *http.Request) {
 	decoded, problems, err := jsonutil.DecodeValid[SignupRequest](r)
 	if len(problems) > 0 {
-		responses.SendAPIError(w, r, http.StatusBadRequest, "invalid request body", problems)
+		responses.SendAPIError(w, r, http.StatusUnprocessableEntity, "invalid request body", problems)
 		return
 	}
 

@@ -20,7 +20,6 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -119,8 +118,8 @@ func main() {
 	case <-done:
 		slog.Info("Cleanup complete")
 		os.Exit(0)
-	case <-time.After(10 * time.Second):
-		slog.Error("timeout")
-		os.Exit(1)
+		// case <-time.After(10 * time.Second):
+		// 	slog.Error("timeout")
+		// 	os.Exit(1)
 	}
 }
