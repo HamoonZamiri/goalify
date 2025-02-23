@@ -80,7 +80,7 @@ func TestHealth(t *testing.T) {
 	t.Parallel()
 	res, err := http.Get(BASE_URL + "/health")
 	assert.Nil(t, err)
-	assert.Equal(t, 200, res.StatusCode)
+	assert.Equal(t, http.StatusOK, res.StatusCode)
 }
 
 /* Users Domain Tests
@@ -98,13 +98,13 @@ func TestSignup(t *testing.T) {
 	res, err := http.Post(BASE_URL+"/api/users/signup", "application/json", bytes.NewReader(stringifiedBody))
 	assert.Nil(t, err)
 
-	assert.Equal(t, 200, res.StatusCode)
+	assert.Equal(t, http.StatusCreated, res.StatusCode)
 
 	defer res.Body.Close()
 
-	serverResponse, err := UnmarshalServerResponse[entities.UserDTO](res)
+	serverResponse, err := unmarshalResponse[entities.UserDTO](res)
 	assert.Nil(t, err)
-	assert.Equal(t, email, serverResponse.Data.Email)
+	assert.Equal(t, email, serverResponse.Email)
 }
 
 func TestSignupEmailExists(t *testing.T) {
@@ -132,6 +132,11 @@ func TestLogin(t *testing.T) {
 	res, _ := http.Post(BASE_URL+"/api/users/login", "application/json", bytes.NewReader(stringifiedBody))
 	assert.Equal(t, http.StatusOK, res.StatusCode)
 	assert.Nil(t, err)
+
+	assert.Nil(t, err)
+	user, err := unmarshalResponse[entities.UserDTO](res)
+	assert.NotEmpty(t, user)
+	assert.Equal(t, email, user.Email)
 }
 
 func TestLoginIncorrectPassword(t *testing.T) {
@@ -152,8 +157,8 @@ func createUser(email, password string) *entities.UserDTO {
 	stringifiedBody, _ := json.Marshal(reqBody)
 	res, _ := http.Post(BASE_URL+"/api/users/signup", "application/json", bytes.NewReader(stringifiedBody))
 
-	servRes, _ := UnmarshalServerResponse[*entities.UserDTO](res)
-	return servRes.Data
+	servRes, _ := unmarshalResponse[*entities.UserDTO](res)
+	return servRes
 }
 
 func TestRefresh(t *testing.T) {
@@ -170,12 +175,12 @@ func TestRefresh(t *testing.T) {
 	res, err := http.Post(url, "application/json", bytes.NewReader(stringifiedBody))
 	assert.Nil(t, err)
 
-	serverResponse, err := UnmarshalServerResponse[entities.UserDTO](res)
+	serverResponse, err := unmarshalResponse[entities.UserDTO](res)
 	assert.Nil(t, err)
 
 	assert.Equal(t, http.StatusOK, res.StatusCode)
 
-	assert.NotEqual(t, prevToken, serverResponse.Data.RefreshToken.String())
+	assert.NotEqual(t, prevToken, serverResponse.RefreshToken.String())
 }
 
 func TestIncorrectRefresh(t *testing.T) {
@@ -188,7 +193,7 @@ func TestIncorrectRefresh(t *testing.T) {
 	res, err := buildAndSendRequest("POST", fmt.Sprintf("%s/api/users/refresh", BASE_URL), reqBody, userDto.AccessToken)
 	assert.Nil(t, err)
 
-	assert.Equal(t, http.StatusBadRequest, res.StatusCode)
+	assert.Equal(t, http.StatusUnprocessableEntity, res.StatusCode)
 }
 
 func TestUpdateUserById(t *testing.T) {
@@ -201,10 +206,10 @@ func TestUpdateUserById(t *testing.T) {
 	res, err := buildAndSendRequest("PUT", fmt.Sprintf("%s/api/users", BASE_URL), reqBody, userDto.AccessToken)
 	require.Nil(t, err)
 
-	resBody, err := UnmarshalServerResponse[entities.UserDTO](res)
+	resBody, err := unmarshalResponse[entities.UserDTO](res)
 	assert.Nil(t, err)
-	assert.Equal(t, 100, resBody.Data.Xp)
-	assert.Equal(t, 100, resBody.Data.CashAvailable)
+	assert.Equal(t, 100, resBody.Xp)
+	assert.Equal(t, 100, resBody.CashAvailable)
 }
 
 func TestIncorrectUpdateUserById(t *testing.T) {
@@ -233,14 +238,14 @@ func TestGoalCategoryCreate(t *testing.T) {
 	reqBody := map[string]any{"title": "goal cat", "xp_per_goal": 100}
 	res, err := buildAndSendRequest("POST", fmt.Sprintf("%s/api/goals/categories", BASE_URL), reqBody, userDto.AccessToken)
 	assert.Nil(t, err)
-	assert.Equal(t, http.StatusOK, res.StatusCode)
+	assert.Equal(t, http.StatusCreated, res.StatusCode)
 
-	gc, err := UnmarshalServerResponse[entities.GoalCategory](res)
+	gc, err := unmarshalResponse[entities.GoalCategory](res)
 	assert.Nil(t, err)
-	assert.Equal(t, "goal cat", gc.Data.Title)
-	assert.Equal(t, 100, gc.Data.Xp_per_goal)
-	assert.NotNil(t, gc.Data.Goals)
-	assert.Equal(t, userDto.Id.String(), gc.Data.UserId.String())
+	assert.Equal(t, "goal cat", gc.Title)
+	assert.Equal(t, 100, gc.Xp_per_goal)
+	assert.NotNil(t, gc.Goals)
+	assert.Equal(t, userDto.Id.String(), gc.UserId.String())
 }
 
 func TestGoalCategoryCreateInvalidFields(t *testing.T) {
@@ -251,7 +256,7 @@ func TestGoalCategoryCreateInvalidFields(t *testing.T) {
 	reqBody := map[string]any{"title": "goal cat", "xp_per_goal": -10}
 	res, err := buildAndSendRequest("POST", fmt.Sprintf("%s/api/goals/categories", BASE_URL), reqBody, userDto.AccessToken)
 	assert.Nil(t, err)
-	assert.Equal(t, http.StatusBadRequest, res.StatusCode)
+	assert.Equal(t, http.StatusUnprocessableEntity, res.StatusCode)
 }
 
 func TestGetGoalCategories(t *testing.T) {
@@ -268,7 +273,7 @@ func TestGetGoalCategories(t *testing.T) {
 	assert.Nil(t, err)
 
 	assert.Equal(t, http.StatusOK, res.StatusCode)
-	resBody, err := UnmarshalServerResponse[[]entities.GoalCategory](res)
+	resBody, err := unmarshalResponse[responses.ServerResponse[[]*entities.GoalCategory]](res)
 	assert.Nil(t, err)
 
 	// expecting 5 inserted category + 1 default from user_created event
@@ -287,10 +292,10 @@ func TestGetGoalCategoryById(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, http.StatusOK, res.StatusCode)
 
-	resBody, err := UnmarshalServerResponse[entities.GoalCategory](res)
+	resBody, err := unmarshalResponse[entities.GoalCategory](res)
 	assert.Nil(t, err)
-	assert.Equal(t, gc.Id, resBody.Data.Id)
-	assert.Equal(t, gc.UserId, resBody.Data.UserId)
+	assert.Equal(t, gc.Id, resBody.Id)
+	assert.Equal(t, gc.UserId, resBody.UserId)
 }
 
 func TestUpdateGoalCategoryById(t *testing.T) {
@@ -306,10 +311,10 @@ func TestUpdateGoalCategoryById(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, http.StatusOK, res.StatusCode)
 
-	resBody, err := UnmarshalServerResponse[entities.GoalCategory](res)
+	resBody, err := unmarshalResponse[entities.GoalCategory](res)
 	assert.Nil(t, err)
-	assert.Equal(t, "updated title", resBody.Data.Title)
-	assert.Equal(t, 69, resBody.Data.Xp_per_goal)
+	assert.Equal(t, "updated title", resBody.Title)
+	assert.Equal(t, 69, resBody.Xp_per_goal)
 }
 
 func TestUpdateGoalCategoryByIdInvalidFields(t *testing.T) {
@@ -323,7 +328,7 @@ func TestUpdateGoalCategoryByIdInvalidFields(t *testing.T) {
 	url := fmt.Sprintf("%s/api/goals/categories/%s", BASE_URL, gc.Id)
 	res, err := buildAndSendRequest("PUT", url, reqBody, userDto.AccessToken)
 	require.Nil(t, err)
-	assert.Equal(t, http.StatusBadRequest, res.StatusCode)
+	assert.Equal(t, http.StatusUnprocessableEntity, res.StatusCode)
 }
 
 func TestDeleteGoalCategoryById(t *testing.T) {
@@ -367,14 +372,14 @@ func TestCreateGoal(t *testing.T) {
 	}
 	res, err := buildAndSendRequest("POST", BASE_URL+"/api/goals", reqBody, userDto.AccessToken)
 	assert.Nil(t, err)
-	assert.Equal(t, http.StatusOK, res.StatusCode)
+	assert.Equal(t, http.StatusCreated, res.StatusCode)
 
-	resBody, err := UnmarshalServerResponse[entities.Goal](res)
+	resBody, err := unmarshalResponse[entities.Goal](res)
 	assert.Nil(t, err)
-	assert.Equal(t, cat.Id.String(), resBody.Data.CategoryId.String())
-	assert.Equal(t, userDto.Id, resBody.Data.UserId)
-	assert.Equal(t, "goal title", resBody.Data.Title)
-	assert.Equal(t, "goal description", resBody.Data.Description)
+	assert.Equal(t, cat.Id.String(), resBody.CategoryId.String())
+	assert.Equal(t, userDto.Id, resBody.UserId)
+	assert.Equal(t, "goal title", resBody.Title)
+	assert.Equal(t, "goal description", resBody.Description)
 }
 
 func TestCreateGoalInvalidFields(t *testing.T) {
@@ -403,10 +408,10 @@ func TestUpdateGoalById(t *testing.T) {
 	require.Nil(t, err)
 
 	assert.Equal(t, http.StatusOK, res.StatusCode)
-	resBody, err := UnmarshalServerResponse[entities.Goal](res)
+	resBody, err := unmarshalResponse[entities.Goal](res)
 	require.Nil(t, err)
-	assert.Equal(t, "updated title", resBody.Data.Title)
-	assert.Equal(t, "updated description", resBody.Data.Description)
+	assert.Equal(t, "updated title", resBody.Title)
+	assert.Equal(t, "updated description", resBody.Description)
 }
 
 func TestUserCreatedEvent(t *testing.T) {
@@ -425,7 +430,7 @@ func TestUserCreatedEvent(t *testing.T) {
 		assert.Nil(t, err)
 
 		assert.Equal(t, http.StatusOK, res.StatusCode)
-		resBody, err = UnmarshalServerResponse[[]*entities.GoalCategory](res)
+		resBody, err = unmarshalResponse[responses.ServerResponse[[]*entities.GoalCategory]](res)
 		assert.Nil(t, err)
 		if len(resBody.Data) == 1 {
 			break
@@ -447,28 +452,27 @@ func TestGoalCategoryCreatedEvent(t *testing.T) {
 	url := fmt.Sprintf("%s/api/goals/categories", BASE_URL)
 	res, err := buildAndSendRequest("POST", url, body, userDto.AccessToken)
 	assert.Nil(t, err)
-	assert.Equal(t, http.StatusOK, res.StatusCode)
+	assert.Equal(t, http.StatusCreated, res.StatusCode)
 
-	responseData, err := UnmarshalServerResponse[entities.GoalCategory](res)
-	gc := responseData.Data
+	gc, err := unmarshalResponse[entities.GoalCategory](res)
 	assert.Nil(t, err)
-	assert.Equal(t, http.StatusOK, res.StatusCode)
+	assert.Equal(t, http.StatusCreated, res.StatusCode)
 
 	// check if the default goal was created
 
-	var serverResponse responses.ServerResponse[*entities.GoalCategory]
+	var serverResponse *entities.GoalCategory
 	url = fmt.Sprintf("%s/api/goals/categories/%s", BASE_URL, gc.Id)
 	for i := 0; i < 5; i++ {
 		res, err = buildAndSendRequest("GET", url, nil, userDto.AccessToken)
 		assert.Nil(t, err)
-		serverResponse, err = UnmarshalServerResponse[*entities.GoalCategory](res)
+		serverResponse, err = unmarshalResponse[*entities.GoalCategory](res)
 		assert.Nil(t, err)
-		if len(serverResponse.Data.Goals) == 1 {
+		if len(serverResponse.Goals) == 1 {
 			break
 		}
 		time.Sleep(200 * time.Millisecond)
 	}
-	assert.Equal(t, 1, len(serverResponse.Data.Goals))
+	assert.Equal(t, 1, len(serverResponse.Goals))
 }
 
 func TestDeleteGoal(t *testing.T) {
@@ -485,35 +489,35 @@ func TestDeleteGoal(t *testing.T) {
 	url := fmt.Sprintf("%s/api/goals/categories", BASE_URL)
 	res, err := buildAndSendRequest("POST", url, body, userDto.AccessToken)
 	assert.Nil(t, err)
-	assert.Equal(t, http.StatusOK, res.StatusCode)
-	gc, err := UnmarshalServerResponse[entities.GoalCategory](res)
+	assert.Equal(t, http.StatusCreated, res.StatusCode)
+	gc, err := unmarshalResponse[entities.GoalCategory](res)
 	assert.Nil(t, err)
 
 	url = fmt.Sprintf("%s/api/goals", BASE_URL)
 	body = map[string]any{
 		"title":       "some title",
 		"description": "some description",
-		"category_id": gc.Data.Id,
+		"category_id": gc.Id,
 	}
-	res, err = buildAndSendRequest("POST", url, body, userDto.AccessToken)
 	assert.Nil(t, err)
-	assert.Equal(t, http.StatusOK, res.StatusCode)
-	goal, err := UnmarshalServerResponse[entities.Goal](res)
+	res, err = buildAndSendRequest("POST", url, body, userDto.AccessToken)
+	assert.Equal(t, http.StatusCreated, res.StatusCode)
+	goal, err := unmarshalResponse[entities.Goal](res)
 	assert.Nil(t, err)
 
 	// rerun requests until goal category created event triggers
-	url = fmt.Sprintf("%s/api/goals/categories/%s", BASE_URL, gc.Data.Id)
+	url = fmt.Sprintf("%s/api/goals/categories/%s", BASE_URL, gc.Id)
 	for i := 0; i < 5; i++ {
 		res, _ = buildAndSendRequest("GET", url, nil, userDto.AccessToken)
-		gc, _ = UnmarshalServerResponse[entities.GoalCategory](res)
-		if len(gc.Data.Goals) == 2 {
+		gc, _ = unmarshalResponse[entities.GoalCategory](res)
+		if len(gc.Goals) == 2 {
 			break
 		}
 		time.Sleep(50 * time.Millisecond)
 	}
-	assert.Equal(t, 2, len(gc.Data.Goals))
+	assert.Equal(t, 2, len(gc.Goals))
 
-	deleteUrl := fmt.Sprintf("%s/api/goals/%s", BASE_URL, goal.Data.Id)
+	deleteUrl := fmt.Sprintf("%s/api/goals/%s", BASE_URL, goal.Id)
 	res, err = buildAndSendRequest("DELETE", deleteUrl, nil, userDto.AccessToken)
 	assert.Nil(t, err)
 	assert.Equal(t, http.StatusOK, res.StatusCode)
@@ -521,9 +525,9 @@ func TestDeleteGoal(t *testing.T) {
 	// rerun request to get goal category by id
 	res, err = buildAndSendRequest("GET", url, nil, userDto.AccessToken)
 	assert.Nil(t, err)
-	gc, err = UnmarshalServerResponse[entities.GoalCategory](res)
+	gc, err = unmarshalResponse[entities.GoalCategory](res)
 	assert.Nil(t, err)
-	assert.Equal(t, 1, len(gc.Data.Goals))
+	assert.Equal(t, 1, len(gc.Goals))
 }
 
 func TestDeleteGoalNotFound(t *testing.T) {
@@ -637,14 +641,14 @@ func getUserById(id string) (*entities.User, error) {
 	return &user, nil
 }
 
-func UnmarshalServerResponse[T any](res *http.Response) (responses.ServerResponse[T], error) {
-	var serverResponse responses.ServerResponse[T]
+func unmarshalResponse[T any](res *http.Response) (T, error) {
+	var response T
 
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
-		return serverResponse, err
+		return response, err
 	}
 
-	err = json.Unmarshal(body, &serverResponse)
-	return serverResponse, err
+	err = json.Unmarshal(body, &response)
+	return response, err
 }

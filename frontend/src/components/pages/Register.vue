@@ -37,8 +37,8 @@ async function signup(payload: MouseEvent) {
     error.value = json as ErrorResponse;
     return;
   }
-  const parsed = Schemas.UserResponseSchema.parse(json);
-  setUser(parsed.data as User);
+  const parsed = Schemas.UserSchema.parse(json);
+  setUser(parsed);
   error.value = null;
   router.push({ name: "Home" });
 }

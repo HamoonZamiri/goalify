@@ -35,11 +35,11 @@ func (o Option[T]) MarshalJSON() ([]byte, error) {
 	if o.Valid {
 		return json.Marshal(o.Value)
 	}
-	return []byte("null"), nil
+	return json.Marshal(nil)
 }
 
 func (o *Option[T]) UnmarshalJSON(data []byte) error {
-	if string(data) == "null" {
+	if data == nil || string(data) == "null" {
 		o.Valid = false
 		return nil
 	}

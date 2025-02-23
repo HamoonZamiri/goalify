@@ -2,6 +2,7 @@ package jsonutil
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 )
@@ -25,7 +26,16 @@ func Encode[T any](w http.ResponseWriter, _ *http.Request, status int, data T) e
 func Decode[T any](r *http.Request) (T, error) {
 	var v T
 	if err := json.NewDecoder(r.Body).Decode(&v); err != nil {
-		return v, fmt.Errorf("decode json: %w", err)
+		var typeErr *json.UnmarshalTypeError
+		var syntaxErr *json.SyntaxError
+		switch {
+		case errors.As(err, &typeErr):
+			return v, fmt.Errorf("invalid type for field '%s', expected %s", typeErr.Field, typeErr.Type)
+		case errors.As(err, &syntaxErr):
+			return v, fmt.Errorf("invalid JSON syntax at position %d", syntaxErr.Offset)
+		default:
+			return v, fmt.Errorf("decode json: %w", err)
+		}
 	}
 	return v, nil
 }
@@ -37,7 +47,7 @@ func DecodeValid[T Validator](r *http.Request) (T, map[string]string, error) {
 	}
 
 	if problems := v.Valid(); len(problems) > 0 {
-		return v, problems, fmt.Errorf("invalid %T: %d problems", v, len(problems))
+		return v, problems, fmt.Errorf("request validation issue")
 	}
 
 	return v, nil, nil
