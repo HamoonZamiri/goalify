@@ -7,8 +7,9 @@ import (
 
 type (
 	SignupRequest struct {
-		Email    string `json:"email"`
-		Password string `json:"password"`
+		Email           string `json:"email"`
+		Password        string `json:"password"`
+		ConfirmPassword string `json:"confirm_password"`
 	}
 	LoginRequest struct {
 		Email    string `json:"email"`
@@ -58,6 +59,10 @@ func (r SignupRequest) Valid() map[string]string {
 
 	ValidateEmail(problems, r.Email)
 	ValidatePassword(problems, r.Password)
+
+	if r.Password != r.ConfirmPassword {
+		problems["confirm_password"] = "passwords do not match"
+	}
 
 	return problems
 }

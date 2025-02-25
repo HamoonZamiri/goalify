@@ -91,7 +91,7 @@ func TestSignup(t *testing.T) {
 	t.Parallel()
 
 	email := t.Name() + "@mail.com"
-	reqBody := handler.SignupRequest{Email: email, Password: "password123!"}
+	reqBody := handler.SignupRequest{Email: email, Password: "password123!", ConfirmPassword: "password123!"}
 	stringifiedBody, err := json.Marshal(reqBody)
 	assert.Nil(t, err)
 
@@ -112,12 +112,12 @@ func TestSignupEmailExists(t *testing.T) {
 
 	email := t.Name() + "@mail.com"
 	createUser(email, "password123!")
-	reqBody := handler.SignupRequest{Email: email, Password: "password"}
+	reqBody := handler.SignupRequest{Email: email, Password: "password123!", ConfirmPassword: "password123!"}
 	stringifiedBody, err := json.Marshal(reqBody)
 	assert.Nil(t, err)
 
 	res, _ := http.Post(BASE_URL+"/api/users/signup", "application/json", bytes.NewReader(stringifiedBody))
-	assert.Equal(t, res.StatusCode, http.StatusBadRequest)
+	assert.Equal(t, http.StatusBadRequest, res.StatusCode)
 }
 
 func TestLogin(t *testing.T) {
@@ -148,7 +148,7 @@ func TestLoginIncorrectPassword(t *testing.T) {
 }
 
 func createUser(email, password string) *entities.UserDTO {
-	reqBody := handler.SignupRequest{Email: email, Password: password}
+	reqBody := handler.SignupRequest{Email: email, Password: password, ConfirmPassword: password}
 	stringifiedBody, _ := json.Marshal(reqBody)
 	res, _ := http.Post(BASE_URL+"/api/users/signup", "application/json", bytes.NewReader(stringifiedBody))
 

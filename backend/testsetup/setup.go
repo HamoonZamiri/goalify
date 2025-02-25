@@ -9,13 +9,17 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/jmoiron/sqlx"
 	"github.com/pressly/goose/v3"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/testcontainers/testcontainers-go/wait"
 )
 
-var pgContainer *postgres.PostgresContainer
+var (
+	pgContainer *postgres.PostgresContainer
+	dbx         *sqlx.DB
+)
 
 func setupPgContainer() error {
 	ctx := context.Background()
@@ -47,7 +51,7 @@ func setupPgContainer() error {
 	}
 	os.Setenv(config.TEST_DB_CONN_STRING, connStr)
 
-	dbx, err := db.NewWithConnString(connStr)
+	dbx, err = db.NewWithConnString(connStr)
 	if err != nil {
 		panic(err)
 	}
@@ -71,4 +75,14 @@ func GetPgContainer() (*postgres.PostgresContainer, error) {
 		}
 	}
 	return pgContainer, nil
+}
+
+func GetDbInstance() (*sqlx.DB, error) {
+	if dbx == nil {
+		err := setupPgContainer()
+		if err != nil {
+			return nil, err
+		}
+	}
+	return dbx, nil
 }
