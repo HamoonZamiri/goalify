@@ -39,7 +39,7 @@ async function handleSubmit(e: MouseEvent) {
   error.value = null;
 
   // dispatch an event to update the categories
-  addCategory(res.data);
+  addCategory(res);
   props.setIsOpen(false);
 }
 </script>

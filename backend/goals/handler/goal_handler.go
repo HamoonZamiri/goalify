@@ -5,7 +5,6 @@ import (
 	"goalify/middleware"
 	"goalify/utils/jsonutil"
 	"goalify/utils/responses"
-	"goalify/utils/svcerror"
 	"log/slog"
 	"net/http"
 
@@ -15,15 +14,8 @@ import (
 func (h *GoalHandler) HandleCreateGoal(w http.ResponseWriter, r *http.Request) {
 	funcStr := h.traceLogger.GetTrace("handler.HandleCreateGoal")
 	body, problems, err := jsonutil.DecodeValid[CreateGoalRequest](r)
-	if len(problems) > 0 {
-		apiError := responses.NewAPIError("invalid request", problems)
-		jsonutil.Encode(w, r, http.StatusBadRequest, apiError)
-		return
-	}
-
 	if err != nil {
-		slog.Error(fmt.Sprintf("%s: jsonutil.DecodeValid[CreateGoalRequest]:", funcStr), "err", err)
-		responses.SendAPIError(w, r, http.StatusInternalServerError, "error decoding request body", nil)
+		responses.HandleDecodeError(w, r, problems, err)
 		return
 	}
 
@@ -50,27 +42,17 @@ func (h *GoalHandler) HandleCreateGoal(w http.ResponseWriter, r *http.Request) {
 
 	goal, err := h.goalService.CreateGoal(body.Title, body.Description, parsedUserId, parsedCategoryId)
 	if err != nil {
-		responses.SendAPIError(w, r, svcerror.GetErrorCode(err), err.Error(), nil)
+		responses.SendAPIError(w, r, responses.GetErrorCode(err), err.Error(), nil)
 		return
 	}
 
-	if err := jsonutil.Encode(w, r, http.StatusOK, responses.New(goal, "goal created successfully")); err != nil {
-		slog.Error("HandleCreateGoal: jsonutil.Encode(goal):", "err", err)
-		responses.SendAPIError(w, r, http.StatusInternalServerError, "internal error encoding response", nil)
-	}
+	responses.SendResponse(w, r, http.StatusCreated, goal)
 }
 
 func (h *GoalHandler) HandleUpdateGoalById(w http.ResponseWriter, r *http.Request) {
 	body, problems, err := jsonutil.DecodeValid[UpdateGoalRequest](r)
-	if len(problems) > 0 {
-		apiError := responses.NewAPIError("invalid request", problems)
-		jsonutil.Encode(w, r, http.StatusBadRequest, apiError)
-		return
-	}
-
 	if err != nil {
-		slog.Error("HandleUpdateGoalById: jsonutil.DecodeValid[UpdateGoalRequest]():", "err", err)
-		responses.SendAPIError(w, r, http.StatusInternalServerError, "error decoding request body", nil)
+		responses.HandleDecodeError(w, r, problems, err)
 		return
 	}
 
@@ -114,14 +96,11 @@ func (h *GoalHandler) HandleUpdateGoalById(w http.ResponseWriter, r *http.Reques
 
 	updatedGoal, err := h.goalService.UpdateGoalById(parsedGoalId, updates, parsedUserId)
 	if err != nil {
-		responses.SendAPIError(w, r, svcerror.GetErrorCode(err), err.Error(), nil)
+		responses.SendAPIError(w, r, responses.GetErrorCode(err), err.Error(), nil)
 		return
 	}
 
-	if err := jsonutil.Encode(w, r, http.StatusOK, responses.New(updatedGoal, "goal updated successfully")); err != nil {
-		slog.Error("HandleUpdateGoalById: jsonutil.Encode(updatedGoal):", "err", err)
-		responses.SendAPIError(w, r, http.StatusInternalServerError, "internal error encoding response", nil)
-	}
+	responses.SendResponse(w, r, http.StatusOK, updatedGoal)
 }
 
 func (gh *GoalHandler) HandleDeleteGoalById(w http.ResponseWriter, r *http.Request) {
@@ -148,13 +127,10 @@ func (gh *GoalHandler) HandleDeleteGoalById(w http.ResponseWriter, r *http.Reque
 
 	err = gh.goalService.DeleteGoalById(goalUUID, userUUID)
 	if err != nil {
-		responses.SendAPIError(w, r, svcerror.GetErrorCode(err), "error deleting goal", nil)
+		responses.SendAPIError(w, r, responses.GetErrorCode(err), "error deleting goal", nil)
 		return
 	}
 
-	res := map[string]string{"data": "null", "message": "goal deleted successfully"}
-	if err := jsonutil.Encode(w, r, http.StatusOK, res); err != nil {
-		slog.Error("HandleDeleteGoalById: jsonutil.Encode(nil):", "err", err)
-		responses.SendAPIError(w, r, http.StatusInternalServerError, "internal error encoding response", nil)
-	}
+	res := map[string]any{"id": goalId, "deleted": true}
+	responses.SendResponse(w, r, http.StatusOK, res)
 }

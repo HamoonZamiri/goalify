@@ -19,7 +19,7 @@ onMounted(async () => {
     alert("Error getting level");
     return;
   }
-  const level = res.data;
+  const level = res;
   const currXp = user.xp;
   setTimeout(() => {
     progressBar.value = (currXp / level.level_up_xp) * 100;

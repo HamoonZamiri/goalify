@@ -38,7 +38,7 @@ async function handleSubmit(e: MouseEvent) {
     error.value = res;
     return;
   }
-  addGoal(CreateGoalFormProps.props.categoryId, res.data);
+  addGoal(CreateGoalFormProps.props.categoryId, res);
   formData.value.title = "";
   formData.value.description = "";
   CreateGoalFormProps.setIsOpen(false);
