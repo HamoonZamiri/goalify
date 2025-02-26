@@ -9,16 +9,13 @@ import {
 import useAuth from "../auth/useAuth";
 
 type ServerResponse<T> = {
-  message: string;
   data: T;
 };
 function useApi() {
   const { zodFetch } = useZodFetch();
   const { authState } = useAuth();
 
-  function isError(
-    res: ServerResponse<any> | ErrorResponse,
-  ): res is ErrorResponse {
+  function isError(res: any | ErrorResponse): res is ErrorResponse {
     const casted = res as ErrorResponse;
     return (
       casted.errors !== undefined ||
@@ -29,10 +26,10 @@ function useApi() {
   async function createGoalCategory(
     title: string,
     xp_per_goal: number,
-  ): Promise<ErrorResponse | ServerResponse<GoalCategory>> {
+  ): Promise<ErrorResponse | GoalCategory> {
     const res = await zodFetch(
       `${API_BASE}/goals/categories`,
-      Schemas.GoalCategoryResponseSchema,
+      Schemas.GoalCategorySchema,
       {
         method: "POST",
         headers: {
@@ -65,33 +62,29 @@ function useApi() {
     title: string,
     description: string,
     categoryId: string,
-  ): Promise<ErrorResponse | ServerResponse<Goal>> {
-    const res = await zodFetch(
-      `${API_BASE}/goals`,
-      Schemas.GoalResponseSchema,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${authState.value?.access_token}`,
-        },
-        body: JSON.stringify({
-          title,
-          description,
-          category_id: categoryId,
-        }),
+  ): Promise<ErrorResponse | Goal> {
+    const res = await zodFetch(`${API_BASE}/goals`, Schemas.GoalSchema, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${authState.value?.access_token}`,
       },
-    );
+      body: JSON.stringify({
+        title,
+        description,
+        category_id: categoryId,
+      }),
+    });
     return res;
   }
 
   async function updateGoal(
     goalId: string,
     updates: Partial<Goal>,
-  ): Promise<ErrorResponse | ServerResponse<Goal>> {
+  ): Promise<ErrorResponse | Goal> {
     const res = await zodFetch(
       `${API_BASE}/goals/${goalId}`,
-      Schemas.GoalResponseSchema,
+      Schemas.GoalSchema,
       {
         method: http.MethodPut,
         headers: {
@@ -134,23 +127,25 @@ function useApi() {
     categoryId: string,
     updates: Partial<GoalCategory>,
   ) {
-    const res = await fetch(`${API_BASE}/goals/categories/${categoryId}`, {
-      method: http.MethodPut,
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${authState.value?.access_token}`,
+    const res = await zodFetch(
+      `${API_BASE}/goals/categories/${categoryId}`,
+      Schemas.GoalCategorySchema,
+      {
+        method: http.MethodPut,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authState.value?.access_token}`,
+        },
+        body: JSON.stringify(updates),
       },
-      body: JSON.stringify(updates),
-    });
-    if (!res.ok) {
-      throw new Error("Failed to update category");
-    }
+    );
+    return res;
   }
 
   async function getLevel(id: number) {
     const res = await zodFetch(
       `${API_BASE}/levels/${id}`,
-      Schemas.LevelResponseSchema,
+      Schemas.LevelSchema,
       {
         headers: { Authorization: `Bearer ${authState.value?.access_token}` },
       },

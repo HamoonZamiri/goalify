@@ -4,7 +4,6 @@ export function createServerResponseSchema<TData extends z.ZodTypeAny>(
   schema: TData,
 ) {
   return z.object({
-    message: z.string(),
     data: schema,
   });
 }
@@ -58,7 +57,6 @@ const GoalCategoryResponseArraySchema = createServerResponseSchema(
   GoalCategoryArraySchema,
 );
 const GoalResponseArraySchema = createServerResponseSchema(GoalArraySchema);
-const LevelResponseSchema = createServerResponseSchema(LevelSchema);
 
 export type User = z.infer<typeof UserSchema>;
 export type Goal = z.infer<typeof GoalSchema>;
@@ -86,5 +84,5 @@ export const Schemas = {
   GoalCategoryArraySchema,
   GoalResponseArraySchema,
   GoalCategoryResponseArraySchema,
-  LevelResponseSchema: LevelResponseSchema,
+  LevelSchema,
 } as const;

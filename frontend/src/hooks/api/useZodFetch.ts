@@ -5,7 +5,7 @@ import { Schemas, type ErrorResponse } from "@/utils/schemas";
 import type { z } from "zod";
 
 function useZodFetch() {
-  const { setUser, getUser, logout, authState } = useAuth();
+  const { setUser, getUser, logout } = useAuth();
 
   async function refreshUserToken(): Promise<void> {
     const user = getUser();

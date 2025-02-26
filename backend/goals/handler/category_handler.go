@@ -2,10 +2,10 @@ package handler
 
 import (
 	"fmt"
-	"goalify/utils/jsonutil"
+	"goalify/entities"
 	"goalify/middleware"
+	"goalify/utils/jsonutil"
 	"goalify/utils/responses"
-	"goalify/utils/svcerror"
 	"log/slog"
 	"net/http"
 
@@ -15,18 +15,10 @@ import (
 func (h *GoalHandler) HandleCreateGoalCategory(w http.ResponseWriter, r *http.Request) {
 	funcStr := h.traceLogger.GetTrace("handler.HandleCreateGoalCategory")
 	body, problems, err := jsonutil.DecodeValid[CreateGoalCategoryRequest](r)
-	if len(problems) > 0 {
-		apiError := responses.NewAPIError("invalid request", problems)
-		jsonutil.Encode(w, r, http.StatusBadRequest, apiError)
-		return
-	}
-
 	if err != nil {
-		slog.Error(fmt.Sprintf("%s: jsontutil.DecodeValid:", funcStr), "err", err)
-		responses.SendAPIError(w, r, http.StatusInternalServerError, "error decoding request body", nil)
+		responses.HandleDecodeError(w, r, problems, err)
 		return
 	}
-
 	userId, err := middleware.GetIdFromHeader(r)
 	if err != nil {
 		slog.Error(fmt.Sprintf("%s: middleware.GetIdFromHeader:", funcStr), "err", err)
@@ -43,15 +35,11 @@ func (h *GoalHandler) HandleCreateGoalCategory(w http.ResponseWriter, r *http.Re
 
 	category, err := h.goalService.CreateGoalCategory(body.Title, body.XpPerGoal, parsedUUID)
 	if err != nil {
-		responses.SendAPIError(w, r, svcerror.GetErrorCode(err), err.Error(), nil)
+		responses.SendAPIError(w, r, responses.GetErrorCode(err), err.Error(), nil)
 		return
 	}
 
-	res := responses.New(category, "goal category created successfully")
-	if err := jsonutil.Encode(w, r, http.StatusOK, res); err != nil {
-		slog.Error(fmt.Sprintf("%s: jsonutil.Encode:", funcStr), "err", err)
-		responses.SendAPIError(w, r, http.StatusInternalServerError, "internal error encoding response", nil)
-	}
+	responses.SendResponse(w, r, http.StatusCreated, category)
 }
 
 func (h *GoalHandler) HandleGetGoalCategoriesByUserId(w http.ResponseWriter, r *http.Request) {
@@ -76,11 +64,11 @@ func (h *GoalHandler) HandleGetGoalCategoriesByUserId(w http.ResponseWriter, r *
 		return
 	}
 
-	res := responses.New(cats, "goal categories retrieved successfully")
-	if err := jsonutil.Encode(w, r, http.StatusOK, res); err != nil {
-		slog.Error(fmt.Sprintf("%s: jsonutil.Encode:", funcStr), "err", err)
-		responses.SendAPIError(w, r, http.StatusInternalServerError, "internal error encoding response", nil)
+	res := responses.ServerResponse[[]*entities.GoalCategory]{
+		Object: responses.ObjectList,
+		Data:   cats,
 	}
+	responses.SendResponse(w, r, http.StatusOK, res)
 }
 
 func (h *GoalHandler) HandleGetGoalCategoryById(w http.ResponseWriter, r *http.Request) {
@@ -109,15 +97,11 @@ func (h *GoalHandler) HandleGetGoalCategoryById(w http.ResponseWriter, r *http.R
 
 	cat, err := h.goalService.GetGoalCategoryById(parsedCategoryId, parsedUUID)
 	if err != nil {
-		responses.SendAPIError(w, r, svcerror.GetErrorCode(err), err.Error(), nil)
+		responses.SendAPIError(w, r, responses.GetErrorCode(err), err.Error(), nil)
 		return
 	}
 
-	res := responses.New(cat, "goal category retrieved successfully")
-	if err := jsonutil.Encode(w, r, http.StatusOK, res); err != nil {
-		slog.Error(fmt.Sprintf("%s: jsonutil.Encode:", funcStr), "err", err)
-		responses.SendAPIError(w, r, http.StatusInternalServerError, "internal error encoding response", nil)
-	}
+	responses.SendResponse(w, r, http.StatusOK, cat)
 }
 
 func (h *GoalHandler) HandleUpdateGoalCategoryById(w http.ResponseWriter, r *http.Request) {
@@ -145,15 +129,8 @@ func (h *GoalHandler) HandleUpdateGoalCategoryById(w http.ResponseWriter, r *htt
 	}
 
 	body, problems, err := jsonutil.DecodeValid[UpdateGoalCategoryRequest](r)
-	if len(problems) > 0 {
-		apiError := responses.NewAPIError("invalid request", problems)
-		jsonutil.Encode(w, r, http.StatusBadRequest, apiError)
-		return
-	}
-
 	if err != nil {
-		slog.Error(fmt.Sprintf("%s: jsonutil.DecodeValid:", funcStr), "err", err)
-		responses.SendAPIError(w, r, http.StatusInternalServerError, err.Error(), nil)
+		responses.HandleDecodeError(w, r, problems, err)
 		return
 	}
 
@@ -173,13 +150,10 @@ func (h *GoalHandler) HandleUpdateGoalCategoryById(w http.ResponseWriter, r *htt
 
 	cat, err := h.goalService.UpdateGoalCategoryById(parsedCategoryId, updates, parsedUUID)
 	if err != nil {
-		responses.SendAPIError(w, r, svcerror.GetErrorCode(err), err.Error(), nil)
+		responses.SendAPIError(w, r, responses.GetErrorCode(err), err.Error(), nil)
 	}
 
-	if err := jsonutil.Encode(w, r, http.StatusOK, responses.New(cat, "goal category updated successfully")); err != nil {
-		slog.Error(fmt.Sprintf("%s: jsonutil.Encode:", funcStr), "err", err)
-		responses.SendAPIError(w, r, http.StatusInternalServerError, err.Error(), nil)
-	}
+	responses.SendResponse(w, r, http.StatusOK, cat)
 }
 
 func (h *GoalHandler) HandleDeleteGoalCategoryById(w http.ResponseWriter, r *http.Request) {
@@ -187,14 +161,14 @@ func (h *GoalHandler) HandleDeleteGoalCategoryById(w http.ResponseWriter, r *htt
 	userId, err := middleware.GetIdFromHeader(r)
 	if err != nil {
 		slog.Error(fmt.Sprintf("%s: middleware.GetIdFromHeader:", funcStr), "err", err)
-		responses.SendAPIError(w, r, svcerror.GetErrorCode(err), err.Error(), nil)
+		responses.SendAPIError(w, r, responses.GetErrorCode(err), err.Error(), nil)
 		return
 	}
 
 	parsedUUID, err := uuid.Parse(userId)
 	if err != nil {
 		slog.Error(fmt.Sprintf("%s: uuid.Parse:", funcStr), "err", err)
-		responses.SendAPIError(w, r, svcerror.GetErrorCode(err), err.Error(), nil)
+		responses.SendAPIError(w, r, responses.GetErrorCode(err), err.Error(), nil)
 		return
 	}
 
@@ -209,12 +183,10 @@ func (h *GoalHandler) HandleDeleteGoalCategoryById(w http.ResponseWriter, r *htt
 	err = h.goalService.DeleteGoalCategoryById(parsedCategoryId, parsedUUID)
 	if err != nil {
 		slog.Error(fmt.Sprintf("%s: goalService.DeleteGoalCategoryById:", funcStr), "err", err)
-		responses.SendAPIError(w, r, svcerror.GetErrorCode(err), err.Error(), nil)
+		responses.SendAPIError(w, r, responses.GetErrorCode(err), err.Error(), nil)
 		return
 	}
 
-	if err := jsonutil.Encode(w, r, http.StatusOK, responses.New[string]("null", "goal category deleted successfully")); err != nil {
-		slog.Error(fmt.Sprintf("%s: jsonutil.Encode:", funcStr), "err", err)
-		responses.SendAPIError(w, r, http.StatusInternalServerError, err.Error(), nil)
-	}
+	res := map[string]any{"id": categoryId, "deleted": true}
+	responses.SendResponse[map[string]any](w, r, http.StatusOK, res)
 }

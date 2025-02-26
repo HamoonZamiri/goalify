@@ -90,3 +90,11 @@ func (r UpdateRequest) Valid() map[string]string {
 
 	return problems
 }
+
+func (r RefreshRequest) Valid() map[string]string {
+	problems := make(map[string]string)
+	if r.RefreshToken == "" {
+		problems["refresh_token"] = "refresh token is required"
+	}
+	return problems
+}
