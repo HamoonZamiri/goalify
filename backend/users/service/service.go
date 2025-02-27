@@ -26,6 +26,7 @@ type UserService interface {
 	Refresh(email, refreshToken string) (*entities.UserDTO, error)
 	DeleteUserById(id string) error
 	UpdateUserById(id uuid.UUID, updates map[string]interface{}) (*entities.UserDTO, error)
+	VerifyToken(tokenString string) (string, error)
 
 	GetLevelById(id int) (*entities.Level, error)
 }
@@ -58,23 +59,39 @@ func generateJWTToken(userId uuid.UUID) (string, error) {
 	return tokenString, nil
 }
 
-func VerifyToken(tokenString string) (string, error) {
+func (s *userService) VerifyToken(tokenString string) (string, error) {
+	errResponse := fmt.Errorf("%w: could not authenticate request", responses.ErrUnauthorized)
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		return []byte(os.Getenv("JWT_SECRET")), nil
 	})
 	if err != nil {
-		return "", err
+		slog.Error("service.VerifyToken: jwt.Parse:", "err", err.Error())
+		return "", errResponse
 	}
 
 	if !token.Valid {
-		return "", errors.New("invalid token")
+		return "", errResponse
 	}
 
 	claims, ok := token.Claims.(jwt.MapClaims)
 	if !ok {
-		return "", errors.New("invalid token")
+		return "", errResponse
 	}
-	return claims["userId"].(string), nil
+	userId := claims["userId"]
+	castedUserId, ok := userId.(string)
+	if !ok {
+		return "", errResponse
+	}
+
+	_, err = s.userStore.GetUserById(castedUserId)
+	if errors.Is(err, sql.ErrNoRows) {
+		return "", errResponse
+	}
+	if err != nil {
+		slog.Error("service.VerifyToken: store.GetUserById:", "err", err.Error())
+		return "", responses.ErrInternalServer
+	}
+	return castedUserId, nil
 }
 
 func generateRefreshToken() uuid.UUID {

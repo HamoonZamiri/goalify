@@ -10,6 +10,7 @@ import (
 	"goalify/routes"
 	"goalify/testsetup"
 	uh "goalify/users/handler"
+	"goalify/users/service"
 	usrSrv "goalify/users/service"
 	us "goalify/users/stores"
 	"goalify/utils/events"
@@ -29,10 +30,11 @@ func addRoute(mux *http.ServeMux, method, path string, handler http.HandlerFunc,
 }
 
 func NewServer(userHandler *uh.UserHandler, goalHandler *gh.GoalHandler,
-	configService *config.ConfigService, em *events.EventManager,
+	configService *config.ConfigService, em *events.EventManager, userService service.UserService,
 ) http.Handler {
 	mux := http.NewServeMux()
-	routes.AddRoutes(mux, userHandler, goalHandler, *configService, em)
+	mw := middleware.SetupMiddleware(userService)
+	routes.AddRoutes(mux, userHandler, goalHandler, em, mw)
 	return mux
 }
 
@@ -61,11 +63,15 @@ func Run() error {
 
 	goalStore := gs.NewGoalStore(dbInstance)
 	goalCategoryStore := gs.NewGoalCategoryStore(dbInstance)
-	goalService := gSrv.NewGoalService(goalStore, goalCategoryStore,
-		goalDomainLogger, eventManager)
+	goalService := gSrv.NewGoalService(
+		goalStore,
+		goalCategoryStore,
+		goalDomainLogger,
+		eventManager,
+	)
 	goalHandler := gh.NewGoalHandler(goalService, goalDomainLogger)
 
-	srv := NewServer(userHandler, goalHandler, configService, eventManager)
+	srv := NewServer(userHandler, goalHandler, configService, eventManager, userService)
 	port := configService.MustGetEnv(config.PORT)
 	httpServer := &http.Server{
 		Addr:    ":" + port,
@@ -83,6 +89,10 @@ func Run() error {
 }
 
 func main() {
+	// global slog default logger
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	slog.SetDefault(logger)
+
 	_, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	container, err := testsetup.GetPgContainer()
