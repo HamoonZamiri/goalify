@@ -135,69 +135,72 @@ func (s *userService) SignUp(email, password string) (*entities.UserDTO, error) 
 }
 
 func (s *userService) Refresh(userId, refreshToken string) (*entities.UserDTO, error) {
+	errResponse := fmt.Errorf("%w: invalid user id or refresh token", responses.ErrBadRequest)
 	user, err := s.userStore.GetUserById(userId)
-	if err == sql.ErrNoRows {
-		return nil, fmt.Errorf("%w: error finding user", responses.ErrNotFound)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, errResponse
 	}
 
 	if err != nil {
 		slog.Error("service.Refresh: store.GetUserById:", "err", err.Error())
-		return nil, fmt.Errorf("%w: error getting user", responses.ErrInternalServer)
+		return nil, responses.ErrInternalServer
 	}
 
 	if user.RefreshToken.String() != refreshToken {
-		return nil, fmt.Errorf("%w: invalid refresh token", responses.ErrBadRequest)
+		return nil, errResponse
 	}
 
 	if user.RefreshTokenExpiry.Before(time.Now()) {
-		return nil, fmt.Errorf("%w: refresh token expired", responses.ErrBadRequest)
+		return nil, errResponse
 	}
 
 	newRefreshToken := generateRefreshToken()
 	user, err = s.userStore.UpdateRefreshToken(user.Id.String(), newRefreshToken.String())
 	if err != nil {
 		slog.Error("service.Refresh: store.UpdateRefreshToken:", "err", err.Error())
-		return nil, fmt.Errorf("%w: error updating refresh token", responses.ErrInternalServer)
+		return nil, responses.ErrInternalServer
 	}
 
 	accessToken, err := generateJWTToken(user.Id)
 	if err != nil {
 		slog.Error("Users: service.Refresh: service.generateJWTToken:", "err", err.Error())
-		return nil, fmt.Errorf("%w: error generating access token", responses.ErrInternalServer)
+		return nil, responses.ErrInternalServer
 	}
 	return user.ToUserDTO(accessToken), nil
 }
 
 func (s *userService) Login(email, password string) (*entities.UserDTO, error) {
+	errResponse := fmt.Errorf("%w: invalid email or password", responses.ErrBadRequest)
 	user, err := s.userStore.GetUserByEmail(email)
-	if err == sql.ErrNoRows {
-		return nil, fmt.Errorf("%w: user with email %s not found", responses.ErrNotFound, email)
-	} else if err != nil {
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, errResponse
+	}
+	if err != nil {
 		slog.Error("service.Login: store.GetUserByEmail:", "err", err.Error())
-		return nil, fmt.Errorf("%w: error getting user", responses.ErrInternalServer)
+		return nil, responses.ErrInternalServer
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
-	if err == bcrypt.ErrMismatchedHashAndPassword {
-		return nil, fmt.Errorf("%w: invalid password", responses.ErrBadRequest)
+	if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
+		return nil, errResponse
 	}
 
 	if err != nil {
 		slog.Error("service.Login: bcrypt.CompareHashAndPassword:", "err", err.Error())
-		return nil, fmt.Errorf("%w: error comparing password", responses.ErrInternalServer)
+		return nil, responses.ErrInternalServer
 	}
 
 	accessToken, err := generateJWTToken(user.Id)
 	if err != nil {
 		slog.Error("Users: service.Login: service.generateJWTToken:", "err", err.Error())
-		return nil, fmt.Errorf("%w: error generating access token", responses.ErrInternalServer)
+		return nil, responses.ErrInternalServer
 	}
 
 	// refresh token now
 	user, err = s.userStore.UpdateRefreshToken(user.Id.String(), generateRefreshToken().String())
 	if err != nil {
 		slog.Error("service.Login: store.UpdateRefreshToken:", "err", err.Error())
-		return nil, fmt.Errorf("%w: error updating refresh token", responses.ErrInternalServer)
+		return nil, responses.ErrInternalServer
 	}
 	return user.ToUserDTO(accessToken), nil
 }
@@ -216,21 +219,17 @@ func (s *userService) DeleteUserById(id string) error {
 
 func (s *userService) UpdateUserById(id uuid.UUID, updates map[string]interface{}) (*entities.UserDTO, error) {
 	user, err := s.userStore.UpdateUserById(id, updates)
-	if err == sql.ErrNoRows {
-		return nil, fmt.Errorf("%w: user not found", responses.ErrNotFound)
+	// should not reach this point if the user does not exist
+	if errors.Is(err, sql.ErrNoRows) {
+		slog.Error("service.UpdateUserById: store.UpdateUserById", "err", err.Error())
+		return nil, responses.ErrInternalServer
 	}
 
 	if err != nil {
 		slog.Error("service.UpdateUserById: store.UpdateUserById", "err", err.Error())
-		return nil, fmt.Errorf("%w: error updating user", responses.ErrInternalServer)
+		return nil, responses.ErrInternalServer
 	}
-
-	accessToken, err := generateJWTToken(user.Id)
-	if err != nil {
-		slog.Error("Users: service.UpdateUserById: service.generateJWTToken:", "err", err.Error())
-		return nil, fmt.Errorf("%w: error generating access token", responses.ErrInternalServer)
-	}
-	return user.ToUserDTO(accessToken), nil
+	return user.ToUserDTO(""), nil
 }
 
 func (s *userService) GetLevelById(id int) (*entities.Level, error) {

@@ -1,7 +1,7 @@
 package stores
 
 import (
-	"errors"
+	"database/sql"
 	"fmt"
 	"goalify/db"
 	"goalify/entities"
@@ -75,7 +75,7 @@ func (s *goalCategoryStore) GetGoalCategoryById(categoryId uuid.UUID) (*entities
 	}
 
 	if len(categorySlice) == 0 {
-		return nil, errors.New("category not found")
+		return nil, sql.ErrNoRows
 	}
 
 	return categorySlice[0], nil

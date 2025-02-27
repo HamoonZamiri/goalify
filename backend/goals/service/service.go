@@ -7,8 +7,8 @@ import (
 	"goalify/entities"
 	"goalify/goals/stores"
 	"goalify/utils/events"
-	"goalify/utils/stacktrace"
 	"goalify/utils/responses"
+	"goalify/utils/stacktrace"
 	"log/slog"
 	"strings"
 
@@ -65,6 +65,14 @@ func NewGoalService(goalStore stores.GoalStore,
 
 func (gs *goalService) CreateGoal(title, description string, userId, categoryId uuid.UUID) (*entities.Goal, error) {
 	funcStr := gs.traceLogger.GetTrace("service.CreateGoal")
+	_, err := gs.goalCategoryStore.GetGoalCategoryById(categoryId)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, fmt.Errorf("%w: invalid category id", responses.ErrBadRequest)
+	}
+	if err != nil {
+		slog.Error(fmt.Sprintf("%s: store.GetGoalCategoryById:", funcStr), "err", err)
+		return nil, responses.ErrInternalServer
+	}
 
 	createdGoal, err := gs.goalStore.CreateGoal(title, description, userId, categoryId)
 	if err != nil {
@@ -95,7 +103,7 @@ func (gs *goalService) UpdateGoalStatus(status string, goalId, userId uuid.UUID)
 func (gs *goalService) GetGoalsByUserId(userId uuid.UUID) ([]*entities.Goal, error) {
 	funcStr := gs.traceLogger.GetTrace("service.GetGoalsByUserId")
 	goals, err := gs.goalStore.GetGoalsByUserId(userId)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return goals, nil
 	}
 
@@ -110,13 +118,13 @@ func (gs *goalService) GetGoalById(goalId uuid.UUID) (*entities.Goal, error) {
 	funcStr := gs.traceLogger.GetTrace("service.GetGoalById")
 	goal, err := gs.goalStore.GetGoalById(goalId)
 
-	if err == sql.ErrNoRows {
-		return nil, fmt.Errorf("%w: goal not found", responses.ErrNotFound)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, fmt.Errorf("%w: invalid goal id", responses.ErrNotFound)
 	}
 
 	if err != nil {
 		slog.Error(fmt.Sprintf("%s: store.GetGoalById:", funcStr), "err", err)
-		return nil, fmt.Errorf("%w: error fetching goal", responses.ErrInternalServer)
+		return nil, responses.ErrInternalServer
 	}
 
 	return goal, nil
@@ -155,6 +163,9 @@ func (gs *goalService) GetGoalCategoryById(categoryId, userId uuid.UUID) (*entit
 	funcStr := gs.traceLogger.GetTrace("service.GetGoalCategoryById")
 
 	gc, err := gs.goalCategoryStore.GetGoalCategoryById(categoryId)
+	if err == sql.ErrNoRows {
+		return nil, fmt.Errorf("%w: category not found", responses.ErrNotFound)
+	}
 	if err != nil {
 		slog.Error(fmt.Sprintf("%s: store.GetGoalCategoryById:", funcStr), "err", err)
 		return nil, fmt.Errorf("%w: error fetching goal category", responses.ErrInternalServer)
