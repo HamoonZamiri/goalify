@@ -22,3 +22,7 @@ start: up
 	@echo "Waiting for Docker to start..."
 	@sleep 2  # Optional: wait for a few seconds to ensure services are up
 	@make run
+dev: up
+	@echo "Waiting for Docker to start..."
+	@sleep 2  # Optional: wait for a few seconds to ensure services are up
+	@air

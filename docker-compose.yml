@@ -10,13 +10,3 @@ services:
       - ${VOLUME_LOCATION}:/var/lib/postgresql/data
     ports:
       - "5432:5432"
-
-  pgadmin:
-    container_name: pgadmin
-    image: dpage/pgadmin4
-    restart: always
-    environment:
-      PGADMIN_DEFAULT_EMAIL: goalify@goalify.com
-      PGADMIN_DEFAULT_PASSWORD: goalify
-    ports:
-      - "5050:80"
