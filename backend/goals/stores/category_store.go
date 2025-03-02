@@ -87,7 +87,7 @@ func (s *goalCategoryStore) UpdateGoalCategoryById(categoryId uuid.UUID, updates
 
 	err := s.db.QueryRowx(fmt.Sprintf("%s RETURNING *", query), args...).StructScan(gc)
 	if err != nil {
-		return nil, fmt.Errorf("queryrowx: %w", err)
+		return nil, err
 	}
 	return gc, nil
 }

@@ -10,7 +10,6 @@ import (
 	"goalify/utils/responses"
 	"log/slog"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -100,35 +99,32 @@ func generateRefreshToken() uuid.UUID {
 
 func (s *userService) SignUp(email, password string) (*entities.UserDTO, error) {
 	_, err := s.userStore.GetUserByEmail(email)
+
+	badReqErr := fmt.Errorf("%w: invalid signup request", responses.ErrBadRequest)
 	if err == nil {
-		return nil, fmt.Errorf("%w: user with email %s already exists", responses.ErrBadRequest, email)
+		return nil, badReqErr
 	}
 
 	if err != sql.ErrNoRows {
 		slog.Error("service.SignUp: store.GetUserByEmail:", "err", err.Error())
-		return nil, fmt.Errorf("%w: internal error signing up user", responses.ErrInternalServer)
-	}
-
-	cleanedEmail := strings.TrimSpace(email)
-	if cleanedEmail == "" {
-		return nil, fmt.Errorf("%w: email cannot be empty", responses.ErrBadRequest)
+		return nil, responses.ErrInternalServer
 	}
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		slog.Error("service.SignUp: bcrypt.GenerateFromPassword:", "err", err.Error())
-		return nil, fmt.Errorf("%w: error hashing password", responses.ErrInternalServer)
+		return nil, responses.ErrInternalServer
 	}
 
-	user, err := s.userStore.CreateUser(cleanedEmail, string(hashedPassword))
+	user, err := s.userStore.CreateUser(email, string(hashedPassword))
 	if err != nil {
 		slog.Error("service.SignUp: store.CreateUser:", "err", err.Error())
 		return nil, fmt.Errorf("%w: error creating user", responses.ErrInternalServer)
 	}
 	accessToken, err := generateJWTToken(user.Id)
 	if err != nil {
-		slog.Error("Users: service.Refresh: service.SignUp:", "err", err.Error())
-		return nil, fmt.Errorf("%w: error generating access token", responses.ErrInternalServer)
+		slog.Error("service.SignUp:", "err", err.Error())
+		return nil, responses.ErrInternalServer
 	}
 	s.eventPublisher.Publish(events.NewEventWithUserId(events.USER_CREATED, user, user.Id.String()))
 	return user.ToUserDTO(accessToken), nil

@@ -47,14 +47,14 @@ func (h *GoalHandler) HandleGetGoalCategoriesByUserId(w http.ResponseWriter, r *
 	userId, err := middleware.GetIdFromHeader(r)
 	if err != nil {
 		slog.Error(fmt.Sprintf("%s: middleware.GetIdFromHeader:", funcStr), "err", err)
-		responses.SendAPIError(w, r, http.StatusInternalServerError, err.Error(), nil)
+		responses.SendInternalServerError(w, r)
 		return
 	}
 
 	parsedUUID, err := uuid.Parse(userId)
 	if err != nil {
 		slog.Error(fmt.Sprintf("%s: uuid.Parse:", funcStr), "err", err)
-		responses.SendAPIError(w, r, http.StatusInternalServerError, "error parsing user id", nil)
+		responses.SendInternalServerError(w, r)
 		return
 	}
 
@@ -76,22 +76,21 @@ func (h *GoalHandler) HandleGetGoalCategoryById(w http.ResponseWriter, r *http.R
 	userId, err := middleware.GetIdFromHeader(r)
 	if err != nil {
 		slog.Error(fmt.Sprintf("%s: middleware.GetIdFromHeader:", funcStr), "err", err)
-		responses.SendAPIError(w, r, http.StatusInternalServerError, err.Error(), nil)
+		responses.SendInternalServerError(w, r)
 		return
 	}
 
 	parsedUUID, err := uuid.Parse(userId)
 	if err != nil {
 		slog.Error(fmt.Sprintf("%s: uuid.Parse:", funcStr), "err", err)
-		responses.SendAPIError(w, r, http.StatusInternalServerError, "error parsing user id", nil)
+		responses.SendInternalServerError(w, r)
 		return
 	}
 
 	categoryId := r.PathValue("categoryId")
 	parsedCategoryId, err := uuid.Parse(categoryId)
 	if err != nil {
-		slog.Error(fmt.Sprintf("%s: uuid.Parse:", funcStr), "err", err)
-		responses.SendAPIError(w, r, http.StatusInternalServerError, "error parsing category id", nil)
+		responses.SendAPIError(w, r, http.StatusBadRequest, "bad request: invalid category id", nil)
 		return
 	}
 
@@ -123,8 +122,7 @@ func (h *GoalHandler) HandleUpdateGoalCategoryById(w http.ResponseWriter, r *htt
 	categoryId := r.PathValue("categoryId")
 	parsedCategoryId, err := uuid.Parse(categoryId)
 	if err != nil {
-		slog.Error(fmt.Sprintf("%s: uuid.Parse:", funcStr), "err", err)
-		responses.SendAPIError(w, r, http.StatusInternalServerError, err.Error(), nil)
+		responses.SendAPIError(w, r, http.StatusBadRequest, "bad request: invalid category id", nil)
 		return
 	}
 
@@ -144,13 +142,15 @@ func (h *GoalHandler) HandleUpdateGoalCategoryById(w http.ResponseWriter, r *htt
 	}
 
 	if len(updates) == 0 {
-		responses.SendAPIError(w, r, http.StatusBadRequest, "no fields given to update", nil)
+		noUpdatesError := fmt.Errorf("%w: no fields given to update", responses.ErrBadRequest)
+		responses.SendAPIError(w, r, http.StatusBadRequest, noUpdatesError.Error(), nil)
 		return
 	}
 
 	cat, err := h.goalService.UpdateGoalCategoryById(parsedCategoryId, updates, parsedUUID)
 	if err != nil {
 		responses.SendAPIError(w, r, responses.GetErrorCode(err), err.Error(), nil)
+		return
 	}
 
 	responses.SendResponse(w, r, http.StatusOK, cat)

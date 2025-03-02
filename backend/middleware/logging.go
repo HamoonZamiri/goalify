@@ -24,6 +24,10 @@ func (scw *statusCodeWriter) Write(b []byte) (int, error) {
 	return scw.w.Write(b)
 }
 
+func (scw *statusCodeWriter) Flush() {
+	scw.w.(http.Flusher).Flush()
+}
+
 func Logging(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()

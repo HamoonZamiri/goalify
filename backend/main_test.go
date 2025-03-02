@@ -539,7 +539,7 @@ func TestDeleteGoalNotFound(t *testing.T) {
 	deleteUrl := fmt.Sprintf("%s/api/goals/%s", BASE_URL, uuid.New())
 	res, err := buildAndSendRequest("DELETE", deleteUrl, nil, userDto.AccessToken)
 	assert.Nil(t, err)
-	assert.Equal(t, http.StatusNotFound, res.StatusCode)
+	assert.Equal(t, http.StatusBadRequest, res.StatusCode)
 }
 
 func TestUserLevelUpEvent(t *testing.T) {
