@@ -58,3 +58,7 @@ func HandleDecodeError(w http.ResponseWriter, r *http.Request, problems map[stri
 	SendAPIError(w, r, http.StatusBadRequest, res.Error(), nil)
 	slog.Error("HandleDecodeError: jsonutil.DecodeValid: ", "err", res)
 }
+
+func SendInternalServerError(w http.ResponseWriter, r *http.Request) {
+	SendAPIError(w, r, http.StatusInternalServerError, ErrInternalServer.Error(), nil)
+}

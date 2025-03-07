@@ -56,6 +56,7 @@ func ValidatePassword(problems map[string]string, password string) {
 
 func (r SignupRequest) Valid() map[string]string {
 	problems := make(map[string]string)
+	r.Email = strings.TrimSpace(r.Email)
 
 	ValidateEmail(problems, r.Email)
 	ValidatePassword(problems, r.Password)

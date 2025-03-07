@@ -3,3 +3,4 @@ backend/.env
 .DS_Store
 pgdata
 backend/bin
+backend/tmp

@@ -98,7 +98,7 @@ func (h *UserHandler) HandleUpdateUserById(w http.ResponseWriter, r *http.Reques
 	}
 
 	if len(updates) == 0 {
-		responses.SendAPIError(w, r, http.StatusBadRequest, "no updates provided", nil)
+		responses.SendAPIError(w, r, http.StatusBadRequest, "bad request: no updates provided", nil)
 		return
 	}
 

@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"log"
+	"log/slog"
 	"net/http"
 	"time"
 )
@@ -24,11 +24,20 @@ func (scw *statusCodeWriter) Write(b []byte) (int, error) {
 	return scw.w.Write(b)
 }
 
+func (scw *statusCodeWriter) Flush() {
+	scw.w.(http.Flusher).Flush()
+}
+
 func Logging(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 		statusWriter := &statusCodeWriter{w: w, statusCode: http.StatusOK}
 		next.ServeHTTP(statusWriter, r)
-		log.Println(statusWriter.statusCode, r.Method, r.URL.Path, time.Since(start))
+		slog.Info("request",
+			slog.String("method", r.Method),
+			slog.String("path", r.URL.Path),
+			slog.Int("status", statusWriter.statusCode),
+			slog.Duration("duration", time.Since(start)),
+		)
 	})
 }

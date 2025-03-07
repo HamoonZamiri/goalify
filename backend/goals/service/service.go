@@ -7,8 +7,8 @@ import (
 	"goalify/entities"
 	"goalify/goals/stores"
 	"goalify/utils/events"
-	"goalify/utils/stacktrace"
 	"goalify/utils/responses"
+	"goalify/utils/stacktrace"
 	"log/slog"
 	"strings"
 
@@ -65,6 +65,14 @@ func NewGoalService(goalStore stores.GoalStore,
 
 func (gs *goalService) CreateGoal(title, description string, userId, categoryId uuid.UUID) (*entities.Goal, error) {
 	funcStr := gs.traceLogger.GetTrace("service.CreateGoal")
+	_, err := gs.goalCategoryStore.GetGoalCategoryById(categoryId)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, fmt.Errorf("%w: invalid category id", responses.ErrBadRequest)
+	}
+	if err != nil {
+		slog.Error(fmt.Sprintf("%s: store.GetGoalCategoryById:", funcStr), "err", err)
+		return nil, responses.ErrInternalServer
+	}
 
 	createdGoal, err := gs.goalStore.CreateGoal(title, description, userId, categoryId)
 	if err != nil {
@@ -95,7 +103,7 @@ func (gs *goalService) UpdateGoalStatus(status string, goalId, userId uuid.UUID)
 func (gs *goalService) GetGoalsByUserId(userId uuid.UUID) ([]*entities.Goal, error) {
 	funcStr := gs.traceLogger.GetTrace("service.GetGoalsByUserId")
 	goals, err := gs.goalStore.GetGoalsByUserId(userId)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return goals, nil
 	}
 
@@ -110,13 +118,13 @@ func (gs *goalService) GetGoalById(goalId uuid.UUID) (*entities.Goal, error) {
 	funcStr := gs.traceLogger.GetTrace("service.GetGoalById")
 	goal, err := gs.goalStore.GetGoalById(goalId)
 
-	if err == sql.ErrNoRows {
-		return nil, fmt.Errorf("%w: goal not found", responses.ErrNotFound)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, fmt.Errorf("%w: invalid goal id", responses.ErrNotFound)
 	}
 
 	if err != nil {
 		slog.Error(fmt.Sprintf("%s: store.GetGoalById:", funcStr), "err", err)
-		return nil, fmt.Errorf("%w: error fetching goal", responses.ErrInternalServer)
+		return nil, responses.ErrInternalServer
 	}
 
 	return goal, nil
@@ -138,15 +146,9 @@ func (gs *goalService) CreateGoalCategory(title string, xpPerGoal int, userId uu
 }
 
 func (gs *goalService) GetGoalCategoriesByUserId(userId uuid.UUID) ([]*entities.GoalCategory, error) {
-	funcStr := gs.traceLogger.GetTrace("service.GetGoalCategoriesByUserId")
-
 	categories, err := gs.goalCategoryStore.GetGoalCategoriesByUserId(userId)
-	if err == sql.ErrNoRows {
-		return []*entities.GoalCategory{}, nil
-	}
 	if err != nil {
-		slog.Error(fmt.Sprintf("%s: store.GetGoalCategoriesByUserId:", funcStr), "err", err)
-		return nil, fmt.Errorf("%w: error fetching goal categories", responses.ErrInternalServer)
+		return nil, responses.ErrInternalServer
 	}
 	return categories, nil
 }
@@ -154,15 +156,20 @@ func (gs *goalService) GetGoalCategoriesByUserId(userId uuid.UUID) ([]*entities.
 func (gs *goalService) GetGoalCategoryById(categoryId, userId uuid.UUID) (*entities.GoalCategory, error) {
 	funcStr := gs.traceLogger.GetTrace("service.GetGoalCategoryById")
 
+	invalidIdErr := fmt.Errorf("%w: invalid category id", responses.ErrBadRequest)
+
 	gc, err := gs.goalCategoryStore.GetGoalCategoryById(categoryId)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, invalidIdErr
+	}
 	if err != nil {
 		slog.Error(fmt.Sprintf("%s: store.GetGoalCategoryById:", funcStr), "err", err)
-		return nil, fmt.Errorf("%w: error fetching goal category", responses.ErrInternalServer)
+		return nil, responses.ErrInternalServer
 	}
 
 	if gc.UserId != userId {
 		slog.Error(fmt.Sprintf("%s: user does not own this category", funcStr), "userId", userId, "categoryId", categoryId, "ownerId", gc.UserId)
-		return nil, fmt.Errorf("%w: user does not own this category", responses.ErrBadRequest)
+		return nil, invalidIdErr
 	}
 
 	return gc, nil
@@ -170,22 +177,30 @@ func (gs *goalService) GetGoalCategoryById(categoryId, userId uuid.UUID) (*entit
 
 func (gs *goalService) UpdateGoalCategoryById(categoryId uuid.UUID, updates map[string]interface{}, userId uuid.UUID) (*entities.GoalCategory, error) {
 	funcStr := gs.traceLogger.GetTrace("service.UpdateGoalCategoryById")
+	badReqErr := fmt.Errorf("%w: invalid request", responses.ErrBadRequest)
 
 	cat, err := gs.goalCategoryStore.GetGoalCategoryById(categoryId)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, badReqErr
+	}
 	if err != nil {
 		slog.Error(fmt.Sprintf("%s: store.GetGoalCategoryById:", funcStr), "err", err)
-		return nil, fmt.Errorf("%w: error fetching goal category", responses.ErrInternalServer)
+		return nil, responses.ErrInternalServer
 	}
 
 	if cat.UserId != userId {
-		slog.Error(fmt.Sprintf("%s: user does not own this category", funcStr), "userId", userId, "categoryId", categoryId, "ownerId", cat.UserId)
-		return nil, fmt.Errorf("%w: user does not own this category", responses.ErrBadRequest)
+		slog.Error("user does not own this category",
+			"userId", userId,
+			"categoryId", categoryId,
+			"ownerId", cat.UserId,
+			"trace", funcStr)
+		return nil, badReqErr
 	}
 
 	updatedCat, err := gs.goalCategoryStore.UpdateGoalCategoryById(categoryId, updates)
 	if err != nil {
 		slog.Error(fmt.Sprintf("%s: store.UpdateGoalCategoryById:", funcStr), "err", err)
-		return nil, fmt.Errorf("%w: error updating goal category", responses.ErrInternalServer)
+		return nil, responses.ErrInternalServer
 	}
 	return updatedCat, nil
 }
@@ -221,12 +236,16 @@ func (gs *goalService) UpdateGoalById(goalId uuid.UUID, updates map[string]inter
 	funcStr := gs.traceLogger.GetTrace("service.UpdateGoalById")
 
 	goal, err := gs.goalStore.GetGoalById(goalId)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, fmt.Errorf("%w: invalid goal id", responses.ErrBadRequest)
+	}
 	if err != nil {
-		return nil, err
+		slog.Error("service.handleUpdateGoalById: store.GetGoalById:", "err", err)
+		return nil, responses.ErrInternalServer
 	}
 	if goal.UserId != userId {
 		slog.Error(fmt.Sprintf("%s: user does not own this goal", funcStr), "userId", userId, "goalId", goalId, "ownerId", goal.UserId)
-		return nil, fmt.Errorf("%w: user does not own this goal", responses.ErrUnauthorized)
+		return nil, fmt.Errorf("%w: invalid goal id", responses.ErrBadRequest)
 	}
 
 	categoryId := updates["category_id"]
@@ -238,55 +257,68 @@ func (gs *goalService) UpdateGoalById(goalId uuid.UUID, updates map[string]inter
 		parsedCategoryId, err := uuid.Parse(categoryId)
 		if err != nil {
 			slog.Error(fmt.Sprintf("%s: uuid.Parse(categoryId):", funcStr), "err", err)
-			return nil, fmt.Errorf("%w: error parsing category_id", responses.ErrBadRequest)
+			return nil, fmt.Errorf("%w: invalid category id", responses.ErrBadRequest)
 		}
 
 		cat, err := gs.goalCategoryStore.GetGoalCategoryById(parsedCategoryId)
 		if err != nil {
 			slog.Error(fmt.Sprintf("%s: store.GetGoalCategoryById:", funcStr), "err", err)
-			return nil, fmt.Errorf("%w: error fetching goal category", responses.ErrInternalServer)
+			return nil, responses.ErrInternalServer
 		}
 
 		if cat.UserId != userId {
 			slog.Error(fmt.Sprintf("%s: user does not own this category", funcStr), "userId", userId, "categoryId", parsedCategoryId, "ownerId", cat.UserId)
-			return nil, fmt.Errorf("%w: user does not own this category", responses.ErrUnauthorized)
+			return nil, fmt.Errorf("%w: invalid category id", responses.ErrBadRequest)
 		}
 	}
 
 	updatedGoal, err := gs.goalStore.UpdateGoalById(goalId, updates)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, fmt.Errorf("%w: invalid goal id", responses.ErrBadRequest)
+	}
 	if err != nil {
 		slog.Error(fmt.Sprintf("%s: store.UpdateGoalById:", funcStr), "err", err)
 		return nil, fmt.Errorf("%w: error updating goal", responses.ErrInternalServer)
 	}
 
 	cat, err := gs.goalCategoryStore.GetGoalCategoryById(updatedGoal.CategoryId)
-	eventData := &events.GoalUpdatedData{
-		OldGoal: goal,
-		NewGoal: updatedGoal,
-		Xp:      cat.Xp_per_goal,
+	skipEvent := false
+
+	// if we can't fetch the goal category we don't know the correct xp per goal
+	// skip publishing the event
+	if err != nil {
+		slog.Error(fmt.Sprintf("%s: store.GetGoalCategoryById:", funcStr), "err", err)
+		skipEvent = true
 	}
-	event := events.NewEventWithUserId(events.GOAL_UPDATED, eventData, userId.String())
-	gs.eventPublisher.Publish(event)
+	if !skipEvent {
+		eventData := &events.GoalUpdatedData{
+			OldGoal: goal,
+			NewGoal: updatedGoal,
+			Xp:      cat.Xp_per_goal,
+		}
+		event := events.NewEventWithUserId(events.GOAL_UPDATED, eventData, userId.String())
+		gs.eventPublisher.Publish(event)
+	}
 	return updatedGoal, nil
 }
 
 func (gs *goalService) DeleteGoalById(goalId, userId uuid.UUID) error {
 	goal, err := gs.goalStore.GetGoalById(goalId)
-	if err == sql.ErrNoRows {
-		slog.Error("service.handleDeleteGoalById: store.GetGoalById:", "err", err)
-		return fmt.Errorf("%w: goal not found", responses.ErrNotFound)
+	if errors.Is(err, sql.ErrNoRows) {
+		return fmt.Errorf("%w: invalid goal id", responses.ErrBadRequest)
 	}
 	if err != nil {
 		slog.Error("service.handleDeleteGoalById: store.GetGoalById:", "err", err)
-		return fmt.Errorf("%w: error fetching goal", responses.ErrBadRequest)
+		return responses.ErrInternalServer
 	}
 	if goal.UserId != userId {
-		return fmt.Errorf("%w: user does not own this goal", responses.ErrUnauthorized)
+		return fmt.Errorf("%w: invalid goal id", responses.ErrBadRequest)
 	}
+
 	err = gs.goalStore.DeleteGoalById(goalId)
 	if err != nil {
 		slog.Error("service.handleDeleteGoalById: store.DeleteGoalById:", "err", err)
-		return fmt.Errorf("%w: error deleting goal", responses.ErrInternalServer)
+		return responses.ErrInternalServer
 	}
 	return nil
 }

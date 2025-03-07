@@ -3,13 +3,14 @@ package main
 import (
 	"context"
 	"goalify/config"
+	"goalify/db"
 	gh "goalify/goals/handler"
 	gSrv "goalify/goals/service"
 	gs "goalify/goals/stores"
 	"goalify/middleware"
 	"goalify/routes"
-	"goalify/testsetup"
 	uh "goalify/users/handler"
+	"goalify/users/service"
 	usrSrv "goalify/users/service"
 	us "goalify/users/stores"
 	"goalify/utils/events"
@@ -18,10 +19,11 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
-	"os/signal"
-	"syscall"
+	"path/filepath"
+	"runtime"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/pressly/goose/v3"
 )
 
 func addRoute(mux *http.ServeMux, method, path string, handler http.HandlerFunc, mwChain middleware.Middleware) {
@@ -29,19 +31,43 @@ func addRoute(mux *http.ServeMux, method, path string, handler http.HandlerFunc,
 }
 
 func NewServer(userHandler *uh.UserHandler, goalHandler *gh.GoalHandler,
-	configService *config.ConfigService, em *events.EventManager,
+	configService *config.ConfigService, em *events.EventManager, userService service.UserService,
 ) http.Handler {
 	mux := http.NewServeMux()
-	routes.AddRoutes(mux, userHandler, goalHandler, *configService, em)
+	mw := middleware.SetupMiddleware(userService)
+	routes.AddRoutes(mux, userHandler, goalHandler, em, mw)
 	return mux
 }
 
 func Run() error {
+	// global slog default logger
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	slog.SetDefault(logger)
+
 	// instantiate config service
 	var err error
 	var dbInstance *sqlx.DB
 	configService := config.NewConfigService(options.None[string]())
-	dbInstance, err = testsetup.GetDbInstance()
+	currEnv := configService.MustGetEnv(config.ENV)
+	if currEnv == "test" {
+		dbInstance, err = db.NewWithConnString(configService.MustGetEnv(config.TEST_DB_CONN_STRING))
+	} else {
+		dbInstance, err = db.New(
+			configService.MustGetEnv(config.DB_NAME),
+			configService.MustGetEnv(config.DB_USER),
+			configService.MustGetEnv(config.DB_PASSWORD))
+	}
+
+	// using goose run migrations from db/migrations
+	if currEnv == "dev" || currEnv == "test" {
+		_, b, _, _ := runtime.Caller(0)
+		basepath := filepath.Dir(b)
+		migrationDir := filepath.Join(basepath, "./db/migrations")
+		err = goose.UpContext(context.Background(), dbInstance.DB, migrationDir)
+		if err != nil {
+			panic(err)
+		}
+	}
 
 	if dbInstance == nil {
 		panic("db instance is nil")
@@ -61,11 +87,15 @@ func Run() error {
 
 	goalStore := gs.NewGoalStore(dbInstance)
 	goalCategoryStore := gs.NewGoalCategoryStore(dbInstance)
-	goalService := gSrv.NewGoalService(goalStore, goalCategoryStore,
-		goalDomainLogger, eventManager)
+	goalService := gSrv.NewGoalService(
+		goalStore,
+		goalCategoryStore,
+		goalDomainLogger,
+		eventManager,
+	)
 	goalHandler := gh.NewGoalHandler(goalService, goalDomainLogger)
 
-	srv := NewServer(userHandler, goalHandler, configService, eventManager)
+	srv := NewServer(userHandler, goalHandler, configService, eventManager, userService)
 	port := configService.MustGetEnv(config.PORT)
 	httpServer := &http.Server{
 		Addr:    ":" + port,
@@ -83,43 +113,8 @@ func Run() error {
 }
 
 func main() {
-	_, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	container, err := testsetup.GetPgContainer()
-	if err != nil {
-		slog.Error("Failed to create container: ", "err", err)
+	if err := Run(); err != nil {
+		slog.Error("run: ", "err", err)
 		os.Exit(1)
-	}
-	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
-	done := make(chan bool)
-
-	go func() {
-		sig := <-sigChan
-		slog.Info("Received signal: ", "sig", sig)
-		cancel()
-
-		slog.Info("Cleaning up resources")
-		if err := container.Terminate(context.Background()); err != nil {
-			slog.Error("Failed to terminate container: ", "err", err)
-		}
-
-		close(done)
-	}()
-
-	go func() {
-		if err := Run(); err != nil {
-			slog.Error("run: ", "err", err)
-			os.Exit(1)
-		}
-	}()
-
-	select {
-	case <-done:
-		slog.Info("Cleanup complete")
-		os.Exit(0)
-		// case <-time.After(10 * time.Second):
-		// 	slog.Error("timeout")
-		// 	os.Exit(1)
 	}
 }

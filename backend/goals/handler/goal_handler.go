@@ -59,20 +59,20 @@ func (h *GoalHandler) HandleUpdateGoalById(w http.ResponseWriter, r *http.Reques
 	userId, err := middleware.GetIdFromHeader(r)
 	if err != nil {
 		slog.Error("HandleUpdateGoalById: middleware.GetIdFromHeader: ", "err", err)
-		responses.SendAPIError(w, r, http.StatusUnauthorized, err.Error(), nil)
+		responses.SendInternalServerError(w, r)
 	}
 
 	parsedUserId, err := uuid.Parse(userId)
 	if err != nil {
 		slog.Error("HandleUpdateGoalById: uuid.Parse(userId):", "err", err)
-		responses.SendAPIError(w, r, http.StatusBadRequest, "error parsing user id", nil)
+		responses.SendInternalServerError(w, r)
 		return
 	}
 
 	parsedGoalId, err := uuid.Parse(r.PathValue("goalId"))
 	if err != nil {
 		slog.Error("HandleUpdateGoalById: uuid.Parse(goalId): ", "err", err)
-		responses.SendAPIError(w, r, http.StatusBadRequest, "error parsing goal id", nil)
+		responses.SendAPIError(w, r, http.StatusBadRequest, "invalid goal id", nil)
 		return
 	}
 
@@ -107,13 +107,13 @@ func (gh *GoalHandler) HandleDeleteGoalById(w http.ResponseWriter, r *http.Reque
 	userId, err := middleware.GetIdFromHeader(r)
 	if err != nil {
 		slog.Error("HandleDeleteGoalById: middleware.GetIdFromHeader: ", "err", err)
-		responses.SendAPIError(w, r, http.StatusUnauthorized, err.Error(), nil)
+		responses.SendInternalServerError(w, r)
 		return
 	}
 	userUUID, err := uuid.Parse(userId)
 	if err != nil {
 		slog.Error("HandleDeleteGoalById: uuid.Parse:", "err", err)
-		responses.SendAPIError(w, r, http.StatusBadRequest, "error parsing user id", nil)
+		responses.SendInternalServerError(w, r)
 		return
 	}
 
@@ -121,13 +121,13 @@ func (gh *GoalHandler) HandleDeleteGoalById(w http.ResponseWriter, r *http.Reque
 	goalUUID, err := uuid.Parse(goalId)
 	if err != nil {
 		slog.Error("HandleDeleteGoalById: uuid.Parse:", "err", err)
-		responses.SendAPIError(w, r, http.StatusBadRequest, "error parsing goal id", nil)
+		responses.SendAPIError(w, r, http.StatusBadRequest, "bad request: invalid goal id", nil)
 		return
 	}
 
 	err = gh.goalService.DeleteGoalById(goalUUID, userUUID)
 	if err != nil {
-		responses.SendAPIError(w, r, responses.GetErrorCode(err), "error deleting goal", nil)
+		responses.SendAPIError(w, r, responses.GetErrorCode(err), err.Error(), nil)
 		return
 	}
 
