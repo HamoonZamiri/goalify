@@ -1,8 +1,8 @@
-import { type User } from "@/utils/schemas";
+import { Schemas, type User } from "@/utils/schemas";
 import Cookies from "js-cookie";
 import { ref } from "vue";
 
-const authState = ref<User | null>(null);
+const authState = ref<User>();
 
 function useAuth() {
   function setUser(user: User) {
@@ -10,26 +10,31 @@ function useAuth() {
     authState.value = user;
   }
 
-  function getUser(): User | null {
-    if (authState.value) return authState.value;
-    const user = Cookies.get("user");
-    if (user) setUser(JSON.parse(user));
-    return user ? JSON.parse(user) : null;
-  }
-
   function logout() {
     Cookies.remove("user");
-    authState.value = null;
+    authState.value = undefined;
   }
 
   function isLoggedIn(): boolean {
     return !!getUser();
   }
 
+  function getUser(): User | undefined {
+    if (!authState.value) {
+      const userCookie = Cookies.get("user");
+      if (!userCookie) return;
+      const parsed = JSON.parse(userCookie);
+      const parseResult = Schemas.UserSchema.safeParse(parsed);
+      if (!parseResult.success) return;
+      authState.value = parseResult.data;
+    }
+    return authState.value;
+  }
+
   return {
     authState,
-    setUser,
     getUser,
+    setUser,
     logout,
     isLoggedIn,
   };

@@ -6,7 +6,7 @@ import { ref } from "vue";
 import useAuth from "@/hooks/auth/useAuth";
 
 const { setUser } = useAuth();
-const error = ref<ErrorResponse | null>(null);
+const error = ref<ErrorResponse>();
 const formData = ref<{ email: string; password: string }>({
   email: "",
   password: "",
@@ -28,7 +28,7 @@ async function login(payload: MouseEvent) {
   }
   const parsed = Schemas.UserSchema.parse(json);
   setUser(parsed);
-  error.value = null;
+  error.value = undefined;
   router.push({ name: "Home" });
 }
 </script>
