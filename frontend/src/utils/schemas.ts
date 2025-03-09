@@ -12,7 +12,7 @@ function createArraySchema<TData extends z.ZodTypeAny>(schema: TData) {
   return z.array(schema);
 }
 
-export const UserSchema = z.object({
+const UserSchema = z.object({
   id: z.string().uuid(),
   email: z.string(),
   xp: z.number(),

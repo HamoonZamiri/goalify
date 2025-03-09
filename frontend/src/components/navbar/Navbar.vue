@@ -11,7 +11,7 @@ const progressBar = ref<number | undefined>(0);
 
 onMounted(async () => {
   const user = getUser();
-  if (user === null) {
+  if (!user) {
     return;
   }
   const res = await getLevel(user.level_id);

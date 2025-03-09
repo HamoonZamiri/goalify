@@ -13,7 +13,7 @@ const formData = ref<CreateCategoryForm>({
   xp_per_goal: 0,
 });
 
-const error = ref<ErrorResponse | null>(null);
+const error = ref<ErrorResponse>();
 
 const props = defineProps<{
   isOpen: boolean;
@@ -36,7 +36,7 @@ async function handleSubmit(e: MouseEvent) {
 
   formData.value.title = "";
   formData.value.xp_per_goal = 1;
-  error.value = null;
+  error.value = undefined;
 
   // dispatch an event to update the categories
   addCategory(res);
