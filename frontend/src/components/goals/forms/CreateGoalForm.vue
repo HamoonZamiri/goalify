@@ -14,7 +14,7 @@ const formData = ref<CreateGoalForm>({
   description: "",
 });
 
-const error = ref<ErrorResponse | null>(null);
+const error = ref<ErrorResponse>();
 const { addGoal } = useGoals();
 const { createGoal, isError } = useApi();
 
@@ -42,6 +42,7 @@ async function handleSubmit(e: MouseEvent) {
   formData.value.title = "";
   formData.value.description = "";
   CreateGoalFormProps.setIsOpen(false);
+  error.value = undefined;
 }
 </script>
 

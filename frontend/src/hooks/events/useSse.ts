@@ -10,10 +10,11 @@ const xpUpdateSchema = z.object({
   level_id: z.number(),
 });
 
+// moving the event source outside the hook to make it a global singleton
+const eventSource = ref<EventSource>();
 export function useSSE(url: string) {
   const { addGoal } = useGoals();
   const { getUser, setUser } = useAuth();
-  const eventSource = ref<EventSource | null>(null);
 
   const connect = () => {
     if (eventSource.value) {
@@ -27,6 +28,7 @@ export function useSSE(url: string) {
     };
     es.onerror = (event) => {
       console.error("error", event);
+      closeConnection();
     };
 
     es.addEventListener(events.DEFAULT_GOAL_CREATED, (event) => {
@@ -49,15 +51,20 @@ export function useSSE(url: string) {
     eventSource.value = es;
   };
 
-  onUnmounted(() => {
+  const closeConnection = () => {
     if (eventSource.value) {
       eventSource.value.close();
     }
-    eventSource.value = null;
+    eventSource.value = undefined;
+  };
+
+  onUnmounted(() => {
+    closeConnection();
   });
 
   return {
     eventSource,
     connect,
+    closeConnection,
   };
 }

@@ -14,7 +14,7 @@ import { API_BASE } from "@/utils/constants";
 // State
 const { getUser } = useAuth();
 const { getUserGoalCategories, isError } = useApi();
-const error = ref<ErrorResponse | null>(null);
+const error = ref<ErrorResponse>();
 const isLoading = ref<boolean>(true);
 const { connect } = useSSE(
   `${API_BASE}/events?token=${getUser()?.access_token}`,
