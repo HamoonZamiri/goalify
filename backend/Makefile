@@ -26,3 +26,8 @@ dev: up
 	@echo "Waiting for Docker to start..."
 	@sleep 2  # Optional: wait for a few seconds to ensure services are up
 	@air
+jqdev: up
+	@echo "Waiting for Docker to start..."
+	@sleep 2  # Optional: wait for a few seconds to ensure services are up
+	@echo "Starting air server with pretty json printing"
+	@air | jq -C -R 'fromjson?'
