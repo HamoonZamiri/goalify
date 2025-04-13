@@ -8,6 +8,7 @@ import { Menu, MenuButton, MenuItems, MenuItem } from "@headlessui/vue";
 import { reactive, watch } from "vue";
 import useGoals from "@/hooks/goals/useGoals";
 import useApi from "@/hooks/api/useApi";
+import { toast } from "vue3-toastify";
 const props = defineProps<{
   goalCategory: GoalCategory;
 }>();
@@ -21,8 +22,8 @@ const updates = reactive({
 });
 
 const { deleteCategory } = useGoals();
-const apiDeleteCategory = useApi().deleteCategory;
-const apiUpdateCategory = useApi().updateCategory;
+const { deleteCategory: apiDeleteCategory, updateCategory: apiUpdateCategory } =
+  useApi();
 
 async function handleDeleteCategory(e: MouseEvent) {
   e.preventDefault();
@@ -30,6 +31,8 @@ async function handleDeleteCategory(e: MouseEvent) {
 
   // remove category from state
   deleteCategory(props.goalCategory.id);
+
+  toast.success(`Successfully deleted category: ${props.goalCategory.title}`);
 }
 
 async function handleNumericInput(payload: Event) {

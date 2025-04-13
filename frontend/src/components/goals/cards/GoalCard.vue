@@ -13,6 +13,7 @@ import {
 import useGoals from "@/hooks/goals/useGoals";
 import useApi from "@/hooks/api/useApi";
 import DeleteModal from "@/components/DeleteModal.vue";
+import { toast } from "vue3-toastify";
 const props = defineProps<{
   goal: Goal;
 }>();
@@ -55,6 +56,10 @@ async function handleDeleteGoal(e: MouseEvent) {
 
   // remove goal from state
   deleteGoal(props.goal.category_id, props.goal.id);
+
+  toast.success(`Successfully deleted goal: ${props.goal.title}`, {
+    theme: "dark",
+  });
 
   setIsEditing(false);
   setIsDeleting(false);

@@ -3,6 +3,7 @@ import useApi from "@/hooks/api/useApi";
 import useGoals from "@/hooks/goals/useGoals";
 import type { ErrorResponse } from "@/utils/schemas";
 import { ref } from "vue";
+import { toast } from "vue3-toastify";
 
 type CreateGoalForm = {
   title: string;
@@ -43,6 +44,7 @@ async function handleSubmit(e: MouseEvent) {
   formData.value.description = "";
   CreateGoalFormProps.setIsOpen(false);
   error.value = undefined;
+  toast.success(`Successfully created goal: ${res.title}`);
 }
 </script>
 
@@ -60,6 +62,9 @@ async function handleSubmit(e: MouseEvent) {
         v-model="formData.title"
         class="block h-10 w-full bg-gray-300 rounded-md border-0 px-1.5 py-1.5 text-gray-900 shadow-sm placeholder:text-gray-400 sm:text-sm sm:leading-6 focus:outline-none"
       />
+      <p class="text-red-400" v-if="error?.errors?.title">
+        {{ error.errors.title }}
+      </p>
     </div>
     <div>
       <label class="text-gray-200">Description:</label>
@@ -67,6 +72,9 @@ async function handleSubmit(e: MouseEvent) {
         v-model="formData.description"
         class="block h-28 w-full bg-gray-300 rounded-md border-0 px-1.5 py-1.5 text-gray-900 shadow-sm placeholder:text-gray-400 sm:text-sm sm:leading-6 focus:outline-none"
       />
+      <p class="text-red-400" v-if="error?.errors?.description">
+        {{ error.errors.description }}
+      </p>
     </div>
     <button
       @click="handleSubmit"
