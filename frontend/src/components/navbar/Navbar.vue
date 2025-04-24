@@ -4,13 +4,13 @@ import useAuth from "@/hooks/auth/useAuth";
 import { onMounted, ref } from "vue";
 import ProfileMenu from "@/components/navbar/ProfileMenu.vue";
 
-const { authState, isLoggedIn, getUser } = useAuth();
+const { isLoggedIn, getUser } = useAuth();
 const { getLevel, isError } = useApi();
+const user = getUser();
 
 const progressBar = ref<number | undefined>(0);
 
 onMounted(async () => {
-  const user = getUser();
   if (!user) {
     return;
   }
@@ -30,9 +30,9 @@ onMounted(async () => {
 <template>
   <nav class="flex gap-4">
     <div v-if="!isLoggedIn()" class="flex gap-2">
-      <RouterLink class="text-xl hover:text-gray-300" to="/login"
-        >Login</RouterLink
-      >
+      <RouterLink class="text-xl hover:text-gray-300" to="/login">
+        Login
+      </RouterLink>
       <RouterLink class="text-xl hover:text-gray-300" to="/register"
         >Register</RouterLink
       >
@@ -41,7 +41,7 @@ onMounted(async () => {
       <ProfileMenu />
       <section class="flex items-center gap-x-1.5 w-48">
         <span class="text-sm text-gray-300">{{
-          authState?.email.split("@")[0]
+          user?.email.split("@")[0]
         }}</span>
         <div class="w-full h-5 bg-gray-200 rounded-md overflow-hidden">
           <div
@@ -51,7 +51,7 @@ onMounted(async () => {
         </div>
         <span
           class="text-xs w-14 h-5 rounded-md flex items-center justify-center bg-gray-200 text-gray-700"
-          >lvl {{ authState?.level_id }}</span
+          >lvl {{ user?.level_id }}</span
         >
       </section>
     </div>

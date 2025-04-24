@@ -21,6 +21,8 @@ const { connect } = useSSE(
 );
 const { setCategories, categoryState } = useGoals();
 
+const isCreateCategoryDialogOpen = ref(false);
+
 onMounted(async () => {
   const res = await getUserGoalCategories();
   if (isError(res)) {
@@ -37,7 +39,7 @@ onMounted(async () => {
 
 <template>
   <div v-if="isLoading">
-    <v-icon name="co-reload" animation="spin" />
+    <h1>Loading...</h1>
   </div>
   <div
     v-else
@@ -53,10 +55,18 @@ onMounted(async () => {
       >
         <GoalCategoryCard :goalCategory="cat" />
       </div>
-      <ModalForm
-        :FormComponent="CreateGoalCategoryForm"
-        :OpenerComponent="CreateCategoryButton"
-      />
+      <div class="flex">
+        <CreateCategoryButton
+          class="hover:cursor-pointer"
+          @click="isCreateCategoryDialogOpen = true"
+        />
+        <ModalForm
+          v-model="isCreateCategoryDialogOpen"
+          @close="isCreateCategoryDialogOpen = false"
+        >
+          <CreateGoalCategoryForm @close="isCreateCategoryDialogOpen = false" />
+        </ModalForm>
+      </div>
     </section>
   </div>
 </template>
