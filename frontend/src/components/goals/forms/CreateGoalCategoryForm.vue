@@ -15,16 +15,12 @@ const formData = ref<CreateCategoryForm>({
 
 const error = ref<ErrorResponse>();
 
-const props = defineProps<{
-  isOpen: boolean;
-  setIsOpen: (value: boolean) => void;
-}>();
-
 const { addCategory } = useGoals();
 const { createGoalCategory, isError } = useApi();
+const emit = defineEmits(["submit", "close"]);
 
-async function handleSubmit(e: MouseEvent) {
-  e.preventDefault();
+async function submit() {
+  emit("submit", { ...formData.value });
   const res = await createGoalCategory(
     formData.value.title,
     formData.value.xp_per_goal,
@@ -40,11 +36,12 @@ async function handleSubmit(e: MouseEvent) {
 
   // dispatch an event to update the categories
   addCategory(res);
-  props.setIsOpen(false);
+  emit("close");
 }
 </script>
 <template>
   <form
+    @submit.prevent="submit"
     class="rounded-lg border bg-gray-800 p-10 w-[95vw] sm:w-[40vw] grid grid-cols-1 gap-4 hover:cursor-default"
   >
     <p class="flex justify-center text-xl text-gray-200">
@@ -53,6 +50,7 @@ async function handleSubmit(e: MouseEvent) {
     <div class="">
       <label class="text-gray-200">Title:</label>
       <input
+        id="title"
         type="text"
         v-model="formData.title"
         class="block h-10 w-full bg-gray-300 rounded-md border-0 px-1.5 py-1.5 text-gray-900 shadow-sm placeholder:text-gray-400 sm:text-sm sm:leading-6 focus:outline-none"
@@ -64,6 +62,7 @@ async function handleSubmit(e: MouseEvent) {
     <div>
       <label class="text-gray-200">XP/goal:</label>
       <input
+        id="xp-per-goal"
         v-model="formData.xp_per_goal"
         type="number"
         min="1"
@@ -75,7 +74,7 @@ async function handleSubmit(e: MouseEvent) {
       </p>
     </div>
     <button
-      @click="handleSubmit"
+      type="submit"
       class="bg-blue-400 mt-10 rounded-lg text-gray-300 hover:bg-blue-500 h-10 py-1.5"
     >
       Add Category

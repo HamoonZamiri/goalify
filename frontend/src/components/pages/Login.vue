@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import router from "@/router";
 import { API_BASE } from "@/utils/constants";
-import { Schemas, type ErrorResponse, type User } from "@/utils/schemas";
+import { Schemas, type ErrorResponse } from "@/utils/schemas";
 import { ref } from "vue";
 import useAuth from "@/hooks/auth/useAuth";
 

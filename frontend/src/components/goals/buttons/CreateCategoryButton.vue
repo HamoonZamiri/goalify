@@ -1,9 +1,4 @@
-<script setup lang="ts">
-const props = defineProps<{
-  setIsOpen: (value: boolean) => void;
-  isOpen: boolean;
-}>();
-</script>
+<script setup lang="ts"></script>
 <template>
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -11,7 +6,6 @@ const props = defineProps<{
     viewBox="0 0 24 24"
     stroke-width="1.5"
     class="size-6 stroke-gray-300"
-    @click="props.setIsOpen(true)"
   >
     <path
       stroke-linecap="round"

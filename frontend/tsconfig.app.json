@@ -5,13 +5,13 @@
     "src/**/*",
     "src/**/*.vue",
     "src/utils/types.ts",
-    "src/state/auth.ts"
+    "src/state/auth.ts",
+    "src/__mocks__/*"
   ],
   "exclude": ["src/**/__tests__/*"],
   "compilerOptions": {
     "composite": true,
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
-
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]

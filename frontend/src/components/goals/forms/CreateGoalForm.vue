@@ -20,36 +20,34 @@ const { addGoal } = useGoals();
 const { createGoal, isError } = useApi();
 
 const CreateGoalFormProps = defineProps<{
-  props: {
-    categoryId: string;
-  };
-  isOpen: boolean;
-  setIsOpen: (value: boolean) => void;
+  categoryId: string;
 }>();
 
-async function handleSubmit(e: MouseEvent) {
-  e.preventDefault();
+const { categoryId } = CreateGoalFormProps;
+
+const emit = defineEmits(["submit", "close"]);
+
+async function submit() {
+  emit("submit", { ...formData.value });
   const { title, description } = formData.value;
-  const res = await createGoal(
-    title,
-    description,
-    CreateGoalFormProps.props.categoryId,
-  );
+  const res = await createGoal(title, description, categoryId);
   if (isError(res)) {
     error.value = res;
     return;
   }
-  addGoal(CreateGoalFormProps.props.categoryId, res);
+  addGoal(categoryId, res);
   formData.value.title = "";
   formData.value.description = "";
-  CreateGoalFormProps.setIsOpen(false);
   error.value = undefined;
+
+  emit("close");
   toast.success(`Successfully created goal: ${res.title}`);
 }
 </script>
 
 <template>
   <form
+    @submit.prevent="submit"
     class="rounded-lg border bg-gray-800 p-6 w-[95vw] sm:w-[40vw] grid grid-cols-1 gap-4 hover:cursor-default"
   >
     <p class="flex justify-center text-xl text-gray-200">
@@ -77,7 +75,7 @@ async function handleSubmit(e: MouseEvent) {
       </p>
     </div>
     <button
-      @click="handleSubmit"
+      type="submit"
       class="bg-blue-400 mt-4 rounded-lg text-gray-300 hover:bg-blue-500 h-10 py-1.5"
     >
       Add Goal
