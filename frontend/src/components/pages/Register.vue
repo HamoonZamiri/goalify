@@ -8,39 +8,39 @@ import useAuth from "@/hooks/auth/useAuth";
 const { setUser } = useAuth();
 const error = ref<ErrorResponse>();
 const formData = ref<{
-  email: string;
-  password: string;
-  confirmPassword: string;
+	email: string;
+	password: string;
+	confirmPassword: string;
 }>({
-  email: "",
-  password: "",
-  confirmPassword: "",
+	email: "",
+	password: "",
+	confirmPassword: "",
 });
 
 async function signup(payload: MouseEvent) {
-  payload.preventDefault();
-  const reqBody = {
-    email: formData.value.email,
-    password: formData.value.password,
-    confirm_password: formData.value.confirmPassword,
-  };
+	payload.preventDefault();
+	const reqBody = {
+		email: formData.value.email,
+		password: formData.value.password,
+		confirm_password: formData.value.confirmPassword,
+	};
 
-  const res = await fetch(`${API_BASE}/users/signup`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(reqBody),
-  });
-  const json: unknown = await res.json();
-  if (!res.ok) {
-    error.value = json as ErrorResponse;
-    return;
-  }
-  const parsed = Schemas.UserSchema.parse(json);
-  setUser(parsed);
-  error.value = undefined;
-  router.push({ name: "Home" });
+	const res = await fetch(`${API_BASE}/users/signup`, {
+		method: "POST",
+		headers: {
+			"Content-Type": "application/json",
+		},
+		body: JSON.stringify(reqBody),
+	});
+	const json: unknown = await res.json();
+	if (!res.ok) {
+		error.value = json as ErrorResponse;
+		return;
+	}
+	const parsed = Schemas.UserSchema.parse(json);
+	setUser(parsed);
+	error.value = undefined;
+	router.push({ name: "Home" });
 }
 </script>
 

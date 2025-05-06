@@ -2,7 +2,7 @@
 import { Dialog, DialogPanel } from "@headlessui/vue";
 
 defineProps<{
-  modelValue: boolean;
+	modelValue: boolean;
 }>();
 const emit = defineEmits(["update:modelValue"]);
 </script>

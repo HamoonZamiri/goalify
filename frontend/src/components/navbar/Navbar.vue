@@ -11,19 +11,19 @@ const user = getUser();
 const progressBar = ref<number | undefined>(0);
 
 onMounted(async () => {
-  if (!user) {
-    return;
-  }
-  const res = await getLevel(user.level_id);
-  if (isError(res)) {
-    alert("Error getting level");
-    return;
-  }
-  const level = res;
-  const currXp = user.xp;
-  setTimeout(() => {
-    progressBar.value = (currXp / level.level_up_xp) * 100;
-  }, 100);
+	if (!user) {
+		return;
+	}
+	const res = await getLevel(user.level_id);
+	if (isError(res)) {
+		alert("Error getting level");
+		return;
+	}
+	const level = res;
+	const currXp = user.xp;
+	setTimeout(() => {
+		progressBar.value = (currXp / level.level_up_xp) * 100;
+	}, 100);
 });
 </script>
 

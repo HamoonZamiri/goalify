@@ -56,6 +56,10 @@ jobs:
         working-directory: ./frontend
         run: pnpm run type-check
 
+      - name: Run biome linting
+        working-directory: ./frontend
+        run: pnpm run lint
+
       - name: Run Vitest
         working-directory: ./frontend
         run: pnpm run test

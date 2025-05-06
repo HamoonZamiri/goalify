@@ -20,7 +20,8 @@ router.beforeEach(async (to, _) => {
 
   if (!user && to.name !== "Login" && to.name !== "Register") {
     return { name: "Login" };
-  } else if (user && (to.name === "Login" || to.name === "Register")) {
+  }
+  if (user && (to.name === "Login" || to.name === "Register")) {
     return { name: "Home", path: "/" };
   }
 });

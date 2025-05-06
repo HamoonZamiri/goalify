@@ -5,7 +5,7 @@ import Navbar from "@/components/navbar/Navbar.vue";
 
 const { isLoggedIn } = useAuth();
 if (!isLoggedIn()) {
-  router.push({ name: "Login" });
+	router.push({ name: "Login" });
 }
 </script>
 
