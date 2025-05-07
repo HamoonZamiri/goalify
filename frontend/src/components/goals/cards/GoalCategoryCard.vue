@@ -5,6 +5,9 @@ import ModalForm from "@/components/ModalForm.vue";
 import CreateGoalForm from "@/components/goals/forms/CreateGoalForm.vue";
 import CreateGoalButton from "@/components/goals/buttons/CreateGoalButton.vue";
 import { Menu, MenuButton, MenuItems, MenuItem } from "@headlessui/vue";
+import Box from "@/components/primitives/Box.vue";
+import Text from "@/components/primitives/Text.vue";
+import InputField from "@/components/primitives/InputField.vue";
 import { reactive, ref, watch } from "vue";
 import useGoals from "@/hooks/goals/useGoals";
 import useApi from "@/hooks/api/useApi";
@@ -19,7 +22,7 @@ const XP_PER_GOAL_MIN = 1;
 const isCreateGoalDialogOpen = ref(false);
 const updates = reactive({
   title: props.goalCategory.title,
-  xp_per_goal: props.goalCategory.xp_per_goal,
+  xp_per_goal: props.goalCategory.xp_per_goal.toString(),
 });
 
 const { deleteCategory } = useGoals();
@@ -36,64 +39,73 @@ async function handleDeleteCategory(e: MouseEvent) {
   toast.success(`Successfully deleted category: ${props.goalCategory.title}`);
 }
 
-async function handleNumericInput(payload: Event) {
-  const value = (payload.target as HTMLInputElement).value;
-  const parsedVal = Number.parseInt(value);
-  if (parsedVal > XP_PER_GOAL_MAX) {
-    updates.xp_per_goal = XP_PER_GOAL_MAX;
-  } else {
-    updates.xp_per_goal = parsedVal;
+const previousValidValue = ref(props.goalCategory.xp_per_goal.toString());
+
+async function handleNumericInputFromModel(value: string | number) {
+  // Handle the value directly since it's already extracted
+  if (!value) {
+    updates.xp_per_goal = "";
+    previousValidValue.value = "";
+    return;
   }
+
+  const stringValue = value.toString();
+
+  // Check if input contains non-numeric characters
+  if (!/^\d+$/.test(stringValue)) {
+    // Revert to previous valid value
+    updates.xp_per_goal = previousValidValue.value;
+    return;
+  }
+
+  const parsedVal = Number.parseInt(stringValue, 10);
+
+  let finalValue: string | number;
+
+  if (parsedVal < XP_PER_GOAL_MIN) {
+    finalValue = XP_PER_GOAL_MIN;
+  } else if (parsedVal > XP_PER_GOAL_MAX) {
+    finalValue = XP_PER_GOAL_MAX;
+  } else {
+    finalValue = parsedVal;
+  }
+
+  updates.xp_per_goal = finalValue.toString();
+  previousValidValue.value = finalValue.toString();
 }
 
 watch(updates, async (category) => {
-  props.goalCategory.title = category.title;
-  props.goalCategory.xp_per_goal = category.xp_per_goal;
-
-  if (
-    category.title === "" ||
-    category.xp_per_goal < XP_PER_GOAL_MIN ||
-    category.xp_per_goal > XP_PER_GOAL_MAX ||
-    Number.isNaN(category.xp_per_goal)
-  )
+  if (!updates.title || !updates.xp_per_goal) {
     return;
-
+  }
   await apiUpdateCategory(props.goalCategory.id, {
     title: category.title,
-    xp_per_goal: category.xp_per_goal,
+    xp_per_goal: Number(category.xp_per_goal),
   });
 });
 </script>
 <template>
-  <div class="flex flex-col">
+  <Box flex-direction="col" padding="p-4">
     <header class="flex justify-between">
-      <div class="flex flex-col">
-        <input
-          v-model="updates.title"
-          class="w-auto text-gray-200 bg-gray-900 text-xl focus:outline-none"
-        />
-        <div class="flex gap-1">
-          <span class="text-xs text-gray-300">Earn</span>
-          <input
-            type="number"
-            min="1"
-            max="100"
-            @input="handleNumericInput"
-            class="num-input focus:outline-none text-xs bg-gray-900 font-semibold text-green-500"
-            :class="{
-              'w-2':
-                props.goalCategory.xp_per_goal < 10 ||
-                isNaN(props.goalCategory.xp_per_goal),
-              'w-4':
-                props.goalCategory.xp_per_goal >= 10 &&
-                props.goalCategory.xp_per_goal < 100,
-              'w-6': props.goalCategory.xp_per_goal == 100,
-            }"
-            v-model="updates.xp_per_goal"
-          />
-          <span class="text-xs text-gray-300">xp/goal</span>
-        </div>
-      </div>
+      <Box flex-direction="col">
+        <InputField class="text-xl" v-model="updates.title" />
+        <InputField
+          type="text"
+          v-model="updates.xp_per_goal"
+          @update:modelValue="handleNumericInputFromModel"
+          class="items-center text-xs"
+          container-width="w-full"
+          width="w-1/2"
+          compact
+        >
+          <template #left>
+            <Text as="span" size="xs" color="light">Earn</Text>
+          </template>
+          <template #right>
+            <span class="text-xs text-gray-300">xp/goal</span>
+          </template>
+        </InputField>
+      </Box>
       <div class="flex">
         <CreateGoalButton
           class="hover:cursor-pointer"
@@ -168,10 +180,10 @@ watch(updates, async (category) => {
         </Menu>
       </div>
     </header>
-    <div class="w-full flex flex-col gap-2" v-for="goal in goalCategory.goals">
+    <Box flex-direction="col" gap="gap-4" v-for="goal in goalCategory.goals">
       <GoalCard :goal="goal" />
-    </div>
-  </div>
+    </Box>
+  </Box>
 </template>
 <style scoped>
 /* Hide default increment and decrement arrows */

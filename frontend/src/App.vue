@@ -2,6 +2,7 @@
 import useAuth from "@/hooks/auth/useAuth";
 import router from "@/router/index";
 import Navbar from "@/components/navbar/Navbar.vue";
+import Box from "@/components/primitives/Box.vue";
 
 const { isLoggedIn } = useAuth();
 if (!isLoggedIn()) {
@@ -10,15 +11,15 @@ if (!isLoggedIn()) {
 </script>
 
 <template>
-  <div class="bg-gray-900 h-screen w-screen flex flex-col">
+  <Box class="bg-gray-900 h-screen w-screen">
     <header class="bg-gray-800 mb-2 h-auto">
-      <div class="flex text-gray-200 justify-between p-6">
+      <Box flex-direction="row" class="justify-between p-6">
         <RouterLink to="/">
           <h1 class="font-semibold text-3xl hover:text-gray-300">Goalify</h1>
         </RouterLink>
         <Navbar />
-      </div>
+      </Box>
     </header>
-    <div class="w-full h-full"><RouterView /></div>
-  </div>
+    <RouterView />
+  </Box>
 </template>

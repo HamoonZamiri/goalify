@@ -13,7 +13,7 @@ function handleLogout(e: MouseEvent) {
 </script>
 
 <template>
-  <Menu as="div" class="relative inline-block">
+  <Menu as="div" class="relative inline-block z-10">
     <MenuButton class="hover:cursor-pointer">
       <svg
         xmlns="http://www.w3.org/2000/svg"

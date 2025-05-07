@@ -4,89 +4,94 @@ import { API_BASE } from "@/utils/constants";
 import { Schemas, type ErrorResponse, type User } from "@/utils/schemas";
 import { ref } from "vue";
 import useAuth from "@/hooks/auth/useAuth";
+import Box from "@/components/primitives/Box.vue";
+import Text from "@/components/primitives/Text.vue";
+import InputField from "@/components/primitives/InputField.vue";
+import Button from "@/components/primitives/Button.vue";
 
+const emit = defineEmits(["submit"]);
 const { setUser } = useAuth();
 const error = ref<ErrorResponse>();
 const formData = ref<{
-	email: string;
-	password: string;
-	confirmPassword: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
 }>({
-	email: "",
-	password: "",
-	confirmPassword: "",
+  email: "",
+  password: "",
+  confirmPassword: "",
 });
 
-async function signup(payload: MouseEvent) {
-	payload.preventDefault();
-	const reqBody = {
-		email: formData.value.email,
-		password: formData.value.password,
-		confirm_password: formData.value.confirmPassword,
-	};
+async function signup() {
+  const reqBody = {
+    email: formData.value.email,
+    password: formData.value.password,
+    confirm_password: formData.value.confirmPassword,
+  };
+  emit("submit", { ...reqBody });
 
-	const res = await fetch(`${API_BASE}/users/signup`, {
-		method: "POST",
-		headers: {
-			"Content-Type": "application/json",
-		},
-		body: JSON.stringify(reqBody),
-	});
-	const json: unknown = await res.json();
-	if (!res.ok) {
-		error.value = json as ErrorResponse;
-		return;
-	}
-	const parsed = Schemas.UserSchema.parse(json);
-	setUser(parsed);
-	error.value = undefined;
-	router.push({ name: "Home" });
+  const res = await fetch(`${API_BASE}/users/signup`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(reqBody),
+  });
+  const json: unknown = await res.json();
+  if (!res.ok) {
+    error.value = json as ErrorResponse;
+    return;
+  }
+  const parsed = Schemas.UserSchema.parse(json);
+  setUser(parsed);
+  error.value = undefined;
+  router.push({ name: "Home" });
 }
 </script>
 
 <template>
-  <div class="w-full flex flex-col items-center">
-    <h3 class="text-3xl text-white mb-6">Sign up for a new account</h3>
-    <form class="w-4/5 sm:w-2/5 grid grid-cols-1 gap-4">
-      <div class="">
-        <label class="text-gray-200">Email</label>
-        <input
-          v-model="formData.email"
-          class="block h-10 w-full bg-gray-300 rounded-md border-0 px-1.5 py-1.5 text-gray-900 shadow-sm placeholder:text-gray-400 sm:text-sm sm:leading-6 focus:outline-none"
-          type="email"
-        />
-        <p class="text-red-400" v-if="error?.errors?.email">
-          {{ error.errors.email }}
-        </p>
-      </div>
-      <div class="">
-        <label class="text-gray-200">Password</label>
-        <input
-          v-model="formData.password"
-          class="block h-10 w-full bg-gray-300 rounded-md border-0 px-1.5 py-1.5 text-gray-900 shadow-sm placeholder:text-gray-400 sm:text-sm sm:leading-6 focus:outline-none"
-          type="password"
-        />
-        <p class="text-red-400" v-if="error?.errors?.password">
-          {{ error.errors.password }}
-        </p>
-      </div>
-      <div class="mb-2">
-        <label class="text-gray-200">Confirm Password</label>
-        <input
-          v-model="formData.confirmPassword"
-          class="block h-10 w-full bg-gray-300 rounded-md border-0 px-1.5 py-1.5 text-gray-900 shadow-sm placeholder:text-gray-400 sm:text-sm sm:leading-6 focus:outline-none"
-          type="password"
-        />
-        <p class="text-red-400" v-if="error?.errors?.confirm_password">
-          {{ error.errors.confirm_password }}
-        </p>
-      </div>
-      <button
-        @click="signup"
-        class="bg-blue-400 mt-4 rounded-lg text-gray-300 hover:bg-blue-500 h-10 py-1.5"
+  <Box bg="darkest" width="w-full" height="h-full" class="items-center">
+    <Text as="h3" size="3xl"> Sign in to your account </Text>
+    <form @submit.prevent="signup" class="w-4/5 sm:w-2/5 flex flex-col gap-4">
+      <InputField
+        bg="primary"
+        text-color="dark"
+        type="email"
+        v-model="formData.email"
       >
-        Signup
-      </button>
+        <template #label><Text>Email</Text></template>
+        <template v-if="error?.errors?.email" #error>
+          <Text color="error">{{ error?.errors?.email }}</Text>
+        </template>
+      </InputField>
+      <InputField
+        text-color="dark"
+        bg="primary"
+        type="password"
+        v-model="formData.password"
+      >
+        <template #label><Text>Password</Text></template>
+        <template v-if="error?.errors?.password" #error>
+          <Text color="error">{{ error?.errors?.password }}</Text>
+        </template>
+      </InputField>
+      <InputField
+        text-color="dark"
+        bg="primary"
+        type="password"
+        v-model="formData.confirmPassword"
+      >
+        <template #label><Text>Confirm Password</Text></template>
+        <template v-if="error?.errors?.confirm_password" #error>
+          <Text color="error">{{ error?.errors?.confirm_password }}</Text>
+        </template>
+      </InputField>
+      <Button class="mt-4" height="h-10" width="w-full">
+        <Text>Register</Text>
+      </Button>
     </form>
-  </div>
+    <Text v-if="error" as="p" size="sm" color="error">
+      {{ error?.message }}
+    </Text>
+  </Box>
 </template>
