@@ -10,7 +10,7 @@ import useGoals from "@/hooks/goals/useGoals";
 import useApi from "@/hooks/api/useApi";
 import { toast } from "vue3-toastify";
 const props = defineProps<{
-  goalCategory: GoalCategory;
+	goalCategory: GoalCategory;
 }>();
 
 const XP_PER_GOAL_MAX = 100;
@@ -18,50 +18,50 @@ const XP_PER_GOAL_MIN = 1;
 
 const isCreateGoalDialogOpen = ref(false);
 const updates = reactive({
-  title: props.goalCategory.title,
-  xp_per_goal: props.goalCategory.xp_per_goal,
+	title: props.goalCategory.title,
+	xp_per_goal: props.goalCategory.xp_per_goal,
 });
 
 const { deleteCategory } = useGoals();
 const { deleteCategory: apiDeleteCategory, updateCategory: apiUpdateCategory } =
-  useApi();
+	useApi();
 
 async function handleDeleteCategory(e: MouseEvent) {
-  e.preventDefault();
-  await apiDeleteCategory(props.goalCategory.id);
+	e.preventDefault();
+	await apiDeleteCategory(props.goalCategory.id);
 
-  // remove category from state
-  deleteCategory(props.goalCategory.id);
+	// remove category from state
+	deleteCategory(props.goalCategory.id);
 
-  toast.success(`Successfully deleted category: ${props.goalCategory.title}`);
+	toast.success(`Successfully deleted category: ${props.goalCategory.title}`);
 }
 
 async function handleNumericInput(payload: Event) {
-  const value = (payload.target as HTMLInputElement).value;
-  const parsedVal = Number.parseInt(value);
-  if (parsedVal > XP_PER_GOAL_MAX) {
-    updates.xp_per_goal = XP_PER_GOAL_MAX;
-  } else {
-    updates.xp_per_goal = parsedVal;
-  }
+	const value = (payload.target as HTMLInputElement).value;
+	const parsedVal = Number.parseInt(value);
+	if (parsedVal > XP_PER_GOAL_MAX) {
+		updates.xp_per_goal = XP_PER_GOAL_MAX;
+	} else {
+		updates.xp_per_goal = parsedVal;
+	}
 }
 
 watch(updates, async (category) => {
-  props.goalCategory.title = category.title;
-  props.goalCategory.xp_per_goal = category.xp_per_goal;
+	props.goalCategory.title = category.title;
+	props.goalCategory.xp_per_goal = category.xp_per_goal;
 
-  if (
-    category.title === "" ||
-    category.xp_per_goal < XP_PER_GOAL_MIN ||
-    category.xp_per_goal > XP_PER_GOAL_MAX ||
-    Number.isNaN(category.xp_per_goal)
-  )
-    return;
+	if (
+		category.title === "" ||
+		category.xp_per_goal < XP_PER_GOAL_MIN ||
+		category.xp_per_goal > XP_PER_GOAL_MAX ||
+		Number.isNaN(category.xp_per_goal)
+	)
+		return;
 
-  await apiUpdateCategory(props.goalCategory.id, {
-    title: category.title,
-    xp_per_goal: category.xp_per_goal,
-  });
+	await apiUpdateCategory(props.goalCategory.id, {
+		title: category.title,
+		xp_per_goal: category.xp_per_goal,
+	});
 });
 </script>
 <template>
