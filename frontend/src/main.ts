@@ -2,17 +2,18 @@ import { createApp } from "vue";
 import App from "./App.vue";
 import router from "./router";
 import "./assets/index.css";
-import { OhVueIcon, addIcons } from "oh-vue-icons";
-import {
-  IoCheckmarkCircleOutline,
-  PxNotesPlus,
-  CoPlus,
-  CoReload,
-} from "oh-vue-icons/icons";
-addIcons(IoCheckmarkCircleOutline, PxNotesPlus, CoPlus, CoReload);
+import Vue3Toastify, { type ToastContainerOptions } from "vue3-toastify";
+import "vue3-toastify/dist/index.css";
+
 const app = createApp(App);
 
 app.use(router);
 
-app.component("v-icon", OhVueIcon);
+const toastifyOptions: ToastContainerOptions = {
+	autoClose: 3000,
+	position: "top-right",
+	theme: "dark",
+};
+app.use(Vue3Toastify, toastifyOptions);
+
 app.mount("#app");

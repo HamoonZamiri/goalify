@@ -1,35 +1,35 @@
 <script setup lang="ts">
 import router from "@/router";
 import { API_BASE } from "@/utils/constants";
-import { Schemas, type ErrorResponse, type User } from "@/utils/schemas";
+import { Schemas, type ErrorResponse } from "@/utils/schemas";
 import { ref } from "vue";
 import useAuth from "@/hooks/auth/useAuth";
 
 const { setUser } = useAuth();
 const error = ref<ErrorResponse>();
 const formData = ref<{ email: string; password: string }>({
-  email: "",
-  password: "",
+	email: "",
+	password: "",
 });
 
 async function login(payload: MouseEvent) {
-  payload.preventDefault();
-  const res = await fetch(`${API_BASE}/users/login`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(formData.value),
-  });
-  const json: unknown = await res.json();
-  if (!res.ok) {
-    error.value = json as ErrorResponse;
-    return;
-  }
-  const parsed = Schemas.UserSchema.parse(json);
-  setUser(parsed);
-  error.value = undefined;
-  router.push({ name: "Home" });
+	payload.preventDefault();
+	const res = await fetch(`${API_BASE}/users/login`, {
+		method: "POST",
+		headers: {
+			"Content-Type": "application/json",
+		},
+		body: JSON.stringify(formData.value),
+	});
+	const json: unknown = await res.json();
+	if (!res.ok) {
+		error.value = json as ErrorResponse;
+		return;
+	}
+	const parsed = Schemas.UserSchema.parse(json);
+	setUser(parsed);
+	error.value = undefined;
+	router.push({ name: "Home" });
 }
 </script>
 

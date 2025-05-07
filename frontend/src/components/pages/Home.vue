@@ -17,27 +17,29 @@ const { getUserGoalCategories, isError } = useApi();
 const error = ref<ErrorResponse>();
 const isLoading = ref<boolean>(true);
 const { connect } = useSSE(
-  `${API_BASE}/events?token=${getUser()?.access_token}`,
+	`${API_BASE}/events?token=${getUser()?.access_token}`,
 );
 const { setCategories, categoryState } = useGoals();
 
-onMounted(async () => {
-  const res = await getUserGoalCategories();
-  if (isError(res)) {
-    // in this case we are only expecting a message and not input validation errors
-    error.value = res;
-    return;
-  }
+const isCreateCategoryDialogOpen = ref(false);
 
-  setCategories(res.data);
-  isLoading.value = false;
-  connect();
+onMounted(async () => {
+	const res = await getUserGoalCategories();
+	if (isError(res)) {
+		// in this case we are only expecting a message and not input validation errors
+		error.value = res;
+		return;
+	}
+
+	setCategories(res.data);
+	isLoading.value = false;
+	connect();
 });
 </script>
 
 <template>
   <div v-if="isLoading">
-    <v-icon name="co-reload" animation="spin" />
+    <h1>Loading...</h1>
   </div>
   <div
     v-else
@@ -53,10 +55,18 @@ onMounted(async () => {
       >
         <GoalCategoryCard :goalCategory="cat" />
       </div>
-      <ModalForm
-        :FormComponent="CreateGoalCategoryForm"
-        :OpenerComponent="CreateCategoryButton"
-      />
+      <div class="flex">
+        <CreateCategoryButton
+          class="hover:cursor-pointer"
+          @click="isCreateCategoryDialogOpen = true"
+        />
+        <ModalForm
+          v-model="isCreateCategoryDialogOpen"
+          @close="isCreateCategoryDialogOpen = false"
+        >
+          <CreateGoalCategoryForm @close="isCreateCategoryDialogOpen = false" />
+        </ModalForm>
+      </div>
     </section>
   </div>
 </template>

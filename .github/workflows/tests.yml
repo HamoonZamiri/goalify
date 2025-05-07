@@ -1,20 +1,24 @@
 name: All tests action
-run-name: Test containers running on GitHub Actions
+run-name: Project tests for server and client
 on:
   pull_request:
-    branches: [main]
+    branches: [main, dev]
 jobs:
   backend-tests:
+    name: 🧪 Backend Tests
     runs-on: ubuntu-latest
     steps:
       - run: echo "Starting backend tests"
       - name: Checkout repo code
         uses: actions/checkout@v4
-      - name: Setup Go 1.22
+
+      - name: Setup Go 1.24
         uses: actions/setup-go@v5
         with:
-          go-version: "1.22.1"
-      - name: Run all tests
+          go-version: "1.24.0"
+          cache-dependency-path: backend/go.sum
+
+      - name: Run all backend tests
         env:
           TEST_DB_NAME: goalify_test
           DB_USER: goalify
@@ -26,3 +30,36 @@ jobs:
           cd backend
           go mod download
           make testall
+  frontend-tests:
+    name: 🧪 Frontend Tests
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Starting frontend tests"
+      - name: Checkout repo code
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: "10"
+
+      - name: setup Nodejs
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install dependencies
+        working-directory: ./frontend
+        run: pnpm install
+
+      - name: Run type check
+        working-directory: ./frontend
+        run: pnpm run type-check
+
+      - name: Run biome linting
+        working-directory: ./frontend
+        run: pnpm run lint
+
+      - name: Run Vitest
+        working-directory: ./frontend
+        run: pnpm run test

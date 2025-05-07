@@ -2,10 +2,10 @@
 import { Dialog, DialogPanel } from "@headlessui/vue";
 
 type Props = {
-  isOpen: boolean;
-  setOpener: (value: boolean) => void;
-  deleteMessage: string;
-  deleteFunction: (e: MouseEvent) => void;
+	isOpen: boolean;
+	setOpener: (value: boolean) => void;
+	deleteMessage: string;
+	deleteFunction: (e: MouseEvent) => void;
 };
 
 const props = defineProps<Props>();

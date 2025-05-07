@@ -6,9 +6,9 @@ import { Menu, MenuButton, MenuItems, MenuItem } from "@headlessui/vue";
 const { logout } = useAuth();
 
 function handleLogout(e: MouseEvent) {
-  e.preventDefault();
-  logout();
-  router.push({ name: "Login" });
+	e.preventDefault();
+	logout();
+	router.push({ name: "Login" });
 }
 </script>
 

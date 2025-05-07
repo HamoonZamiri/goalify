@@ -5,9 +5,10 @@ import ModalForm from "@/components/ModalForm.vue";
 import CreateGoalForm from "@/components/goals/forms/CreateGoalForm.vue";
 import CreateGoalButton from "@/components/goals/buttons/CreateGoalButton.vue";
 import { Menu, MenuButton, MenuItems, MenuItem } from "@headlessui/vue";
-import { reactive, watch } from "vue";
+import { reactive, ref, watch } from "vue";
 import useGoals from "@/hooks/goals/useGoals";
 import useApi from "@/hooks/api/useApi";
+import { toast } from "vue3-toastify";
 const props = defineProps<{
   goalCategory: GoalCategory;
 }>();
@@ -15,14 +16,15 @@ const props = defineProps<{
 const XP_PER_GOAL_MAX = 100;
 const XP_PER_GOAL_MIN = 1;
 
+const isCreateGoalDialogOpen = ref(false);
 const updates = reactive({
   title: props.goalCategory.title,
   xp_per_goal: props.goalCategory.xp_per_goal,
 });
 
 const { deleteCategory } = useGoals();
-const apiDeleteCategory = useApi().deleteCategory;
-const apiUpdateCategory = useApi().updateCategory;
+const { deleteCategory: apiDeleteCategory, updateCategory: apiUpdateCategory } =
+  useApi();
 
 async function handleDeleteCategory(e: MouseEvent) {
   e.preventDefault();
@@ -30,11 +32,13 @@ async function handleDeleteCategory(e: MouseEvent) {
 
   // remove category from state
   deleteCategory(props.goalCategory.id);
+
+  toast.success(`Successfully deleted category: ${props.goalCategory.title}`);
 }
 
 async function handleNumericInput(payload: Event) {
   const value = (payload.target as HTMLInputElement).value;
-  const parsedVal = parseInt(value);
+  const parsedVal = Number.parseInt(value);
   if (parsedVal > XP_PER_GOAL_MAX) {
     updates.xp_per_goal = XP_PER_GOAL_MAX;
   } else {
@@ -50,7 +54,7 @@ watch(updates, async (category) => {
     category.title === "" ||
     category.xp_per_goal < XP_PER_GOAL_MIN ||
     category.xp_per_goal > XP_PER_GOAL_MAX ||
-    isNaN(category.xp_per_goal)
+    Number.isNaN(category.xp_per_goal)
   )
     return;
 
@@ -91,11 +95,16 @@ watch(updates, async (category) => {
         </div>
       </div>
       <div class="flex">
-        <ModalForm
-          :FormComponent="CreateGoalForm"
-          :OpenerComponent="CreateGoalButton"
-          :formProps="{ categoryId: props.goalCategory.id }"
+        <CreateGoalButton
+          class="hover:cursor-pointer"
+          @click="isCreateGoalDialogOpen = true"
         />
+        <ModalForm v-model="isCreateGoalDialogOpen">
+          <CreateGoalForm
+            :category-id="props.goalCategory.id"
+            @close="isCreateGoalDialogOpen = false"
+          />
+        </ModalForm>
         <Menu as="div" class="relative inline-block">
           <MenuButton class="hover:cursor-pointer">
             <svg
