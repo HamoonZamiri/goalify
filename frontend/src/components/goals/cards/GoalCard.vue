@@ -2,30 +2,35 @@
 import type { Goal } from "@/utils/schemas";
 import { ref, watch, reactive, nextTick } from "vue";
 import {
-	Dialog,
-	DialogPanel,
-	Listbox,
-	ListboxButton,
-	ListboxOption,
-	ListboxOptions,
-	TransitionRoot,
+  Dialog,
+  DialogPanel,
+  Listbox,
+  ListboxButton,
+  ListboxOption,
+  ListboxOptions,
+  TransitionRoot,
 } from "@headlessui/vue";
+import Text from "@/components/primitives/Text.vue";
+import Box from "@/components/primitives/Box.vue";
+import InputField from "@/components/primitives/InputField.vue";
+import CheckOutline from "@/components/icons/CheckOutline.vue";
+("@/components/icons/CheckOutline.vue");
 import useGoals from "@/hooks/goals/useGoals";
 import useApi from "@/hooks/api/useApi";
 import DeleteModal from "@/components/DeleteModal.vue";
 import { toast } from "vue3-toastify";
 const props = defineProps<{
-	goal: Goal;
+  goal: Goal;
 }>();
 
 const updates = reactive<{
-	title: string;
-	description: string;
-	status: "complete" | "not_complete";
+  title: string;
+  description: string;
+  status: "complete" | "not_complete";
 }>({
-	title: props.goal.title,
-	description: props.goal.description,
-	status: props.goal.status,
+  title: props.goal.title,
+  description: props.goal.description,
+  status: props.goal.status,
 });
 
 const isEditing = ref(false);
@@ -35,69 +40,69 @@ const { deleteGoal } = useGoals();
 const { deleteGoal: deleteGoalApi, updateGoal: updateGoalApi } = useApi();
 
 function setIsEditing(value: boolean) {
-	isEditing.value = value;
+  isEditing.value = value;
 }
 
 function setIsDeleting(value: boolean) {
-	isDeleting.value = value;
+  isDeleting.value = value;
 }
 
 function openEditingDialog() {
-	setIsEditing(false);
-	nextTick(() => {
-		setIsEditing(true);
-	});
+  setIsEditing(false);
+  nextTick(() => {
+    setIsEditing(true);
+  });
 }
 
 async function handleDeleteGoal(e: MouseEvent) {
-	e.preventDefault();
+  e.preventDefault();
 
-	await deleteGoalApi(props.goal.id);
+  await deleteGoalApi(props.goal.id);
 
-	// remove goal from state
-	deleteGoal(props.goal.category_id, props.goal.id);
+  // remove goal from state
+  deleteGoal(props.goal.category_id, props.goal.id);
 
-	toast.success(`Successfully deleted goal: ${props.goal.title}`, {
-		theme: "dark",
-	});
+  toast.success(`Successfully deleted goal: ${props.goal.title}`, {
+    theme: "dark",
+  });
 
-	setIsEditing(false);
-	setIsDeleting(false);
+  setIsEditing(false);
+  setIsDeleting(false);
 }
 
 async function handleToggleStatus(e: MouseEvent) {
-	e.preventDefault();
-	updates.status = updates.status === "complete" ? "not_complete" : "complete";
+  e.preventDefault();
+  updates.status = updates.status === "complete" ? "not_complete" : "complete";
 }
 
 // watches for updates on the goal title and description
 watch(updates, async (newUpdates) => {
-	// syncronhize state passed in from props with local reactive updates
-	props.goal.title = newUpdates.title;
-	props.goal.description = newUpdates.description;
-	props.goal.status = newUpdates.status;
-	// do not send updates with empty strings, titles and descriptions cannot be empty
-	if (!newUpdates.title || !newUpdates.description) return;
+  // syncronhize state passed in from props with local reactive updates
+  props.goal.title = newUpdates.title;
+  props.goal.description = newUpdates.description;
+  props.goal.status = newUpdates.status;
+  // do not send updates with empty strings, titles and descriptions cannot be empty
+  if (!newUpdates.title || !newUpdates.description) return;
 
-	// in the future we want to use a debouncer to reduce the number of api calls
-	await updateGoalApi(props.goal.id, {
-		title: newUpdates.title,
-		description: newUpdates.description,
-		status: newUpdates.status,
-	});
+  // in the future we want to use a debouncer to reduce the number of api calls
+  await updateGoalApi(props.goal.id, {
+    title: newUpdates.title,
+    description: newUpdates.description,
+    status: newUpdates.status,
+  });
 });
 
 const statuses = [
-	{
-		id: 1,
-		name: "Not Complete",
-		value: "not_complete",
-	},
-	{
-		id: 2,
-		name: "Complete",
-		value: "complete",
-	},
+  {
+    id: 1,
+    name: "Not Complete",
+    value: "not_complete",
+  },
+  {
+    id: 2,
+    name: "Complete",
+    value: "complete",
+  },
 ];
 
 const statusMap = { not_complete: "Not Complete", complete: "Complete" };
@@ -110,21 +115,8 @@ const statusMap = { not_complete: "Not Complete", complete: "Complete" };
       'bg-green-600 hover:bg-green-700': props.goal.status === 'complete',
     }"
   >
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke-width="1.5"
-      class="size-6 stroke-gray-300"
-      @click.stop="handleToggleStatus"
-    >
-      <path
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
-      />
-    </svg>
-    <span class="font-semibold text-gray-300">{{ props.goal.title }}</span>
+    <CheckOutline :onclick="(e: MouseEvent) => handleToggleStatus(e)" />
+    <Text as="span" weight="semibold">{{ props.goal.title }}</Text>
   </header>
   <section>
     <TransitionRoot
@@ -136,13 +128,20 @@ const statusMap = { not_complete: "Not Complete", complete: "Complete" };
         class="absolute inset-0 h-screen flex justify-end hover:cursor-pointer z-10 w-screen bg-opacity-10 rounded-lg"
         @close="setIsEditing(false)"
       >
-        <DialogPanel class="w-1/2">
-          <div
-            class="flex flex-col gap-4 h-full p-8 border-white bg-gray-800 hover:cursor-default shadow-md shadow-gray-400"
+        <DialogPanel class="w-full sm:w-1/2">
+          <Box
+            gap="gap-4"
+            shadow="shadow-lg"
+            flex-direction="col"
+            padding="p-8"
+            height="h-full"
+            class="border-white hover:cursor-default shadow-gray-400"
           >
-            <input
+            <InputField
+              type="text"
               v-model="updates.title"
-              class="w-full bg-gray-800 text-gray-200 focus:outline-none text-3xl"
+              width="w-full"
+              class="text-3xl"
             />
             <div class="flex gap-x-24 w-full text-gray-200">
               <p class="text-xl">Status</p>
@@ -189,7 +188,7 @@ const statusMap = { not_complete: "Not Complete", complete: "Complete" };
               delete-message="Are you sure you want to delete this goal?"
               :delete-function="handleDeleteGoal"
             />
-          </div>
+          </Box>
         </DialogPanel>
       </Dialog>
     </TransitionRoot>
