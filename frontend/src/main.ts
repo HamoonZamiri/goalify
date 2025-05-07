@@ -10,9 +10,9 @@ const app = createApp(App);
 app.use(router);
 
 const toastifyOptions: ToastContainerOptions = {
-  autoClose: 3000,
-  position: "top-right",
-  theme: "dark",
+	autoClose: 3000,
+	position: "top-right",
+	theme: "dark",
 };
 app.use(Vue3Toastify, toastifyOptions);
 

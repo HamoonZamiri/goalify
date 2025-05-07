@@ -11,7 +11,10 @@
     "type-check": "vue-tsc --build --force",
     "test": "vitest run",
     "test:watch": "vitest --watch",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "lint": "biome lint ./src/**/*",
+    "format": "biome format ./src",
+    "format:fix": "biome format --write ./src"
   },
   "dependencies": {
     "@headlessui/vue": "^1.7.22",
@@ -22,6 +25,7 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@biomejs/biome": "1.9.4",
     "@tsconfig/node20": "^20.1.4",
     "@types/js-cookie": "^3.0.6",
     "@types/node": "^20.12.5",

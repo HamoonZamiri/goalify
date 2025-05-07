@@ -15,7 +15,7 @@ function useApi() {
   const { zodFetch } = useZodFetch();
   const { authState } = useAuth();
 
-  function isError(res: any | ErrorResponse): res is ErrorResponse {
+  function isError(res: unknown | ErrorResponse): res is ErrorResponse {
     const casted = res as ErrorResponse;
     return (
       casted.errors !== undefined ||

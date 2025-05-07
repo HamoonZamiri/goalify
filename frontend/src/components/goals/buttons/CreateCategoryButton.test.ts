@@ -1,37 +1,37 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { VueWrapper, mount } from "@vue/test-utils";
+import { type VueWrapper, mount } from "@vue/test-utils";
 import CreateCategoryButton from "./CreateCategoryButton.vue";
 
 const mountComponent = () => {
-  return mount(CreateCategoryButton, {
-    props: {
-      setIsOpen: () => {},
-      isOpen: true,
-    },
-  });
+	return mount(CreateCategoryButton, {
+		props: {
+			setIsOpen: () => {},
+			isOpen: true,
+		},
+	});
 };
 
 describe("CreateCategoryButton", () => {
-  let wrapper: VueWrapper;
+	let wrapper: VueWrapper;
 
-  beforeEach(() => {
-    wrapper = mountComponent();
-  });
+	beforeEach(() => {
+		wrapper = mountComponent();
+	});
 
-  afterEach(() => {
-    vi.resetAllMocks();
-    wrapper.unmount();
-  });
+	afterEach(() => {
+		vi.resetAllMocks();
+		wrapper.unmount();
+	});
 
-  it("should render the component", () => {
-    expect(wrapper.exists()).toBe(true);
-    expect(wrapper.isVisible()).toBe(true);
-  });
+	it("should render the component", () => {
+		expect(wrapper.exists()).toBe(true);
+		expect(wrapper.isVisible()).toBe(true);
+	});
 
-  it("should find the svg element", async () => {
-    const svg = wrapper.findAll("svg");
-    const path = wrapper.findAll("path");
-    expect(svg.length).toBe(1);
-    expect(path.length).toBe(1);
-  });
+	it("should find the svg element", async () => {
+		const svg = wrapper.findAll("svg");
+		const path = wrapper.findAll("path");
+		expect(svg.length).toBe(1);
+		expect(path.length).toBe(1);
+	});
 });

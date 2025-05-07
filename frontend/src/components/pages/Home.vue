@@ -17,23 +17,23 @@ const { getUserGoalCategories, isError } = useApi();
 const error = ref<ErrorResponse>();
 const isLoading = ref<boolean>(true);
 const { connect } = useSSE(
-  `${API_BASE}/events?token=${getUser()?.access_token}`,
+	`${API_BASE}/events?token=${getUser()?.access_token}`,
 );
 const { setCategories, categoryState } = useGoals();
 
 const isCreateCategoryDialogOpen = ref(false);
 
 onMounted(async () => {
-  const res = await getUserGoalCategories();
-  if (isError(res)) {
-    // in this case we are only expecting a message and not input validation errors
-    error.value = res;
-    return;
-  }
+	const res = await getUserGoalCategories();
+	if (isError(res)) {
+		// in this case we are only expecting a message and not input validation errors
+		error.value = res;
+		return;
+	}
 
-  setCategories(res.data);
-  isLoading.value = false;
-  connect();
+	setCategories(res.data);
+	isLoading.value = false;
+	connect();
 });
 </script>
 
