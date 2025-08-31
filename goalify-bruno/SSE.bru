@@ -1,0 +1,19 @@
+meta {
+  name: SSE
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{domain}}/api/events?token=
+  body: none
+  auth: inherit
+}
+
+params:query {
+  token: 
+}
+
+settings {
+  encodeUrl: true
+}
