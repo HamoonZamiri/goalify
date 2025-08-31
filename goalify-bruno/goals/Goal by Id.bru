@@ -1,0 +1,25 @@
+meta {
+  name: Goal by Id
+  type: http
+  seq: 6
+}
+
+put {
+  url: {{domain}}/api/goals/{{goal_id}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+body:json {
+  {
+      "title": "1"
+  }
+}
+
+settings {
+  encodeUrl: true
+}

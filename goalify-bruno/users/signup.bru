@@ -1,0 +1,36 @@
+meta {
+  name: signup
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{domain}}/api/users/signup
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+      "email": "somemail4@mail.com",
+      "password": "password123!",
+      "confirm_password": "password123!"
+  }
+}
+
+script:post-response {
+  // Parse the response body
+  let response = res.getBody();
+  
+  // Check if the response contains an access token
+  if (response.access_token) {
+      bru.setVar("access_token", response.access_token);
+      console.log("Access token saved:", response.access_token);
+  } else {
+      console.log("No access token found in response.");
+  }
+}
+
+settings {
+  encodeUrl: true
+}

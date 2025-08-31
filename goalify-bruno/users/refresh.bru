@@ -1,0 +1,22 @@
+meta {
+  name: refresh
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{domain}}/api/users/refresh
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+      "user_id": "{{user_id}}",
+      "refresh_token": "{{refresh_token}}"
+  }
+}
+
+settings {
+  encodeUrl: true
+}

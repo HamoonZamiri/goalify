@@ -1,0 +1,26 @@
+meta {
+  name: Category by Id
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{domain}}/api/goals/categories/{{category_id}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+body:json {
+  {
+      "title": "updating category",
+      "xp_per_goal": 50
+  }
+}
+
+settings {
+  encodeUrl: true
+}

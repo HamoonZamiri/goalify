@@ -1,0 +1,27 @@
+meta {
+  name: Goal
+  type: http
+  seq: 5
+}
+
+delete {
+  url: {{domain}}/api/goals/{{goal_id}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+body:json {
+  {
+      "title": 1,
+      "description": "",
+      "category_id": "20ab3764-4157-4760-92c9-8a8c1dca9c2c"
+  }
+}
+
+settings {
+  encodeUrl: true
+}

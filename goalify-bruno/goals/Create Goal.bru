@@ -1,0 +1,27 @@
+meta {
+  name: Create Goal
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{domain}}/api/goals
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+body:json {
+  {
+      "title": "nice title",
+      "description": "new",
+      "category_id": "426b8282-994c-4315-982e-4c46d2c692e5"
+  }
+}
+
+settings {
+  encodeUrl: true
+}

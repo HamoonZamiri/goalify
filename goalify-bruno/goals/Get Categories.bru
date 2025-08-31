@@ -1,0 +1,19 @@
+meta {
+  name: Get Categories
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{domain}}/api/goals/categories
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+settings {
+  encodeUrl: true
+}

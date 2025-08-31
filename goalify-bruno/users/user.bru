@@ -1,0 +1,27 @@
+meta {
+  name: user
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{domain}}/api/users
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+body:json {
+  {
+      "xp": 100,
+      "level_id": 3,
+      "cash_available": 2000
+  }
+}
+
+settings {
+  encodeUrl: true
+}

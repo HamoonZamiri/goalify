@@ -1,0 +1,26 @@
+meta {
+  name: Create Category
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{domain}}/api/goals/categories
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+body:json {
+  {
+      "title": "new Category testing events 2",
+      "xp_per_goal": 50
+  }
+}
+
+settings {
+  encodeUrl: true
+}
