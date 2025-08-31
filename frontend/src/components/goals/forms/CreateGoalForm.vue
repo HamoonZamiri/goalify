@@ -70,6 +70,7 @@ async function submit() {
       text-color="dark"
       type="text"
       v-model="formData.description"
+      as="textarea"
     >
       <template #label><Text>Description</Text></template>
       <template v-if="error?.errors?.description" #error>

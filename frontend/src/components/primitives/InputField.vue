@@ -30,6 +30,7 @@ type InputFieldProps = {
   bg?: "transparent" | "primary";
   errorslot?: boolean;
   compact?: boolean;
+  as?: "input" | "textarea";
 };
 
 const bgClasses = {
@@ -44,12 +45,30 @@ const props = withDefaults(defineProps<InputFieldProps>(), {
   height: "h-10",
   width: "w-full",
   compact: false,
+  as: "input",
 });
 
 const emit = defineEmits(["update:modelValue"]);
 const baseClass = props.compact
   ? "focus:outline-none placeholder-gray-400 rounded border-0 text-center min-w-0"
   : "focus:outline-none placeholder-gray-400 sm:flex-1 rounded-lg border-0";
+
+function handleInput(e: Event) {
+  const target = e.target as HTMLInputElement | HTMLTextAreaElement;
+  const raw = target.value;
+  const parsed =
+    props.type === "number" ? (raw === "" ? null : Number(raw)) : raw;
+  emit("update:modelValue", parsed as any);
+}
+
+const sharedClasses = [
+  baseClass,
+  bgClasses[props.bg],
+  textColorMap[props.textColor],
+  props.bg !== "transparent" ? "px-1.5 py-1.5" : "",
+  props.compact ? "w-12 text-xs" : "",
+  props.class,
+];
 </script>
 
 <template>
@@ -58,24 +77,21 @@ const baseClass = props.compact
     <Box flex-direction="row" class="gap-1">
       <slot name="left" />
       <input
-        :class="[
-          baseClass,
-          bgClasses[props.bg],
-          textColorMap[props.textColor],
-          props.bg !== 'transparent' ? 'px-1.5 py-1.5' : '',
-          props.compact ? 'w-12 text-xs' : '',
-          props.class,
-        ]"
+        v-if="props.as === 'input'"
+        :class="sharedClasses"
         v-bind="props"
         :value="props.modelValue"
-        @input="
-          (e) => {
-            const raw = (e.target as HTMLInputElement).value;
-            const parsed =
-              props.type === 'number' ? (raw === '' ? null : Number(raw)) : raw;
-            emit('update:modelValue', parsed as any);
-          }
-        "
+        @input="handleInput"
+      />
+
+      <textarea
+        v-else-if="props.as === 'textarea'"
+        :class="sharedClasses"
+        :placeholder="props.placeholder"
+        :disabled="props.disabled"
+        :name="props.name"
+        :value="props.modelValue"
+        @input="handleInput"
       />
       <slot name="right" />
     </Box>
