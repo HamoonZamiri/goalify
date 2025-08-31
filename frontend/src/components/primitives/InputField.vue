@@ -58,7 +58,7 @@ function handleInput(e: Event) {
   const raw = target.value;
   const parsed =
     props.type === "number" ? (raw === "" ? null : Number(raw)) : raw;
-  emit("update:modelValue", parsed as any);
+  emit("update:modelValue", parsed);
 }
 
 const sharedClasses = [
