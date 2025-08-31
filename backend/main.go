@@ -10,7 +10,6 @@ import (
 	"goalify/middleware"
 	"goalify/routes"
 	uh "goalify/users/handler"
-	"goalify/users/service"
 	usrSrv "goalify/users/service"
 	us "goalify/users/stores"
 	"goalify/utils/events"
@@ -31,7 +30,7 @@ func addRoute(mux *http.ServeMux, method, path string, handler http.HandlerFunc,
 }
 
 func NewServer(userHandler *uh.UserHandler, goalHandler *gh.GoalHandler,
-	configService *config.ConfigService, em *events.EventManager, userService service.UserService,
+	configService *config.ConfigService, em *events.EventManager, userService usrSrv.UserService,
 ) http.Handler {
 	mux := http.NewServeMux()
 	mw := middleware.SetupMiddleware(userService)

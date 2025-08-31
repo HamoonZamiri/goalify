@@ -133,8 +133,8 @@ func TestLogin(t *testing.T) {
 	assert.Equal(t, http.StatusOK, res.StatusCode)
 	assert.Nil(t, err)
 
-	assert.Nil(t, err)
 	user, err := unmarshalResponse[entities.UserDTO](res)
+	assert.Nil(t, err)
 	assert.NotEmpty(t, user)
 	assert.Equal(t, email, user.Email)
 }
@@ -462,7 +462,7 @@ func TestGoalCategoryCreatedEvent(t *testing.T) {
 
 	var serverResponse *entities.GoalCategory
 	url = fmt.Sprintf("%s/api/goals/categories/%s", BASE_URL, gc.Id)
-	for i := 0; i < 5; i++ {
+	for range 5 {
 		res, err = buildAndSendRequest("GET", url, nil, userDto.AccessToken)
 		assert.Nil(t, err)
 		serverResponse, err = unmarshalResponse[*entities.GoalCategory](res)
@@ -501,6 +501,7 @@ func TestDeleteGoal(t *testing.T) {
 	}
 	assert.Nil(t, err)
 	res, err = buildAndSendRequest("POST", url, body, userDto.AccessToken)
+	assert.Nil(t, err)
 	assert.Equal(t, http.StatusCreated, res.StatusCode)
 	goal, err := unmarshalResponse[entities.Goal](res)
 	assert.Nil(t, err)
@@ -556,8 +557,6 @@ func TestUserLevelUpEvent(t *testing.T) {
 	require.Nil(t, err)
 	assert.Equal(t, http.StatusOK, res.StatusCode)
 
-	// rerun requests until goal category created event triggers
-	url = fmt.Sprintf("%s/api/goals/categories/%s", BASE_URL, cat.Id)
 	var user *entities.User
 	for i := 0; i < 5; i++ {
 		user, err = getUserById(userDto.Id.String())
