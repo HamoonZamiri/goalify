@@ -4,7 +4,6 @@ import (
 	"context"
 	"goalify/config"
 	"goalify/db"
-	"os"
 	"path/filepath"
 	"runtime"
 
@@ -19,20 +18,17 @@ var (
 )
 
 func setupPgContainer() error {
+	configService := config.GetConfig()
 	ctx := context.Background()
 	if pgContainer != nil {
 		return nil
 	}
 
-	dbName := "goalify_test"
-	dbUser := "goalify"
-	dbPassword := "goalify"
-
 	var err error
 	pgContainer, err = postgres.Run(ctx, "docker.io/postgres:16-alpine",
-		postgres.WithDatabase(dbName),
-		postgres.WithUsername(dbUser),
-		postgres.WithPassword(dbPassword),
+		postgres.WithDatabase(configService.TestDBName),
+		postgres.WithUsername(configService.TestDBUser),
+		postgres.WithPassword(configService.TestDBPassword),
 		postgres.BasicWaitStrategies(),
 	)
 	if err != nil {
@@ -43,7 +39,6 @@ func setupPgContainer() error {
 	if err != nil {
 		return err
 	}
-	os.Setenv(config.TEST_DB_CONN_STRING, connStr)
 
 	dbx, err = db.NewWithConnString(connStr)
 	if err != nil {

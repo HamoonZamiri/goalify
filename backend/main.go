@@ -13,7 +13,6 @@ import (
 	usrSrv "goalify/users/service"
 	us "goalify/users/stores"
 	"goalify/utils/events"
-	"goalify/utils/options"
 	"goalify/utils/stacktrace"
 	"log/slog"
 	"net/http"
@@ -25,12 +24,8 @@ import (
 	"github.com/pressly/goose/v3"
 )
 
-func addRoute(mux *http.ServeMux, method, path string, handler http.HandlerFunc, mwChain middleware.Middleware) {
-	mux.Handle(method+" "+path, mwChain(http.HandlerFunc(handler)))
-}
-
 func NewServer(userHandler *uh.UserHandler, goalHandler *gh.GoalHandler,
-	configService *config.ConfigService, em *events.EventManager, userService usrSrv.UserService,
+	em *events.EventManager, userService usrSrv.UserService,
 ) http.Handler {
 	mux := http.NewServeMux()
 	mw := middleware.SetupMiddleware(userService)
@@ -46,19 +41,23 @@ func Run() error {
 	// instantiate config service
 	var err error
 	var dbInstance *sqlx.DB
-	configService := config.NewConfigService(options.None[string]())
-	currEnv := configService.MustGetEnv(config.ENV)
-	if currEnv == "test" {
-		dbInstance, err = db.NewWithConnString(configService.MustGetEnv(config.TEST_DB_CONN_STRING))
+	configService := config.GetConfig()
+	currEnv := configService.Env
+	if configService.Env == config.LocalTest {
+		dbInstance, err = db.NewWithConnString(configService.GetTestDBConnectionString())
 	} else {
 		dbInstance, err = db.New(
-			configService.MustGetEnv(config.DB_NAME),
-			configService.MustGetEnv(config.DB_USER),
-			configService.MustGetEnv(config.DB_PASSWORD))
+			configService.DBName,
+			configService.DBUser,
+			configService.DBPassword)
+	}
+
+	if dbInstance == nil {
+		panic("db instance is nil")
 	}
 
 	// using goose run migrations from db/migrations
-	if currEnv == "dev" || currEnv == "test" {
+	if currEnv == config.LocalTest {
 		_, b, _, _ := runtime.Caller(0)
 		basepath := filepath.Dir(b)
 		migrationDir := filepath.Join(basepath, "./db/migrations")
@@ -68,9 +67,6 @@ func Run() error {
 		}
 	}
 
-	if dbInstance == nil {
-		panic("db instance is nil")
-	}
 	if err != nil {
 		panic(err)
 	}
@@ -94,8 +90,8 @@ func Run() error {
 	)
 	goalHandler := gh.NewGoalHandler(goalService, goalDomainLogger)
 
-	srv := NewServer(userHandler, goalHandler, configService, eventManager, userService)
-	port := configService.MustGetEnv(config.PORT)
+	srv := NewServer(userHandler, goalHandler, eventManager, userService)
+	port := configService.Port
 	httpServer := &http.Server{
 		Addr:    ":" + port,
 		Handler: srv,
