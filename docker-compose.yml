@@ -6,7 +6,5 @@ services:
     environment:
       POSTGRES_USER: goalify
       POSTGRES_PASSWORD: goalify
-    volumes:
-      - ${VOLUME_LOCATION}:/var/lib/postgresql/data
     ports:
       - "5432:5432"

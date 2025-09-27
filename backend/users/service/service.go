@@ -4,12 +4,12 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"goalify/config"
 	"goalify/entities"
 	"goalify/users/stores"
 	"goalify/utils/events"
 	"goalify/utils/responses"
 	"log/slog"
-	"os"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -50,7 +50,7 @@ func generateJWTToken(userId uuid.UUID) (string, error) {
 		"exp":    time.Now().Add(time.Hour * 1).Unix(),
 	})
 
-	tokenString, err := token.SignedString([]byte(os.Getenv("JWT_SECRET")))
+	tokenString, err := token.SignedString([]byte(config.GetConfig().JWTSecret))
 	if err != nil {
 		return "", err
 	}
@@ -61,7 +61,7 @@ func generateJWTToken(userId uuid.UUID) (string, error) {
 func (s *userService) VerifyToken(tokenString string) (string, error) {
 	errResponse := fmt.Errorf("%w: could not authenticate request", responses.ErrUnauthorized)
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		return []byte(os.Getenv("JWT_SECRET")), nil
+		return []byte(config.GetConfig().JWTSecret), nil
 	})
 	if err != nil {
 		slog.Error("service.VerifyToken: jwt.Parse:", "err", err.Error())

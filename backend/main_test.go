@@ -11,7 +11,6 @@ import (
 	"goalify/entities"
 	"goalify/testsetup"
 	"goalify/users/handler"
-	"goalify/utils/options"
 	"goalify/utils/responses"
 	"io"
 	"log"
@@ -30,15 +29,12 @@ import (
 const BASE_URL = "http://localhost:8080"
 
 var (
-	dbx           *sqlx.DB
-	configService *config.ConfigService
-	pgContainer   *postgres.PostgresContainer
+	dbx         *sqlx.DB
+	pgContainer *postgres.PostgresContainer
 )
 
 func setup(ctx context.Context) {
 	var err error
-	configService = config.NewConfigService(options.None[string]())
-	configService.SetEnv(config.ENV, "test")
 
 	pgContainer, err = testsetup.GetPgContainer()
 	if err != nil {
@@ -49,6 +45,13 @@ func setup(ctx context.Context) {
 	if err != nil {
 		panic(err)
 	}
+
+	// Set environment and database connection string before getting config
+	config.SetEnv(config.ENV, string(config.LocalTest))
+	config.SetEnv(config.TEST_DB_CONN_STRING, connStr)
+
+	// Reset config singleton to pick up test environment variables
+	config.ResetForTesting()
 
 	dbx, err = db.NewWithConnString(connStr)
 	if err != nil {
