@@ -105,7 +105,7 @@ func (s *userService) SignUp(email, password string) (*entities.UserDTO, error) 
 		return nil, badReqErr
 	}
 
-	if err != sql.ErrNoRows {
+	if !errors.Is(err, sql.ErrNoRows) {
 		slog.Error("service.SignUp: store.GetUserByEmail:", "err", err.Error())
 		return nil, responses.ErrInternalServer
 	}
@@ -203,7 +203,7 @@ func (s *userService) Login(email, password string) (*entities.UserDTO, error) {
 
 func (s *userService) DeleteUserById(id string) error {
 	err := s.userStore.DeleteUserById(id)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return fmt.Errorf("%w: user not found", responses.ErrNotFound)
 	}
 	if err != nil {

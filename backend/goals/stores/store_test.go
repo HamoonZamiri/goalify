@@ -3,6 +3,7 @@ package stores
 import (
 	"context"
 	"goalify/db"
+	sqlcdb "goalify/db/generated"
 	"goalify/testsetup"
 	us "goalify/users/stores"
 	"log"
@@ -43,7 +44,13 @@ func setup(ctx context.Context) {
 		panic(err)
 	}
 
-	userStore = us.NewUserStore(dbConn)
+	pgxPool, err := db.NewPgxPoolWithConnString(ctx, connStr)
+	if err != nil {
+		panic(err)
+	}
+
+	queries := sqlcdb.New(pgxPool)
+	userStore = us.NewUserStore(dbConn, queries)
 	gStore = NewGoalStore(dbConn)
 	gcStore = NewGoalCategoryStore(dbConn)
 }

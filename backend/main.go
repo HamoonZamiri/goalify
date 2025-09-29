@@ -4,6 +4,7 @@ import (
 	"context"
 	"goalify/config"
 	"goalify/db"
+	sqlcdb "goalify/db/generated"
 	gh "goalify/goals/handler"
 	gSrv "goalify/goals/service"
 	gs "goalify/goals/stores"
@@ -20,6 +21,7 @@ import (
 	"path/filepath"
 	"runtime"
 
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jmoiron/sqlx"
 	"github.com/pressly/goose/v3"
 )
@@ -41,19 +43,39 @@ func Run() error {
 	// instantiate config service
 	var err error
 	var dbInstance *sqlx.DB
+	var pgxPool *pgxpool.Pool
 	configService := config.GetConfig()
 	currEnv := configService.Env
+
 	if configService.Env == config.LocalTest {
-		dbInstance, err = db.NewWithConnString(configService.GetTestDBConnectionString())
+		connStr := configService.GetTestDBConnectionString()
+		dbInstance, err = db.NewWithConnString(connStr)
+		if err != nil {
+			panic(err)
+		}
+		pgxPool, err = db.NewPgxPoolWithConnString(context.Background(), connStr)
 	} else {
 		dbInstance, err = db.New(
 			configService.DBName,
 			configService.DBUser,
 			configService.DBPassword)
+		if err != nil {
+			panic(err)
+		}
+		pgxPool, err = db.NewPgx(
+			configService.DBName,
+			configService.DBUser,
+			configService.DBPassword)
 	}
 
+	if err != nil {
+		panic(err)
+	}
 	if dbInstance == nil {
 		panic("db instance is nil")
+	}
+	if pgxPool == nil {
+		panic("pgx pool is nil")
 	}
 
 	// using goose run migrations from db/migrations
@@ -76,7 +98,10 @@ func Run() error {
 
 	eventManager := events.NewEventManager()
 
-	userStore := us.NewUserStore(dbInstance)
+	// Create sqlc queries
+	queries := sqlcdb.New(pgxPool)
+
+	userStore := us.NewUserStore(dbInstance, queries)
 	userService := usrSrv.NewUserService(userStore, eventManager)
 	userHandler := uh.NewUserHandler(userService)
 

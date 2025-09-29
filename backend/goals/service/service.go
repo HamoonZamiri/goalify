@@ -220,7 +220,7 @@ func (gs *goalService) DeleteGoalCategoryById(categoryId, userId uuid.UUID) erro
 	}
 
 	err = gs.goalCategoryStore.DeleteGoalCategoryById(categoryId)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return fmt.Errorf("%w: category not found", responses.ErrNotFound)
 	}
 

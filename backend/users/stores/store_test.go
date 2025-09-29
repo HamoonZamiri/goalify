@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"goalify/db"
+	sqlcdb "goalify/db/generated"
 	"goalify/testsetup"
 	"log"
 	"os"
@@ -40,7 +41,13 @@ func setup(ctx context.Context) {
 		panic(err)
 	}
 
-	userStoreVar = NewUserStore(dbConn)
+	pgxPool, err := db.NewPgxPoolWithConnString(ctx, connStr)
+	if err != nil {
+		panic(err)
+	}
+
+	queries := sqlcdb.New(pgxPool)
+	userStoreVar = NewUserStore(dbConn, queries)
 }
 
 func TestMain(m *testing.M) {
