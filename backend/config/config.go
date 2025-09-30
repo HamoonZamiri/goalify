@@ -27,10 +27,11 @@ type Config struct {
 	TestDBConnString string
 
 	// Application configuration
-	JWTSecret string
-	Port      string
-	Env       Environment
-	IsCI      bool
+	JWTSecret      string
+	Port           string
+	AllowedOrigins []string
+	Env            Environment
+	IsCI           bool
 }
 
 var (
@@ -141,6 +142,18 @@ func loadFromEnvironment() *Config {
 	config.TestDBHost = os.Getenv(string(TEST_DB_HOST))
 	config.TestDBConnString = os.Getenv(string(TEST_DB_CONN_STRING))
 	config.IsCI = os.Getenv(string(CI)) == "true"
+
+	// Parse allowed origins (comma-separated list)
+	if originsEnv := os.Getenv(string(ALLOWED_ORIGINS)); originsEnv != "" {
+		config.AllowedOrigins = strings.Split(originsEnv, ",")
+		// Trim whitespace from each origin
+		for i := range config.AllowedOrigins {
+			config.AllowedOrigins[i] = strings.TrimSpace(config.AllowedOrigins[i])
+		}
+	} else {
+		// Default to localhost for development
+		config.AllowedOrigins = []string{"http://localhost:5173"}
+	}
 
 	// Check for missing required variables
 	if len(missing) > 0 {

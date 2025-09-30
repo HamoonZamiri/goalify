@@ -1,4 +1,4 @@
-package main
+package app
 
 import (
 	"context"
@@ -53,7 +53,6 @@ func Run() error {
 		connStr = configService.GetDBConnectionString()
 	}
 	pgxPool, err = db.NewPgxPoolWithConnString(context.Background(), connStr)
-
 	if err != nil {
 		panic(err)
 	}
@@ -65,7 +64,7 @@ func Run() error {
 	if currEnv == config.LocalTest {
 		_, b, _, _ := runtime.Caller(0)
 		basepath := filepath.Dir(b)
-		migrationDir := filepath.Join(basepath, "./db/migrations")
+		migrationDir := filepath.Join(basepath, "../../db/migrations")
 		err = goose.UpContext(context.Background(), stdlib.OpenDBFromPool(pgxPool), migrationDir)
 		if err != nil {
 			panic(err)
@@ -115,9 +114,3 @@ func Run() error {
 	return err
 }
 
-func main() {
-	if err := Run(); err != nil {
-		slog.Error("run: ", "err", err)
-		os.Exit(1)
-	}
-}

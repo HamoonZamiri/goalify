@@ -13,6 +13,7 @@ const (
 	DB_CONN_STRING      ConfigKey = "DATABASE_URL"
 	JWT_SECRET          ConfigKey = "JWT_SECRET"
 	PORT                ConfigKey = "PORT"
+	ALLOWED_ORIGINS     ConfigKey = "ALLOWED_ORIGINS"
 	TEST_DB_CONN_STRING ConfigKey = "TEST_DB_CONN_STRING"
 	CI                  ConfigKey = "CI"
 	TEST_DB_NAME        ConfigKey = "TEST_DB_NAME"

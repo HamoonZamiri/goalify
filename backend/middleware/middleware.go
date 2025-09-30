@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"goalify/config"
 	"goalify/users/service"
 	"net/http"
 
@@ -27,14 +28,16 @@ func CreateChain(mws ...Middleware) Middleware {
 }
 
 func SetupMiddleware(userService service.UserService) MiddleWareChains {
+	configService := config.GetConfig()
+
 	c := cors.New(cors.Options{
-		AllowedOrigins: []string{"http://localhost:5173"},
+		AllowedOrigins: configService.AllowedOrigins,
 		AllowedMethods: []string{
 			http.MethodPatch, http.MethodPost, http.MethodPut, http.MethodGet,
 			http.MethodDelete, http.MethodOptions,
 		},
 		AllowCredentials: true,
-		Debug:            false,
+		Debug:            configService.IsDevelopment(),
 		AllowedHeaders:   []string{"*"},
 	})
 
