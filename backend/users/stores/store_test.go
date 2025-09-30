@@ -11,14 +11,12 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
 )
 
 var (
-	dbConn       *sqlx.DB
 	userStoreVar UserStore
 	pgContainer  *postgres.PostgresContainer
 )
@@ -36,18 +34,13 @@ func setup(ctx context.Context) {
 		panic(err)
 	}
 
-	dbConn, err = db.NewWithConnString(connStr)
-	if err != nil {
-		panic(err)
-	}
-
 	pgxPool, err := db.NewPgxPoolWithConnString(ctx, connStr)
 	if err != nil {
 		panic(err)
 	}
 
 	queries := sqlcdb.New(pgxPool)
-	userStoreVar = NewUserStore(dbConn, queries)
+	userStoreVar = NewUserStore(queries)
 }
 
 func TestMain(m *testing.M) {

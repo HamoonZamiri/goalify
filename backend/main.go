@@ -22,7 +22,7 @@ import (
 	"runtime"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/jmoiron/sqlx"
+	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/pressly/goose/v3"
 )
 
@@ -42,37 +42,20 @@ func Run() error {
 
 	// instantiate config service
 	var err error
-	var dbInstance *sqlx.DB
 	var pgxPool *pgxpool.Pool
 	configService := config.GetConfig()
 	currEnv := configService.Env
 
+	var connStr string
 	if configService.Env == config.LocalTest {
-		connStr := configService.GetTestDBConnectionString()
-		dbInstance, err = db.NewWithConnString(connStr)
-		if err != nil {
-			panic(err)
-		}
-		pgxPool, err = db.NewPgxPoolWithConnString(context.Background(), connStr)
+		connStr = configService.GetTestDBConnectionString()
 	} else {
-		dbInstance, err = db.New(
-			configService.DBName,
-			configService.DBUser,
-			configService.DBPassword)
-		if err != nil {
-			panic(err)
-		}
-		pgxPool, err = db.NewPgx(
-			configService.DBName,
-			configService.DBUser,
-			configService.DBPassword)
+		connStr = configService.GetDBConnectionString()
 	}
+	pgxPool, err = db.NewPgxPoolWithConnString(context.Background(), connStr)
 
 	if err != nil {
 		panic(err)
-	}
-	if dbInstance == nil {
-		panic("db instance is nil")
 	}
 	if pgxPool == nil {
 		panic("pgx pool is nil")
@@ -83,7 +66,7 @@ func Run() error {
 		_, b, _, _ := runtime.Caller(0)
 		basepath := filepath.Dir(b)
 		migrationDir := filepath.Join(basepath, "./db/migrations")
-		err = goose.UpContext(context.Background(), dbInstance.DB, migrationDir)
+		err = goose.UpContext(context.Background(), stdlib.OpenDBFromPool(pgxPool), migrationDir)
 		if err != nil {
 			panic(err)
 		}
@@ -101,12 +84,12 @@ func Run() error {
 	// Create sqlc queries
 	queries := sqlcdb.New(pgxPool)
 
-	userStore := us.NewUserStore(dbInstance, queries)
+	userStore := us.NewUserStore(queries)
 	userService := usrSrv.NewUserService(userStore, eventManager)
 	userHandler := uh.NewUserHandler(userService)
 
-	goalStore := gs.NewGoalStore(dbInstance, queries)
-	goalCategoryStore := gs.NewGoalCategoryStore(dbInstance, queries)
+	goalStore := gs.NewGoalStore(queries)
+	goalCategoryStore := gs.NewGoalCategoryStore(queries)
 	goalService := gSrv.NewGoalService(
 		goalStore,
 		goalCategoryStore,

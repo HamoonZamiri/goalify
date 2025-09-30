@@ -8,7 +8,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/jmoiron/sqlx"
 )
 
 type (
@@ -23,7 +22,6 @@ type (
 		GetLevelById(id int) (*entities.Level, error)
 	}
 	userStore struct {
-		db      *sqlx.DB
 		queries *sqlcdb.Queries
 	}
 )
@@ -56,9 +54,8 @@ func pgxLevelToEntity(l sqlcdb.Level) *entities.Level {
 	}
 }
 
-func NewUserStore(db *sqlx.DB, queries *sqlcdb.Queries) UserStore {
+func NewUserStore(queries *sqlcdb.Queries) UserStore {
 	return &userStore{
-		db:      db,
 		queries: queries,
 	}
 }

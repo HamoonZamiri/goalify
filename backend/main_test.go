@@ -7,7 +7,7 @@ import (
 	"fmt"
 	main "goalify"
 	"goalify/config"
-	"goalify/db"
+	sqlcdb "goalify/db/generated"
 	"goalify/entities"
 	"goalify/testsetup"
 	"goalify/users/handler"
@@ -20,7 +20,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/jmoiron/sqlx"
+	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
@@ -29,7 +30,8 @@ import (
 const BASE_URL = "http://localhost:8080"
 
 var (
-	dbx         *sqlx.DB
+	pgxPool     *pgxpool.Pool
+	queries     *sqlcdb.Queries
 	pgContainer *postgres.PostgresContainer
 )
 
@@ -53,10 +55,12 @@ func setup(ctx context.Context) {
 	// Reset config singleton to pick up test environment variables
 	config.ResetForTesting()
 
-	dbx, err = db.NewWithConnString(connStr)
+	pgxPool, err = testsetup.GetPgxPool()
 	if err != nil {
 		panic(err)
 	}
+
+	queries = sqlcdb.New(pgxPool)
 
 	go main.Run()
 	time.Sleep(50 * time.Millisecond)
@@ -619,28 +623,72 @@ func printErrResponse(res *http.Response) error {
 }
 
 func createTestGoalCategory(title string, userId uuid.UUID) *entities.GoalCategory {
-	query := `INSERT INTO goal_categories (title, xp_per_goal, user_id) 
-  VALUES ($1, $2, $3) RETURNING *`
-	var goalCategory entities.GoalCategory
-	dbx.QueryRowx(query, title, 100, userId).StructScan(&goalCategory)
-	return &goalCategory
+	params := sqlcdb.CreateGoalCategoryParams{
+		Title:     title,
+		XpPerGoal: 100,
+		UserID:    pgtype.UUID{Bytes: userId, Valid: true},
+	}
+	gc, err := queries.CreateGoalCategory(context.Background(), params)
+	if err != nil {
+		panic(err)
+	}
+	return &entities.GoalCategory{
+		Id:          uuid.UUID(gc.ID.Bytes),
+		Title:       gc.Title,
+		Xp_per_goal: int(gc.XpPerGoal),
+		UserId:      uuid.UUID(gc.UserID.Bytes),
+		CreatedAt:   gc.CreatedAt.Time,
+		UpdatedAt:   gc.UpdatedAt.Time,
+		Goals:       []*entities.Goal{},
+	}
 }
 
 func createTestGoal(title, description string, categoryId, userId uuid.UUID) *entities.Goal {
-	query := `INSERT INTO goals (title, description, user_id, category_id)
-  VALUES ($1, $2, $3, $4) RETURNING *`
-	var goal entities.Goal
-	dbx.QueryRowx(query, title, description, userId, categoryId).StructScan(&goal)
-	return &goal
+	params := sqlcdb.CreateGoalParams{
+		Title:       title,
+		Description: pgtype.Text{String: description, Valid: true},
+		UserID:      pgtype.UUID{Bytes: userId, Valid: true},
+		CategoryID:  pgtype.UUID{Bytes: categoryId, Valid: true},
+	}
+	g, err := queries.CreateGoal(context.Background(), params)
+	if err != nil {
+		panic(err)
+	}
+	return &entities.Goal{
+		Id:          uuid.UUID(g.ID.Bytes),
+		Title:       g.Title,
+		Description: g.Description.String,
+		Status:      string(g.Status.GoalStatus),
+		CategoryId:  uuid.UUID(g.CategoryID.Bytes),
+		UserId:      uuid.UUID(g.UserID.Bytes),
+		CreatedAt:   g.CreatedAt.Time,
+		UpdatedAt:   g.UpdatedAt.Time,
+	}
 }
 
 func getUserById(id string) (*entities.User, error) {
-	var user entities.User
-	err := dbx.Get(&user, "SELECT * FROM users WHERE id = $1", id)
+	userId, err := uuid.Parse(id)
 	if err != nil {
 		return nil, err
 	}
-	return &user, nil
+
+	u, err := queries.GetUserById(context.Background(), pgtype.UUID{Bytes: userId, Valid: true})
+	if err != nil {
+		return nil, err
+	}
+
+	return &entities.User{
+		Id:                 uuid.UUID(u.ID.Bytes),
+		Email:              u.Email,
+		Password:           u.Password,
+		Xp:                 int(u.Xp.Int32),
+		LevelId:            int(u.LevelID.Int32),
+		CashAvailable:      int(u.CashAvailable.Int32),
+		RefreshToken:       uuid.UUID(u.RefreshToken.Bytes),
+		RefreshTokenExpiry: u.RefreshTokenExpiry.Time,
+		CreatedAt:          u.CreatedAt.Time,
+		UpdatedAt:          u.UpdatedAt.Time,
+	}, nil
 }
 
 func unmarshalResponse[T any](res *http.Response) (T, error) {

@@ -7,14 +7,15 @@ import (
 	"path/filepath"
 	"runtime"
 
-	"github.com/jmoiron/sqlx"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/pressly/goose/v3"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
 )
 
 var (
 	pgContainer *postgres.PostgresContainer
-	dbx         *sqlx.DB
+	pgxPool     *pgxpool.Pool
 )
 
 func setupPgContainer() error {
@@ -40,7 +41,7 @@ func setupPgContainer() error {
 		return err
 	}
 
-	dbx, err = db.NewWithConnString(connStr)
+	pgxPool, err = db.NewPgxPoolWithConnString(ctx, connStr)
 	if err != nil {
 		panic(err)
 	}
@@ -49,7 +50,7 @@ func setupPgContainer() error {
 	_, b, _, _ := runtime.Caller(0)
 	basepath := filepath.Dir(b)
 	migrationDir := filepath.Join(basepath, "../db/migrations")
-	err = goose.UpContext(ctx, dbx.DB, migrationDir)
+	err = goose.UpContext(ctx, stdlib.OpenDBFromPool(pgxPool), migrationDir)
 	if err != nil {
 		panic(err)
 	}
@@ -66,12 +67,12 @@ func GetPgContainer() (*postgres.PostgresContainer, error) {
 	return pgContainer, nil
 }
 
-func GetDbInstance() (*sqlx.DB, error) {
-	if dbx == nil {
+func GetPgxPool() (*pgxpool.Pool, error) {
+	if pgxPool == nil {
 		err := setupPgContainer()
 		if err != nil {
 			return nil, err
 		}
 	}
-	return dbx, nil
+	return pgxPool, nil
 }

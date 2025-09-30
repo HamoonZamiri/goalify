@@ -11,7 +11,6 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
 )
@@ -19,7 +18,6 @@ import (
 const password = "Password123!"
 
 var (
-	dbConn      *sqlx.DB
 	userStore   us.UserStore
 	gStore      GoalStore
 	gcStore     GoalCategoryStore
@@ -39,20 +37,15 @@ func setup(ctx context.Context) {
 		panic(err)
 	}
 
-	dbConn, err = db.NewWithConnString(connStr)
-	if err != nil {
-		panic(err)
-	}
-
 	pgxPool, err := db.NewPgxPoolWithConnString(ctx, connStr)
 	if err != nil {
 		panic(err)
 	}
 
 	queries := sqlcdb.New(pgxPool)
-	userStore = us.NewUserStore(dbConn, queries)
-	gStore = NewGoalStore(dbConn, queries)
-	gcStore = NewGoalCategoryStore(dbConn, queries)
+	userStore = us.NewUserStore(queries)
+	gStore = NewGoalStore(queries)
+	gcStore = NewGoalCategoryStore(queries)
 }
 
 func TestMain(m *testing.M) {
