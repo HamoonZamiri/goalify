@@ -51,8 +51,8 @@ func setup(ctx context.Context) {
 
 	queries := sqlcdb.New(pgxPool)
 	userStore = us.NewUserStore(dbConn, queries)
-	gStore = NewGoalStore(dbConn)
-	gcStore = NewGoalCategoryStore(dbConn)
+	gStore = NewGoalStore(dbConn, queries)
+	gcStore = NewGoalCategoryStore(dbConn, queries)
 }
 
 func TestMain(m *testing.M) {

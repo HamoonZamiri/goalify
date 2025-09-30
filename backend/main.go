@@ -105,8 +105,8 @@ func Run() error {
 	userService := usrSrv.NewUserService(userStore, eventManager)
 	userHandler := uh.NewUserHandler(userService)
 
-	goalStore := gs.NewGoalStore(dbInstance)
-	goalCategoryStore := gs.NewGoalCategoryStore(dbInstance)
+	goalStore := gs.NewGoalStore(dbInstance, queries)
+	goalCategoryStore := gs.NewGoalCategoryStore(dbInstance, queries)
 	goalService := gSrv.NewGoalService(
 		goalStore,
 		goalCategoryStore,
