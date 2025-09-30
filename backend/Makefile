@@ -7,7 +7,7 @@ MIGRATIONS_DIR ?= ./db/migrations
 
 # Build commands
 build:
-	@go build -o bin/goalify
+	@go build -o bin/goalify ./cmd/main.go
 
 run: build
 	@./bin/goalify
@@ -61,13 +61,17 @@ unit:
 	@echo "Running unit tests..."
 	@go test -count=1 ./utils/... ./middleware/... ./db/...
 
-inte:
-	@echo "Running integration tests..."
+store:
+	@echo "Running store/repository tests..."
 	@go test -count=1 -v ./users/stores/...
 	@go test -count=1 -v ./goals/stores/...
-	@go test -count=1 -v ./main_test.go
+	@go test -count=1 -v ./loot/stores/...
 
-test: unit inte
+inte:
+	@echo "Running integration tests..."
+	@go test -count=1 -v ./tests/...
+
+test: unit store inte
 
 testall:
 	@go test -count=1 -v ./...
@@ -108,9 +112,10 @@ help:
 	@echo "  generate      - Generate code (sqlc)"
 	@echo "  lint          - Run linter"
 	@echo "  lint-fix      - Run linter with auto-fixes"
-	@echo "  test          - Run all tests"
+	@echo "  test          - Run all tests (unit + store + integration)"
 	@echo "  unit          - Run unit tests only"
-	@echo "  inte          - Run integration tests only"
+	@echo "  store         - Run store/repository tests only"
+	@echo "  inte          - Run integration tests only (tests/ directory)"
 	@echo "  testall       - Run all tests including edge cases"
 	@echo "  up            - Start Docker services"
 	@echo "  down          - Stop Docker services"
@@ -118,4 +123,4 @@ help:
 	@echo "  help          - Show this help"
 	@echo "  list-tools    - List installed go tools
 
-.PHONY: build run dev jqdev migrate-up migrate-down migrate-status migrate-create generate lint lint-fix unit inte test testall up down start clean help
+.PHONY: build run dev jqdev migrate-up migrate-down migrate-status migrate-create generate lint lint-fix unit store inte test testall up down start clean help
