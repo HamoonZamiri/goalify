@@ -10,6 +10,7 @@ const (
 	DB_USER             ConfigKey = "DB_USER"
 	DB_NAME             ConfigKey = "DB_NAME"
 	DB_HOST             ConfigKey = "DB_HOST"
+	DB_CONN_STRING      ConfigKey = "DATABASE_URL"
 	JWT_SECRET          ConfigKey = "JWT_SECRET"
 	PORT                ConfigKey = "PORT"
 	TEST_DB_CONN_STRING ConfigKey = "TEST_DB_CONN_STRING"

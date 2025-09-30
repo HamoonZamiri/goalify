@@ -13,10 +13,11 @@ import (
 // Config holds all configuration values
 type Config struct {
 	// Database configuration
-	DBPassword string
-	DBUser     string
-	DBName     string
-	DBHost     string
+	DBPassword   string
+	DBUser       string
+	DBName       string
+	DBHost       string
+	DBConnString string
 
 	// Test database configuration
 	TestDBPassword   string
@@ -133,6 +134,7 @@ func loadFromEnvironment() *Config {
 
 	// Load optional variables
 	config.DBHost = os.Getenv(string(DB_HOST))
+	config.DBConnString = os.Getenv(string(DB_CONN_STRING))
 	config.TestDBPassword = os.Getenv(string(TEST_DB_PASSWORD))
 	config.TestDBUser = os.Getenv(string(TEST_DB_USER))
 	config.TestDBName = os.Getenv(string(TEST_DB_NAME))
@@ -149,6 +151,9 @@ func loadFromEnvironment() *Config {
 }
 
 func (c *Config) GetDBConnectionString() string {
+	if c.DBConnString != "" {
+		return c.DBConnString
+	}
 	return fmt.Sprintf("user=%s password=%s dbname=%s host=%s sslmode=disable",
 		c.DBUser, c.DBPassword, c.DBName, c.DBHost)
 }

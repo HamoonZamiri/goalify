@@ -8,7 +8,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/jmoiron/sqlx"
 )
 
 type (
@@ -20,7 +19,6 @@ type (
 		DeleteGoalCategoryById(categoryId uuid.UUID) error
 	}
 	goalCategoryStore struct {
-		db      *sqlx.DB
 		queries *sqlcdb.Queries
 	}
 )
@@ -116,9 +114,8 @@ func mapGoalCategoryWithGoalsSingleRow(rows []sqlcdb.GetGoalCategoryWithGoalsByI
 	return gc, nil
 }
 
-func NewGoalCategoryStore(db *sqlx.DB, queries *sqlcdb.Queries) GoalCategoryStore {
+func NewGoalCategoryStore(queries *sqlcdb.Queries) GoalCategoryStore {
 	return &goalCategoryStore{
-		db:      db,
 		queries: queries,
 	}
 }

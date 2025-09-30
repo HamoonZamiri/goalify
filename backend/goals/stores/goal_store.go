@@ -7,7 +7,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/jmoiron/sqlx"
 )
 
 type GoalStore interface {
@@ -20,7 +19,6 @@ type GoalStore interface {
 }
 
 type goalStore struct {
-	db      *sqlx.DB
 	queries *sqlcdb.Queries
 }
 
@@ -38,9 +36,8 @@ func pgxGoalToEntity(g sqlcdb.Goal) *entities.Goal {
 	}
 }
 
-func NewGoalStore(db *sqlx.DB, queries *sqlcdb.Queries) GoalStore {
+func NewGoalStore(queries *sqlcdb.Queries) GoalStore {
 	return &goalStore{
-		db:      db,
 		queries: queries,
 	}
 }
