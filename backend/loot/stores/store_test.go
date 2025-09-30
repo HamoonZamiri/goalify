@@ -3,18 +3,17 @@ package stores
 import (
 	"context"
 	"goalify/db"
+	sqlcdb "goalify/db/generated"
 	"goalify/testsetup"
 	"log"
 	"os"
 	"testing"
 
-	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
 )
 
 var (
-	dbConn      *sqlx.DB
 	cStore      LootStore
 	pgContainer *postgres.PostgresContainer
 )
@@ -32,12 +31,13 @@ func setup(ctx context.Context) {
 		panic(err)
 	}
 
-	dbConn, err = db.NewWithConnString(connStr)
+	pgxPool, err := db.NewPgxPoolWithConnString(ctx, connStr)
 	if err != nil {
 		panic(err)
 	}
 
-	cStore = NewChestStore(dbConn)
+	queries := sqlcdb.New(pgxPool)
+	cStore = NewChestStore(queries)
 }
 
 func TestMain(m *testing.M) {
