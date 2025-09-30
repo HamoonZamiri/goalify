@@ -1,11 +1,12 @@
 package stores
 
 import (
-	"fmt"
-	"goalify/db"
+	"context"
+	sqlcdb "goalify/db/generated"
 	"goalify/entities"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -19,70 +20,119 @@ type GoalStore interface {
 }
 
 type goalStore struct {
-	db *sqlx.DB
+	db      *sqlx.DB
+	queries *sqlcdb.Queries
 }
 
-func NewGoalStore(db *sqlx.DB) GoalStore {
-	return &goalStore{db: db}
+// Helper function to convert sqlc Goal to entity Goal
+func pgxGoalToEntity(g sqlcdb.Goal) *entities.Goal {
+	return &entities.Goal{
+		Id:          uuid.UUID(g.ID.Bytes),
+		Title:       g.Title,
+		Description: g.Description.String,
+		UserId:      uuid.UUID(g.UserID.Bytes),
+		CategoryId:  uuid.UUID(g.CategoryID.Bytes),
+		Status:      string(g.Status.GoalStatus),
+		CreatedAt:   g.CreatedAt.Time,
+		UpdatedAt:   g.UpdatedAt.Time,
+	}
+}
+
+func NewGoalStore(db *sqlx.DB, queries *sqlcdb.Queries) GoalStore {
+	return &goalStore{
+		db:      db,
+		queries: queries,
+	}
 }
 
 func (s *goalStore) CreateGoal(title, description string, userId, categoryId uuid.UUID) (*entities.Goal, error) {
-	query := `INSERT INTO goals (title, description, user_id, category_id)
-  VALUES ($1, $2, $3, $4)
-  RETURNING *`
+	params := sqlcdb.CreateGoalParams{
+		Title:       title,
+		Description: pgtype.Text{String: description, Valid: true},
+		UserID:      pgtype.UUID{Bytes: userId, Valid: true},
+		CategoryID:  pgtype.UUID{Bytes: categoryId, Valid: true},
+	}
 
-	var goal entities.Goal
-	err := s.db.QueryRowx(query, title, description, userId, categoryId).StructScan(&goal)
+	goal, err := s.queries.CreateGoal(context.Background(), params)
 	if err != nil {
 		return nil, err
 	}
-	return &goal, nil
+
+	return pgxGoalToEntity(goal), nil
 }
 
 func (s *goalStore) UpdateGoalStatus(goalId uuid.UUID, status string) (*entities.Goal, error) {
-	query := `UPDATE goals SET status = $1 WHERE id = $2 RETURNING *`
+	params := sqlcdb.UpdateGoalStatusParams{
+		Status: sqlcdb.NullGoalStatus{GoalStatus: sqlcdb.GoalStatus(status), Valid: true},
+		ID:     pgtype.UUID{Bytes: goalId, Valid: true},
+	}
 
-	var goal entities.Goal
-	err := s.db.QueryRowx(query, status, goalId).StructScan(&goal)
+	goal, err := s.queries.UpdateGoalStatus(context.Background(), params)
 	if err != nil {
 		return nil, err
 	}
 
-	return &goal, nil
+	return pgxGoalToEntity(goal), nil
 }
 
 func (s *goalStore) GetGoalsByUserId(userId uuid.UUID) ([]*entities.Goal, error) {
-	goals := make([]*entities.Goal, 0)
-
-	err := s.db.Select(&goals, "SELECT * FROM goals WHERE user_id = $1", userId)
+	goals, err := s.queries.GetGoalsByUserId(context.Background(), pgtype.UUID{Bytes: userId, Valid: true})
 	if err != nil {
 		return nil, err
 	}
-	return goals, nil
+
+	result := make([]*entities.Goal, len(goals))
+	for i, g := range goals {
+		result[i] = pgxGoalToEntity(g)
+	}
+
+	return result, nil
 }
 
 func (s *goalStore) GetGoalById(goalId uuid.UUID) (*entities.Goal, error) {
-	var goal entities.Goal
-
-	err := s.db.Get(&goal, "SELECT * FROM goals WHERE id = $1", goalId)
+	goal, err := s.queries.GetGoalById(context.Background(), pgtype.UUID{Bytes: goalId, Valid: true})
 	if err != nil {
 		return nil, err
 	}
-	return &goal, nil
+
+	return pgxGoalToEntity(goal), nil
 }
 
 func (s *goalStore) UpdateGoalById(goalId uuid.UUID, updates map[string]interface{}) (*entities.Goal, error) {
-	query, args := db.BuildUpdateQuery("goals", updates, goalId)
+	params := sqlcdb.UpdateGoalByIdParams{
+		ID: pgtype.UUID{Bytes: goalId, Valid: true},
+	}
 
-	var goal entities.Goal
-	err := s.db.QueryRowx(fmt.Sprintf("%s RETURNING *", query), args...).StructScan(&goal)
+	// Convert map updates to typed parameters
+	if title, ok := updates["title"]; ok {
+		if titleStr, ok := title.(string); ok {
+			params.Title = pgtype.Text{String: titleStr, Valid: true}
+		}
+	}
+	if description, ok := updates["description"]; ok {
+		if descStr, ok := description.(string); ok {
+			params.Description = pgtype.Text{String: descStr, Valid: true}
+		}
+	}
+	if status, ok := updates["status"]; ok {
+		if statusStr, ok := status.(string); ok {
+			params.Status = sqlcdb.NullGoalStatus{GoalStatus: sqlcdb.GoalStatus(statusStr), Valid: true}
+		}
+	}
+	if categoryId, ok := updates["category_id"]; ok {
+		if catUUID, ok := categoryId.(uuid.UUID); ok {
+			params.CategoryID = pgtype.UUID{Bytes: catUUID, Valid: true}
+		}
+	}
+
+	goal, err := s.queries.UpdateGoalById(context.Background(), params)
 	if err != nil {
 		return nil, err
 	}
-	return &goal, nil
+
+	return pgxGoalToEntity(goal), nil
 }
 
 func (s *goalStore) DeleteGoalById(goalId uuid.UUID) error {
-	_, err := s.db.Exec("DELETE FROM goals WHERE id = $1", goalId)
-	return err
+	return s.queries.DeleteGoalById(context.Background(), pgtype.UUID{Bytes: goalId, Valid: true})
 }
