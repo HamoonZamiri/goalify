@@ -1,0 +1,11 @@
+.env
+.env.local
+.git
+.gitignore
+bin/
+*.md
+main_test.go
+tests/
+*_test.go
+.air.toml
+Makefile
