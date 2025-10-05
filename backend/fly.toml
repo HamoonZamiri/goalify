@@ -16,6 +16,9 @@ primary_region = 'iad'
   min_machines_running = 0
   processes = ['app']
 
+[deploy]
+  release_command = "go tool github.com/pressly/goose/v3/cmd/goose -dir "./db/migrations" postgres "$DIRECT_DATABASE_URL" up"
+
 [[vm]]
   cpu_kind = 'shared'
   cpus = 1
