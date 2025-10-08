@@ -44,7 +44,9 @@ func AddRoutes(
 	addRoute(mux, http.MethodDelete, "/api/goals/categories/{categoryId}", goalHandler.HandleDeleteGoalCategoryById, mw.AuthChain)
 
 	// need options method available on all endpoints for CORS
-	addRoute(mux, http.MethodOptions, "/api/{endpoints...}", nil, middleware.CreateChain(mw.CorsChain))
+	mux.Handle("OPTIONS /api/", mw.CorsChain(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNoContent)
+	})))
 
 	// Server Sent Events endpoint
 	addRoute(mux, http.MethodOptions, "/api/events", nil, mw.CorsChain)
