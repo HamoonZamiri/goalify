@@ -47,6 +47,7 @@ async function login() {
         text-color="dark"
         type="email"
         v-model="formData.email"
+        errorslot
       >
         <template #label><Text>Email</Text></template>
         <template v-if="error?.errors?.email" #error>
@@ -58,6 +59,7 @@ async function login() {
         bg="primary"
         type="password"
         v-model="formData.password"
+        errorslot
       >
         <template #label><Text>Password</Text></template>
         <template v-if="error?.errors?.password" #error>

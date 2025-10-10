@@ -58,6 +58,7 @@ async function signup() {
         text-color="dark"
         type="email"
         v-model="formData.email"
+        errorslot
       >
         <template #label><Text>Email</Text></template>
         <template v-if="error?.errors?.email" #error>
@@ -69,6 +70,7 @@ async function signup() {
         bg="primary"
         type="password"
         v-model="formData.password"
+        errorslot
       >
         <template #label><Text>Password</Text></template>
         <template v-if="error?.errors?.password" #error>
@@ -80,6 +82,7 @@ async function signup() {
         bg="primary"
         type="password"
         v-model="formData.confirmPassword"
+        errorslot
       >
         <template #label><Text>Confirm Password</Text></template>
         <template v-if="error?.errors?.confirm_password" #error>
