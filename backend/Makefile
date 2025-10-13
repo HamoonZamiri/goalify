@@ -3,7 +3,7 @@
 export
 -include .env
 DB_URL = postgres://$(DB_USER):$(DB_PASSWORD)@localhost:5432/$(DB_NAME)?sslmode=disable
-MIGRATIONS_DIR ?= ./db/migrations
+MIGRATIONS_DIR ?= ./internal/db/migrations
 
 # Build commands
 build:
@@ -59,13 +59,13 @@ lint-fix:
 # Testing commands
 unit:
 	@echo "Running unit tests..."
-	@go test -count=1 ./utils/... ./middleware/... ./db/...
+	@go test -count=1 ./pkg/... ./internal/db/... ./internal/middleware/
 
 store:
 	@echo "Running store/repository tests..."
-	@go test -count=1 -v ./users/stores/...
-	@go test -count=1 -v ./goals/stores/...
-	@go test -count=1 -v ./loot/stores/...
+	@go test -count=1 -v ./internal/users/stores/...
+	@go test -count=1 -v ./internal/goals/stores/...
+	@go test -count=1 -v ./internal/loot/stores/...
 
 inte:
 	@echo "Running integration tests..."

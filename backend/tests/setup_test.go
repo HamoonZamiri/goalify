@@ -8,9 +8,9 @@ import (
 	"time"
 
 	"goalify/cmd/app"
-	"goalify/config"
-	sqlcdb "goalify/db/generated"
-	"goalify/testsetup"
+	"goalify/internal/config"
+	sqlcdb "goalify/internal/db/generated"
+	"goalify/internal/testsetup"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
