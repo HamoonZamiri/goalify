@@ -1,3 +1,6 @@
+/*
+Package middleware includes REST API middleware handlers. For example this package includes middleware to log requests and responses, authenticate users and apply CORS headers.
+*/
 package middleware
 
 import (
