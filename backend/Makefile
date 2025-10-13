@@ -22,7 +22,7 @@ jqdev: up
 	@echo "Waiting for Docker to start..."
 	@sleep 2
 	@echo "Starting air server with pretty json printing"
-	@go tool github.com/air-verse/air | jq -C -R 'fromjson?'
+	@go tool github.com/air-verse/air --build.cmd "go build -o bin/goalify ./cmd/main.go" --build.bin "./bin/goalify"  | jq -C -R 'fromjson?'
 
 # Migration commands
 migrate-up:
