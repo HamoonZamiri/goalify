@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"testing"
 
-	"goalify/entities"
-	"goalify/users/handler"
+	"goalify/internal/entities"
+	"goalify/internal/users/handler"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

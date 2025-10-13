@@ -7,10 +7,10 @@ import (
 	"io"
 	"net/http"
 
-	sqlcdb "goalify/db/generated"
-	"goalify/entities"
-	"goalify/users/handler"
-	"goalify/utils/responses"
+	sqlcdb "goalify/internal/db/generated"
+	"goalify/internal/entities"
+	"goalify/internal/users/handler"
+	"goalify/internal/responses"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"

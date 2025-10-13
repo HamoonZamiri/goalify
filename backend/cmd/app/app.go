@@ -2,19 +2,19 @@ package app
 
 import (
 	"context"
-	"goalify/config"
-	"goalify/db"
-	sqlcdb "goalify/db/generated"
-	gh "goalify/goals/handler"
-	gSrv "goalify/goals/service"
-	gs "goalify/goals/stores"
-	"goalify/middleware"
-	"goalify/routes"
-	uh "goalify/users/handler"
-	usrSrv "goalify/users/service"
-	us "goalify/users/stores"
-	"goalify/utils/events"
-	"goalify/utils/stacktrace"
+	"goalify/internal/config"
+	"goalify/internal/db"
+	sqlcdb "goalify/internal/db/generated"
+	"goalify/internal/events"
+	gh "goalify/internal/goals/handler"
+	gSrv "goalify/internal/goals/service"
+	gs "goalify/internal/goals/stores"
+	"goalify/internal/middleware"
+	"goalify/internal/routes"
+	uh "goalify/internal/users/handler"
+	usrSrv "goalify/internal/users/service"
+	us "goalify/internal/users/stores"
+	"goalify/pkg/stacktrace"
 	"log/slog"
 	"net/http"
 	"os"
@@ -64,7 +64,7 @@ func Run() error {
 	if currEnv == config.LocalTest {
 		_, b, _, _ := runtime.Caller(0)
 		basepath := filepath.Dir(b)
-		migrationDir := filepath.Join(basepath, "../../db/migrations")
+		migrationDir := filepath.Join(basepath, "../../internal/db/migrations")
 		err = goose.UpContext(context.Background(), stdlib.OpenDBFromPool(pgxPool), migrationDir)
 		if err != nil {
 			panic(err)
@@ -113,4 +113,3 @@ func Run() error {
 
 	return err
 }
-

@@ -2,8 +2,8 @@ package tests
 
 import (
 	"fmt"
-	"goalify/entities"
-	"goalify/utils/responses"
+	"goalify/internal/entities"
+	"goalify/internal/responses"
 	"net/http"
 	"testing"
 	"time"
