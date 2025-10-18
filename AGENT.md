@@ -47,13 +47,74 @@ Goalify is a full-stack productivity web application that tracks goals and goal 
 - Test files: `*.test.ts` or `*.spec.ts` (frontend), `*_test.go` (backend)
 
 ## Architecture
-- Frontend: Vue 3 Composition API with TypeScript
-- Backend: Golang standard library HTTP server
-- Database: PostgreSQL with Goose migrations  
-- Styling: Tailwind CSS with custom component primitives (Box, Text, InputField)
-- Build: Vite (frontend), Go toolchain (backend)
-- Package manager: pnpm (frontend)
-- Containerization: Docker Compose for development services
+
+### Backend
+- Golang standard library HTTP server
+- PostgreSQL with Goose migrations
+- Standard Go package structure
+
+### Frontend
+- Vue 3 Composition API with TypeScript
+- TanStack Query for data fetching & caching
+- Zod for schema validation
+- Styling: Tailwind CSS with custom UI primitives
+- Build: Vite
+- Package manager: pnpm
+
+**Frontend Folder Structure (Feature-Based):**
+```
+frontend/src/
+├── features/          # Domain-driven feature modules
+│   └── goals/
+│       ├── queries/          # TanStack Query hooks with inline queryDataFns
+│       ├── schemas/          # Zod schemas (entities & forms)
+│       ├── components/       # Feature-specific components
+│       ├── forms/           # Form components
+│       └── index.ts         # Barrel exports
+├── shared/            # Shared utilities (monorepo-ready)
+│   ├── components/ui/       # Primitives (Box, Button, Text, InputField)
+│   ├── api/                 # zodFetch, query client
+│   └── schemas/             # Common schemas
+├── pages/             # Route components ONLY
+├── types/             # Global TypeScript types
+└── router/
+```
+
+**Data Flow:**
+- Component → TanStack Query hook → inline queryDataFn → zodFetch → Backend
+- TanStack Query handles caching, loading states, errors, and refetching
+- Zod schemas validate API responses at runtime
+- Each query/mutation hook includes its own queryDataFn in the same file
+
+**Import Patterns:**
+```typescript
+// Feature imports (use in pages/cross-feature)
+import { useGoalCategories, GoalCard } from "@/features/goals";
+
+// Shared imports
+import { Box, Button } from "@/shared/components/ui";
+import { zodFetch } from "@/shared/api";
+
+// Within same feature (use relative imports)
+import { useGoalCategories } from "../queries";
+import type { Goal } from "../schemas";
+```
+
+**Key Files:**
+- `shared/api/client.ts` - zodFetch with automatic auth & token refresh
+- `shared/api/query-client.ts` - TanStack Query configuration
+- `features/goals/queries/queryKeys.ts` - Hierarchical query key factory
+- `features/goals/schemas/goal.schema.ts` - Zod entity schemas
+- `features/goals/schemas/goal-form.schema.ts` - Form validation schemas
+- All folders have `index.ts` barrel exports for clean imports
+
+**zodFetch Automatic Authentication:**
+- `zodFetch` automatically adds `Authorization: Bearer {token}` to all requests
+- Gets token from `useAuth().getUser()?.access_token` internally
+- No manual token passing needed in query hooks
+- If user is not logged in (token undefined), header is omitted
+- Server middleware ignores missing auth for `/login` and `/signup` endpoints
+- On 401 response, automatically attempts token refresh and retries request
 
 ## Security
 - Use appropriate data types that limit exposure of sensitive information
@@ -81,3 +142,179 @@ When adding new configuration options:
 5. Frontend: Use Vite's env variable conventions
 
 All configuration keys use consistent naming and MUST be documented.
+
+## Frontend Patterns & Best Practices
+
+### TanStack Query Usage (One Hook Per File)
+```typescript
+// Query hook pattern with inline queryDataFn
+// features/goals/queries/categories/useGoalCategories.ts
+
+async function goalCategoriesQueryDataFn(): Promise<GoalCategory[]> {
+  const result = await zodFetch(
+    `${API_BASE}/goals/categories`,
+    GoalCategoryResponseArraySchema,
+  );
+
+  if (isErrorResponse(result)) {
+    throw new Error(result.message);
+  }
+
+  return result.data;
+}
+
+export function useGoalCategories() {
+  return useQuery({
+    queryKey: categoryKeys.lists(),
+    queryFn: goalCategoriesQueryDataFn,
+  });
+}
+
+// Mutation hook pattern with inline queryDataFn
+// features/goals/queries/goals/useCreateGoal.ts
+async function createGoalQueryDataFn(
+  data: CreateGoalFormData
+): Promise<Goal> {
+  const result = await zodFetch(`${API_BASE}/goals`, GoalSchema, {
+    method: http.MethodPost,
+    body: JSON.stringify(data),
+  });
+
+  if (isErrorResponse(result)) {
+    throw new Error(result.message);
+  }
+
+  return result;
+}
+
+export function useCreateGoal() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: createGoalQueryDataFn,
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: categoryKeys.all });
+      toast.success(`Goal created: ${data.title}`);
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to create goal: ${error.message}`);
+    },
+  });
+}
+
+// Component usage
+const { data, isLoading, error } = useGoalCategories();
+const { mutate: createGoal, isPending } = useCreateGoal();
+```
+
+**Naming Convention:**
+- Query data functions follow the pattern: `{hookName without "use"}QueryDataFn()`
+- Example: `useGoalCategories()` hook → `goalCategoriesQueryDataFn()`
+- Example: `useCreateGoal()` hook → `createGoalQueryDataFn()`
+- Data functions are NOT exported - they're internal to the hook file
+- Each hook lives in its own file for better organization and Git diffs
+
+**Authentication & Error Handling:**
+- `zodFetch` automatically adds Authorization headers using `useAuth().getUser()?.access_token`
+- No need to pass tokens manually - zodFetch handles it internally
+- If token is undefined (user not logged in), it's simply omitted from headers
+- Server returns 401 for auth failures, triggering automatic token refresh flow
+- queryDataFns handle error checking internally and throw errors
+- Return type is clean data (`Promise<Goal>`) not union (`Promise<Goal | ErrorResponse>`)
+- Hooks simply call the queryDataFn and let errors propagate to TanStack Query
+- onError callbacks in mutations handle toast notifications
+
+### Query Keys (Hierarchical Pattern)
+```typescript
+// features/goals/queries/queryKeys.ts
+export const categoryKeys = {
+  all: ['categories'] as const,
+  lists: () => [...categoryKeys.all, 'list'] as const,
+  list: (filters: any) => [...categoryKeys.lists(), filters] as const,
+  details: () => [...categoryKeys.all, 'detail'] as const,
+  detail: (id: string) => [...categoryKeys.details(), id] as const,
+};
+
+// Invalidation
+queryClient.invalidateQueries({ queryKey: categoryKeys.all }); // All categories
+queryClient.invalidateQueries({ queryKey: categoryKeys.lists() }); // Just lists
+```
+
+### Query File Structure (One Hook Per File)
+Each query/mutation hook lives in its own file organized by subdomain:
+
+```
+features/goals/queries/
+├── queryKeys.ts              # Hierarchical query key factory
+├── categories/               # Category-related queries
+│   ├── useGoalCategories.ts
+│   ├── useCreateGoalCategory.ts
+│   ├── useUpdateGoalCategory.ts
+│   ├── useDeleteGoalCategory.ts
+│   └── index.ts             # Barrel export for category hooks
+├── goals/                   # Goal-related queries
+│   ├── useCreateGoal.ts
+│   ├── useUpdateGoal.ts
+│   ├── useDeleteGoal.ts
+│   └── index.ts             # Barrel export for goal hooks
+└── index.ts                 # Barrel export for all hooks
+```
+
+**Benefits:**
+- **NO separate `api/` directory** - queryDataFns are colocated with hooks
+- One hook per file (~30-40 lines each)
+- Easy to find and navigate specific hooks
+- Cleaner Git diffs - changes to one hook don't dirty large files
+- Natural organization by subdomain (categories vs goals)
+- queryDataFns are private to the file (not exported)
+- Only hooks are exported
+
+### Zod Schemas (Single Source of Truth)
+```typescript
+// Define schema once
+const GoalSchema = z.object({
+  id: z.string().uuid(),
+  title: z.string(),
+  // ...
+});
+
+// Runtime validation
+const goal = GoalSchema.parse(json);
+
+// TypeScript types
+export type Goal = z.infer<typeof GoalSchema>;
+```
+
+### Adding New Features
+When adding a new feature (e.g., `features/auth/`):
+1. Create folder structure: `queries/`, `schemas/`, `components/`, `forms/`
+2. Define Zod schemas in `schemas/`
+3. Create query keys in `queries/queryKeys.ts`
+4. Create subdomain folders within `queries/` (e.g., `queries/sessions/`, `queries/users/`)
+5. Create one file per hook with inline queryDataFn using `{hookNameWithoutUse}QueryDataFn()` naming
+6. Add barrel exports:
+   - Each subdomain folder gets an `index.ts` exporting all its hooks
+   - `queries/index.ts` exports all subdomain folders + queryKeys
+7. Build components/forms with their own barrel exports
+8. Export from feature root `index.ts`
+
+**Example:**
+```
+features/auth/
+├── queries/
+│   ├── queryKeys.ts
+│   ├── sessions/
+│   │   ├── useLogin.ts
+│   │   ├── useLogout.ts
+│   │   └── index.ts
+│   └── index.ts
+├── schemas/
+├── components/
+├── forms/
+└── index.ts
+```
+
+### Migration Status
+- ✅ Goals feature fully migrated to new structure
+- ⏳ Auth feature (uses old hooks/api/useApi.ts)
+- ⏳ Levels feature
+- Old code in `components/goals/`, `hooks/goals/`, `components/primitives/` can be deleted after validation
