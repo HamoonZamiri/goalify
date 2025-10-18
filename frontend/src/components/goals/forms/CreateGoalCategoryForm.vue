@@ -8,12 +8,12 @@ import Button from "@/components/primitives/Button.vue";
 import { ref } from "vue";
 
 type CreateCategoryForm = {
-  title: string;
-  xp_per_goal: number;
+	title: string;
+	xp_per_goal: number;
 };
 const formData = ref<CreateCategoryForm>({
-  title: "",
-  xp_per_goal: 0,
+	title: "",
+	xp_per_goal: 0,
 });
 
 const error = ref<ErrorResponse>();
@@ -23,23 +23,23 @@ const { createGoalCategory, isError } = useApi();
 const emit = defineEmits(["submit", "close"]);
 
 async function submit() {
-  emit("submit", { ...formData.value });
-  const res = await createGoalCategory(
-    formData.value.title,
-    formData.value.xp_per_goal,
-  );
-  if (isError(res)) {
-    error.value = res;
-    return;
-  }
+	emit("submit", { ...formData.value });
+	const res = await createGoalCategory(
+		formData.value.title,
+		formData.value.xp_per_goal,
+	);
+	if (isError(res)) {
+		error.value = res;
+		return;
+	}
 
-  formData.value.title = "";
-  formData.value.xp_per_goal = 1;
-  error.value = undefined;
+	formData.value.title = "";
+	formData.value.xp_per_goal = 1;
+	error.value = undefined;
 
-  // dispatch an event to update the categories
-  addCategory(res);
-  emit("close");
+	// dispatch an event to update the categories
+	addCategory(res);
+	emit("close");
 }
 </script>
 <template>

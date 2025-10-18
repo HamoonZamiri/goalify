@@ -9,13 +9,13 @@ import InputField from "@/components/primitives/InputField.vue";
 import Button from "@/components/primitives/Button.vue";
 
 type CreateGoalForm = {
-  title: string;
-  description: string;
+	title: string;
+	description: string;
 };
 
 const formData = ref<CreateGoalForm>({
-  title: "",
-  description: "",
+	title: "",
+	description: "",
 });
 
 const error = ref<ErrorResponse>();
@@ -23,7 +23,7 @@ const { addGoal } = useGoals();
 const { createGoal, isError } = useApi();
 
 const CreateGoalFormProps = defineProps<{
-  categoryId: string;
+	categoryId: string;
 }>();
 
 const { categoryId } = CreateGoalFormProps;
@@ -31,20 +31,20 @@ const { categoryId } = CreateGoalFormProps;
 const emit = defineEmits(["submit", "close"]);
 
 async function submit() {
-  emit("submit", { ...formData.value });
-  const { title, description } = formData.value;
-  const res = await createGoal(title, description, categoryId);
-  if (isError(res)) {
-    error.value = res;
-    return;
-  }
-  addGoal(categoryId, res);
-  formData.value.title = "";
-  formData.value.description = "";
-  error.value = undefined;
+	emit("submit", { ...formData.value });
+	const { title, description } = formData.value;
+	const res = await createGoal(title, description, categoryId);
+	if (isError(res)) {
+		error.value = res;
+		return;
+	}
+	addGoal(categoryId, res);
+	formData.value.title = "";
+	formData.value.description = "";
+	error.value = undefined;
 
-  emit("close");
-  toast.success(`Successfully created goal: ${res.title}`);
+	emit("close");
+	toast.success(`Successfully created goal: ${res.title}`);
 }
 </script>
 
