@@ -1,7 +1,7 @@
+import { mount, type VueWrapper } from "@vue/test-utils";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { type VueWrapper, mount } from "@vue/test-utils";
-import GoalCategoryCard from "./GoalCategoryCard.vue";
 import { goalCategory } from "@/__mocks__/mocks";
+import GoalCategoryCard from "./GoalCategoryCard.vue";
 
 function mountComponent() {
 	return mount(GoalCategoryCard, {

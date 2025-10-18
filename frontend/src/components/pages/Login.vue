@@ -1,13 +1,9 @@
 <script setup lang="ts">
-import router from "@/router";
-import { API_BASE } from "@/utils/constants";
-import { Schemas, type ErrorResponse } from "@/utils/schemas";
 import { ref } from "vue";
 import useAuth from "@/hooks/auth/useAuth";
-import Box from "@/components/primitives/Box.vue";
-import Text from "@/components/primitives/Text.vue";
-import InputField from "@/components/primitives/InputField.vue";
-import Button from "@/components/primitives/Button.vue";
+import router from "@/router";
+import { API_BASE } from "@/utils/constants";
+import { type ErrorResponse, Schemas } from "@/utils/schemas";
 
 const emit = defineEmits(["submit"]);
 const { setUser } = useAuth();

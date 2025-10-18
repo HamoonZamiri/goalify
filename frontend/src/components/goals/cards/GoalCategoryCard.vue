@@ -1,17 +1,10 @@
 <script setup lang="ts">
-import type { GoalCategory } from "@/utils/schemas";
-import GoalCard from "./GoalCard.vue";
-import ModalForm from "@/components/ModalForm.vue";
-import CreateGoalForm from "@/components/goals/forms/CreateGoalForm.vue";
-import CreateGoalButton from "@/components/goals/buttons/CreateGoalButton.vue";
-import { Menu, MenuButton, MenuItems, MenuItem } from "@headlessui/vue";
-import Box from "@/components/primitives/Box.vue";
-import Text from "@/components/primitives/Text.vue";
-import InputField from "@/components/primitives/InputField.vue";
 import { reactive, ref, watch } from "vue";
-import useGoals from "@/hooks/goals/useGoals";
-import useApi from "@/hooks/api/useApi";
 import { toast } from "vue3-toastify";
+import useApi from "@/hooks/api/useApi";
+import useGoals from "@/hooks/goals/useGoals";
+import type { GoalCategory } from "@/utils/schemas";
+
 const props = defineProps<{
 	goalCategory: GoalCategory;
 }>();

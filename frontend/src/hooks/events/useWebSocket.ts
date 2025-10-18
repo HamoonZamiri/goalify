@@ -1,8 +1,8 @@
-import { events } from "@/utils/constants";
-import { Schemas } from "@/utils/schemas";
 import { onUnmounted, ref } from "vue";
 import { z } from "zod";
 import useGoals from "@/hooks/goals/useGoals";
+import { events } from "@/utils/constants";
+import { Schemas } from "@/utils/schemas";
 
 function createEventSchema<TData extends z.ZodTypeAny>(schema: TData) {
 	return z.object({

@@ -1,10 +1,10 @@
 import useZodFetch from "@/hooks/api/useZodFetch";
 import { API_BASE, http } from "@/utils/constants";
 import {
-	Schemas,
 	type ErrorResponse,
 	type Goal,
 	type GoalCategory,
+	Schemas,
 } from "@/utils/schemas";
 import useAuth from "../auth/useAuth";
 

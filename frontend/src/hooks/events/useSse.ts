@@ -1,10 +1,10 @@
+import { readonly, ref } from "vue";
+import { toast } from "vue3-toastify";
+import { z } from "zod";
+import useGoals from "@/hooks/goals/useGoals";
 import { events } from "@/utils/constants";
 import { Schemas, type User } from "@/utils/schemas";
-import { readonly, ref } from "vue";
-import useGoals from "@/hooks/goals/useGoals";
 import useAuth from "../auth/useAuth";
-import { z } from "zod";
-import { toast } from "vue3-toastify";
 
 const xpUpdateSchema = z.object({
 	xp: z.number(),

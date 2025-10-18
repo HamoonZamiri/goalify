@@ -1,26 +1,13 @@
 <script setup lang="ts">
+import { nextTick, reactive, ref, watch } from "vue";
 import type { Goal } from "@/utils/schemas";
-import { ref, watch, reactive, nextTick } from "vue";
-import {
-	Dialog,
-	DialogPanel,
-	Listbox,
-	ListboxButton,
-	ListboxOption,
-	ListboxOptions,
-	TransitionRoot,
-} from "@headlessui/vue";
-import Text from "@/components/primitives/Text.vue";
-import Box from "@/components/primitives/Box.vue";
-import InputField from "@/components/primitives/InputField.vue";
-import CheckOutline from "@/components/icons/CheckOutline.vue";
-import Button from "@/components/primitives/Button.vue";
-import XMark from "@/components/icons/XMark.vue";
+
 ("@/components/icons/CheckOutline.vue");
-import useGoals from "@/hooks/goals/useGoals";
-import useApi from "@/hooks/api/useApi";
-import DeleteModal from "@/components/DeleteModal.vue";
+
 import { toast } from "vue3-toastify";
+import useApi from "@/hooks/api/useApi";
+import useGoals from "@/hooks/goals/useGoals";
+
 const props = defineProps<{
 	goal: Goal;
 }>();
@@ -148,7 +135,7 @@ const statusMap = { not_complete: "Not Complete", complete: "Complete" };
             >
               <template #right>
                 <XMark
-                  :onclick="(_) => setIsEditing(false)"
+                  :onclick="() => setIsEditing(false)"
                   class="sm:ml-auto hover:cursor-pointer"
                 />
               </template>

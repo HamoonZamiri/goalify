@@ -1,5 +1,5 @@
+import { mount, type VueWrapper } from "@vue/test-utils";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { type VueWrapper, mount } from "@vue/test-utils";
 import CreateGoalCategoryForm from "./CreateGoalCategoryForm.vue";
 
 function mountComponent() {

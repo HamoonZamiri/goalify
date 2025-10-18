@@ -1,11 +1,10 @@
 <script setup lang="ts">
 import type { InputTypeHTMLAttribute } from "vue";
-import Box from "./Box.vue";
 import {
-	type Width,
 	type Height,
 	type TextColor,
 	textColorMap,
+	type Width,
 } from "@/utils/tailwind";
 
 defineOptions({

@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import useAuth from "@/hooks/auth/useAuth";
 import router from "@/router/index";
-import Navbar from "@/components/navbar/Navbar.vue";
-import Box from "@/components/primitives/Box.vue";
 
 const { isLoggedIn } = useAuth();
 if (!isLoggedIn()) {

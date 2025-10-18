@@ -1,8 +1,7 @@
 <script setup lang="ts">
+import { onMounted, ref } from "vue";
 import useApi from "@/hooks/api/useApi";
 import useAuth from "@/hooks/auth/useAuth";
-import { onMounted, ref } from "vue";
-import ProfileMenu from "@/components/navbar/ProfileMenu.vue";
 
 const { isLoggedIn, getUser } = useAuth();
 const { getLevel, isError } = useApi();

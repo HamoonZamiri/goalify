@@ -1,11 +1,11 @@
-import { API_BASE, http } from "@/utils/constants";
-import useAuth from "../auth/useAuth";
-import router from "@/router";
-import { Schemas, type ErrorResponse, type User } from "@/utils/schemas";
 import type { z } from "zod";
+import router from "@/router";
+import { API_BASE, http } from "@/utils/constants";
+import { type ErrorResponse, Schemas, type User } from "@/utils/schemas";
+import useAuth from "../auth/useAuth";
 import { useSSE } from "../events/useSse";
 
-let refreshPromise: Promise<User | undefined> | undefined = undefined;
+let refreshPromise: Promise<User | undefined> | undefined;
 
 function useZodFetch() {
 	const { setUser, getUser, logout } = useAuth();
@@ -40,6 +40,33 @@ function useZodFetch() {
 				setUser(parsedJson);
 				// Reconnect SSE with fresh access token
 				reconnect(`${API_BASE}/events?token=${parsedJson.access_token}`);
+				refreshPromise = (async () => {
+					try {
+						const user = getUser();
+						if (!user) return undefined;
+						const res = await fetch(`${API_BASE}/users/refresh`, {
+							method: "POST",
+							headers: {
+								"Content-Type": "application/json",
+							},
+							body: JSON.stringify({
+								user_id: user.id,
+								refresh_token: user.refresh_token,
+							}),
+						});
+						const json: unknown = await res.json();
+						if (!res.ok) {
+							logout();
+							router.push({ name: "Login" });
+							return undefined;
+						}
+						const parsedJson = Schemas.UserSchema.parse(json);
+						setUser(parsedJson);
+						return parsedJson;
+					} finally {
+						refreshPromise = undefined;
+					}
+				})();
 				return parsedJson;
 			} finally {
 				refreshPromise = undefined;

@@ -1,4 +1,4 @@
-import { reactive, ref } from "vue";
+import { reactive } from "vue";
 import type { Goal, GoalCategory } from "@/utils/schemas";
 
 const categoryState = reactive<{ categories: GoalCategory[] }>({

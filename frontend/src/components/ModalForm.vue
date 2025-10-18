@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { Dialog, DialogPanel } from "@headlessui/vue";
-
 defineProps<{
 	modelValue: boolean;
 }>();

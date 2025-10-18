@@ -1,6 +1,6 @@
-import { Schemas, type User } from "@/utils/schemas";
 import Cookies from "js-cookie";
 import { ref } from "vue";
+import { Schemas, type User } from "@/utils/schemas";
 
 const authState = ref<User>();
 

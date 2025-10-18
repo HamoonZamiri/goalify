@@ -1,3 +1,4 @@
+import { mount, type VueWrapper } from "@vue/test-utils";
 import {
 	afterAll,
 	afterEach,
@@ -7,10 +8,9 @@ import {
 	it,
 	vi,
 } from "vitest";
-import { type VueWrapper, mount } from "@vue/test-utils";
-import Navbar from "./Navbar.vue";
 import { user } from "@/__mocks__/mocks";
 import useAuth from "@/hooks/auth/useAuth";
+import Navbar from "./Navbar.vue";
 
 describe("Navbar tests", () => {
 	let wrapper: VueWrapper;

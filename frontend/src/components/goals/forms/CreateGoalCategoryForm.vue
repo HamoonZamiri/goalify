@@ -1,11 +1,8 @@
 <script setup lang="ts">
+import { ref } from "vue";
 import useApi from "@/hooks/api/useApi";
 import useGoals from "@/hooks/goals/useGoals";
 import type { ErrorResponse } from "@/utils/schemas";
-import Text from "@/components/primitives/Text.vue";
-import InputField from "@/components/primitives/InputField.vue";
-import Button from "@/components/primitives/Button.vue";
-import { ref } from "vue";
 
 type CreateCategoryForm = {
 	title: string;
