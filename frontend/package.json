@@ -18,6 +18,8 @@
   },
   "dependencies": {
     "@headlessui/vue": "^1.7.22",
+    "@tanstack/vue-form": "^1.23.7",
+    "@tanstack/vue-query": "^5.90.3",
     "js-cookie": "^3.0.5",
     "vue": "^3.4.21",
     "vue-router": "^4.3.0",

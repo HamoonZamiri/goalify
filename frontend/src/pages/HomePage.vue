@@ -1,46 +1,38 @@
 <script setup lang="ts">
-import GoalCategoryCard from "@/components/goals/cards/GoalCategoryCard.vue";
-import { onMounted, ref } from "vue";
+import { ref, onMounted } from "vue";
+import GoalCategoryCard from "@/features/goals/components/GoalCategoryCard.vue";
 import ModalForm from "@/components/ModalForm.vue";
-import CreateGoalCategoryForm from "@/components/goals/forms/CreateGoalCategoryForm.vue";
-import CreateCategoryButton from "@/components/goals/buttons/CreateCategoryButton.vue";
-import { useSSE } from "@/hooks/events/useSse";
-import useGoals from "@/hooks/goals/useGoals";
-import useAuth from "@/hooks/auth/useAuth";
-import type { ErrorResponse } from "@/utils/schemas";
-import useApi from "@/hooks/api/useApi";
-import { API_BASE } from "@/utils/constants";
-import Box from "@/components/primitives/Box.vue";
+import CreateGoalCategoryForm from "@/features/goals/forms/CreateGoalCategoryForm.vue";
+import CreateCategoryButton from "@/features/goals/components/CreateCategoryButton.vue";
+import Box from "@/shared/components/ui/Box.vue";
 import ArrowPath from "@/components/icons/ArrowPath.vue";
-
-// State
-const { getUser } = useAuth();
-const { getUserGoalCategories, isError } = useApi();
-const error = ref<ErrorResponse>();
-const isLoading = ref<boolean>(true);
-const { connect } = useSSE();
-const { setCategories, categoryState } = useGoals();
+import { useGoalCategories } from "@/features/goals/queries";
+import { useSSE } from "@/hooks/events/useSse";
+import { API_BASE } from "@/utils/constants";
+import useAuth from "@/hooks/auth/useAuth";
 
 const isCreateCategoryDialogOpen = ref(false);
 
-onMounted(async () => {
-  const res = await getUserGoalCategories();
-  if (isError(res)) {
-    // in this case we are only expecting a message and not input validation errors
-    error.value = res;
-    return;
-  }
+const { getUser } = useAuth();
+const { data: categories, isLoading, error } = useGoalCategories();
 
-  setCategories(res.data);
-  isLoading.value = false;
+const { connect } = useSSE();
+
+onMounted(() => {
   connect(`${API_BASE}/events?token=${getUser()?.access_token}`);
-  setCategories(res.data);
-  isLoading.value = false;
 });
 </script>
 
 <template>
   <ArrowPath class="animate-spin" v-if="isLoading" />
+  <Box
+    v-else-if="error"
+    height="h-full"
+    bg="darkest"
+    class="items-center justify-center"
+  >
+    <p class="text-red-500">Error loading categories: {{ error.message }}</p>
+  </Box>
   <Box
     v-else
     height="h-full"
@@ -57,8 +49,8 @@ onMounted(async () => {
         width="w-full"
         bg="darkest"
         class="sm:w-1/2 lg:w-1/3 flex-shrink-0"
-        v-for="cat in categoryState.categories"
-        key="cat.id"
+        v-for="cat in categories"
+        :key="cat.id"
       >
         <GoalCategoryCard :goalCategory="cat" />
       </Box>
