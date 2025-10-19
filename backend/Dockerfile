@@ -27,7 +27,7 @@ RUN apk --no-cache add ca-certificates
 COPY --from=builder /app/bin/goalify .
 
 # Copy migrations (needed if running migrations in-app)
-COPY --from=builder /app/db/migrations ./db/migrations
+COPY --from=builder /app/internal/db/migrations ./internal/db/migrations
 
 COPY --from=builder /go/bin/goose /usr/local/bin/goose
 
