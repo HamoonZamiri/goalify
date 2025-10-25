@@ -1,6 +1,6 @@
 import { events } from "@/utils/constants";
 import { Schemas, type User } from "@/utils/schemas";
-import { onUnmounted, ref } from "vue";
+import { readonly, ref } from "vue";
 import useGoals from "@/hooks/goals/useGoals";
 import useAuth from "../auth/useAuth";
 import { z } from "zod";
@@ -11,26 +11,31 @@ const xpUpdateSchema = z.object({
 	level_id: z.number(),
 });
 
-// moving the event source outside the hook to make it a global singleton
 const eventSource = ref<EventSource>();
-export function useSSE(url: string) {
+
+/**
+ * Hook for managing Server-Sent Events connection
+ */
+export function useSSE() {
 	const { addGoal } = useGoals();
 	const { getUser, setUser } = useAuth();
 
-	const connect = () => {
+	/**
+	 * Closes the current SSE connection
+	 */
+	const closeConnection = () => {
 		if (eventSource.value) {
-			return;
+			eventSource.value.close();
+			eventSource.value = undefined;
 		}
+	};
 
-		const es = new EventSource(url);
-		es.onopen = () => {
-			console.log("connected");
-			console.log("readystate:", es.readyState);
-		};
-		es.onerror = (event) => {
+	/**
+	 * Sets up all event listeners on an EventSource instance
+	 */
+	const setupEventListeners = (es: EventSource) => {
+		es.onerror = () => {
 			toast.warning("There was an issue connecting to the server!");
-
-			console.error("error", event);
 			closeConnection();
 		};
 
@@ -43,34 +48,39 @@ export function useSSE(url: string) {
 			addGoal(parsedData.category_id, parsedData);
 		});
 
-		es.addEventListener(events.SSE_CONNECTED, () => {
-			console.log("initial sse event");
-		});
-
 		es.addEventListener(events.XP_UPDATED, (event) => {
 			const json = JSON.parse(event.data);
 			const parsedData = xpUpdateSchema.parse(json);
 			const user = getUser() as User;
 			setUser({ ...user, ...parsedData });
 		});
+	};
 
+	/**
+	 * Establishes SSE connection to the given URL
+	 */
+	const connect = (url: string) => {
+		if (eventSource.value) {
+			return;
+		}
+
+		const es = new EventSource(url);
+		setupEventListeners(es);
 		eventSource.value = es;
 	};
 
-	const closeConnection = () => {
-		if (eventSource.value) {
-			eventSource.value.close();
-		}
-		eventSource.value = undefined;
+	/**
+	 * Reconnects SSE with a new URL (e.g., after token refresh)
+	 */
+	const reconnect = (url: string) => {
+		closeConnection();
+		connect(url);
 	};
 
-	onUnmounted(() => {
-		closeConnection();
-	});
-
 	return {
-		eventSource,
+		eventSource: readonly(eventSource),
 		connect,
+		reconnect,
 		closeConnection,
 	};
 }

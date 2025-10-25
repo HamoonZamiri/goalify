@@ -37,6 +37,10 @@ func (s *SSEConn) writeEvent(event Event) error {
 	if err != nil {
 		return err
 	}
+	slog.Info("SSE writing event",
+		slog.String("eventId", eventId),
+		slog.String("eventType", event.EventType),
+		slog.String("userId", s.userId))
 	fmt.Fprintf(s.writer, "id: %s\nevent: %s\ndata: %s\n\n", eventId, event.EventType, eventData)
 	return nil
 }
@@ -63,6 +67,10 @@ func (em *EventManager) SSEHandler(w http.ResponseWriter, r *http.Request) {
 	for {
 		select {
 		case event := <-conn.eventQueue:
+			slog.Info("SSE received event from queue",
+				slog.String("eventType", event.EventType),
+				slog.String("eventUserId", event.UserId.ValueOrZero()),
+				slog.String("connUserId", conn.userId))
 			userId := event.UserId
 			if userId.ValueOrZero() == conn.userId {
 				err := conn.writeEvent(event)
@@ -70,6 +78,10 @@ func (em *EventManager) SSEHandler(w http.ResponseWriter, r *http.Request) {
 					slog.Error("SSEHandler: conn.WriteEvent:", "err", err)
 				}
 				w.(http.Flusher).Flush()
+			} else {
+				slog.Warn("SSE event userId mismatch, skipping",
+					slog.String("eventUserId", userId.ValueOrZero()),
+					slog.String("connUserId", conn.userId))
 			}
 		case <-r.Context().Done():
 			return
