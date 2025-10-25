@@ -13,7 +13,7 @@ import useGoals from "@/hooks/goals/useGoals";
 import useApi from "@/hooks/api/useApi";
 import { toast } from "vue3-toastify";
 const props = defineProps<{
-  goalCategory: GoalCategory;
+	goalCategory: GoalCategory;
 }>();
 
 const XP_PER_GOAL_MAX = 100;
@@ -21,67 +21,67 @@ const XP_PER_GOAL_MIN = 1;
 
 const isCreateGoalDialogOpen = ref(false);
 const updates = reactive({
-  title: props.goalCategory.title,
-  xp_per_goal: props.goalCategory.xp_per_goal.toString(),
+	title: props.goalCategory.title,
+	xp_per_goal: props.goalCategory.xp_per_goal.toString(),
 });
 
 const { deleteCategory } = useGoals();
 const { deleteCategory: apiDeleteCategory, updateCategory: apiUpdateCategory } =
-  useApi();
+	useApi();
 
 async function handleDeleteCategory(e: MouseEvent) {
-  e.preventDefault();
-  await apiDeleteCategory(props.goalCategory.id);
+	e.preventDefault();
+	await apiDeleteCategory(props.goalCategory.id);
 
-  // remove category from state
-  deleteCategory(props.goalCategory.id);
+	// remove category from state
+	deleteCategory(props.goalCategory.id);
 
-  toast.success(`Successfully deleted category: ${props.goalCategory.title}`);
+	toast.success(`Successfully deleted category: ${props.goalCategory.title}`);
 }
 
 const previousValidValue = ref(props.goalCategory.xp_per_goal.toString());
 
 async function handleNumericInputFromModel(value: string | number) {
-  // Handle the value directly since it's already extracted
-  if (!value) {
-    updates.xp_per_goal = "";
-    previousValidValue.value = "";
-    return;
-  }
+	// Handle the value directly since it's already extracted
+	if (!value) {
+		updates.xp_per_goal = "";
+		previousValidValue.value = "";
+		return;
+	}
 
-  const stringValue = value.toString();
+	const stringValue = value.toString();
 
-  // Check if input contains non-numeric characters
-  if (!/^\d+$/.test(stringValue)) {
-    // Revert to previous valid value
-    updates.xp_per_goal = previousValidValue.value;
-    return;
-  }
+	// Check if input contains non-numeric characters
+	if (!/^\d+$/.test(stringValue)) {
+		// Revert to previous valid value
+		updates.xp_per_goal = previousValidValue.value;
+		return;
+	}
 
-  const parsedVal = Number.parseInt(stringValue, 10);
+	const parsedVal = Number.parseInt(stringValue, 10);
 
-  let finalValue: string | number;
+	let finalValue: string | number;
 
-  if (parsedVal < XP_PER_GOAL_MIN) {
-    finalValue = XP_PER_GOAL_MIN;
-  } else if (parsedVal > XP_PER_GOAL_MAX) {
-    finalValue = XP_PER_GOAL_MAX;
-  } else {
-    finalValue = parsedVal;
-  }
+	if (parsedVal < XP_PER_GOAL_MIN) {
+		finalValue = XP_PER_GOAL_MIN;
+	} else if (parsedVal > XP_PER_GOAL_MAX) {
+		finalValue = XP_PER_GOAL_MAX;
+	} else {
+		finalValue = parsedVal;
+	}
 
-  updates.xp_per_goal = finalValue.toString();
-  previousValidValue.value = finalValue.toString();
+	updates.xp_per_goal = finalValue.toString();
+	previousValidValue.value = finalValue.toString();
 }
 
 watch(updates, async (category) => {
-  if (!updates.title || !updates.xp_per_goal) {
-    return;
-  }
-  await apiUpdateCategory(props.goalCategory.id, {
-    title: category.title,
-    xp_per_goal: Number(category.xp_per_goal),
-  });
+	if (!updates.title || !updates.xp_per_goal) {
+		return;
+	}
+	await apiUpdateCategory(props.goalCategory.id, {
+		title: category.title,
+		xp_per_goal: Number(category.xp_per_goal),
+	});
 });
 </script>
 <template>

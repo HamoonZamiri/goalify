@@ -140,6 +140,9 @@ func (gs *goalService) CreateGoalCategory(title string, xpPerGoal int, userId uu
 	}
 
 	e := events.NewEventWithUserId(events.GOAL_CATEGORY_CREATED, cat, cat.UserId.String())
+	slog.Info("Publishing GOAL_CATEGORY_CREATED event",
+		slog.String("categoryId", cat.Id.String()),
+		slog.String("userId", cat.UserId.String()))
 	gs.eventPublisher.Publish(e)
 
 	return cat, nil

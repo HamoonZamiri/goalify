@@ -31,6 +31,9 @@ func (gs *goalService) handleUserCreatedEvent(event events.Event) {
 }
 
 func (gs *goalService) handleGoalCategoryCreatedEvent(event events.Event) {
+	slog.Info("Handling GOAL_CATEGORY_CREATED event",
+		slog.String("eventType", event.EventType),
+		slog.String("userId", event.UserId.ValueOrZero()))
 	category, err := events.ParseEventData[*entities.GoalCategory](event)
 	if err != nil {
 		slog.Error("service.handleGoalCategoryCreatedEvent: events.ParseEventData:", "err", err)
@@ -40,6 +43,10 @@ func (gs *goalService) handleGoalCategoryCreatedEvent(event events.Event) {
 	defaultGoal, err := gs.CreateGoal("example", "This is an example goal/task!", category.UserId, category.Id)
 	if err != nil {
 		slog.Error("service.handleGoalCategoryCreatedEvent: CreateGoal:", "err", err)
+		return
 	}
+	slog.Info("Publishing DEFAULT_GOAL_CREATED event",
+		slog.String("goalId", defaultGoal.Id.String()),
+		slog.String("userId", defaultGoal.UserId.String()))
 	gs.eventPublisher.Publish(events.NewEventWithUserId(events.DEFAULT_GOAL_CREATED, defaultGoal, defaultGoal.UserId.String()))
 }

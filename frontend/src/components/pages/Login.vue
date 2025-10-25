@@ -13,28 +13,28 @@ const emit = defineEmits(["submit"]);
 const { setUser } = useAuth();
 const error = ref<ErrorResponse>();
 const formData = ref<{ email: string; password: string }>({
-  email: "",
-  password: "",
+	email: "",
+	password: "",
 });
 
 async function login() {
-  emit("submit", { ...formData.value });
-  const res = await fetch(`${API_BASE}/users/login`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(formData.value),
-  });
-  const json: unknown = await res.json();
-  if (!res.ok) {
-    error.value = json as ErrorResponse;
-    return;
-  }
-  const parsed = Schemas.UserSchema.parse(json);
-  setUser(parsed);
-  error.value = undefined;
-  router.push({ name: "Home" });
+	emit("submit", { ...formData.value });
+	const res = await fetch(`${API_BASE}/users/login`, {
+		method: "POST",
+		headers: {
+			"Content-Type": "application/json",
+		},
+		body: JSON.stringify(formData.value),
+	});
+	const json: unknown = await res.json();
+	if (!res.ok) {
+		error.value = json as ErrorResponse;
+		return;
+	}
+	const parsed = Schemas.UserSchema.parse(json);
+	setUser(parsed);
+	error.value = undefined;
+	router.push({ name: "Home" });
 }
 </script>
 

@@ -2,13 +2,13 @@
 import type { Goal } from "@/utils/schemas";
 import { ref, watch, reactive, nextTick } from "vue";
 import {
-  Dialog,
-  DialogPanel,
-  Listbox,
-  ListboxButton,
-  ListboxOption,
-  ListboxOptions,
-  TransitionRoot,
+	Dialog,
+	DialogPanel,
+	Listbox,
+	ListboxButton,
+	ListboxOption,
+	ListboxOptions,
+	TransitionRoot,
 } from "@headlessui/vue";
 import Text from "@/components/primitives/Text.vue";
 import Box from "@/components/primitives/Box.vue";
@@ -22,17 +22,17 @@ import useApi from "@/hooks/api/useApi";
 import DeleteModal from "@/components/DeleteModal.vue";
 import { toast } from "vue3-toastify";
 const props = defineProps<{
-  goal: Goal;
+	goal: Goal;
 }>();
 
 const updates = reactive<{
-  title: string;
-  description: string;
-  status: "complete" | "not_complete";
+	title: string;
+	description: string;
+	status: "complete" | "not_complete";
 }>({
-  title: props.goal.title,
-  description: props.goal.description,
-  status: props.goal.status,
+	title: props.goal.title,
+	description: props.goal.description,
+	status: props.goal.status,
 });
 
 const isEditing = ref(false);
@@ -42,69 +42,69 @@ const { deleteGoal } = useGoals();
 const { deleteGoal: deleteGoalApi, updateGoal: updateGoalApi } = useApi();
 
 function setIsEditing(value: boolean) {
-  isEditing.value = value;
+	isEditing.value = value;
 }
 
 function setIsDeleting(value: boolean) {
-  isDeleting.value = value;
+	isDeleting.value = value;
 }
 
 function openEditingDialog() {
-  setIsEditing(false);
-  nextTick(() => {
-    setIsEditing(true);
-  });
+	setIsEditing(false);
+	nextTick(() => {
+		setIsEditing(true);
+	});
 }
 
 async function handleDeleteGoal(e: MouseEvent) {
-  e.preventDefault();
+	e.preventDefault();
 
-  await deleteGoalApi(props.goal.id);
+	await deleteGoalApi(props.goal.id);
 
-  // remove goal from state
-  deleteGoal(props.goal.category_id, props.goal.id);
+	// remove goal from state
+	deleteGoal(props.goal.category_id, props.goal.id);
 
-  toast.success(`Successfully deleted goal: ${props.goal.title}`, {
-    theme: "dark",
-  });
+	toast.success(`Successfully deleted goal: ${props.goal.title}`, {
+		theme: "dark",
+	});
 
-  setIsEditing(false);
-  setIsDeleting(false);
+	setIsEditing(false);
+	setIsDeleting(false);
 }
 
 async function handleToggleStatus(e: MouseEvent) {
-  e.preventDefault();
-  updates.status = updates.status === "complete" ? "not_complete" : "complete";
+	e.preventDefault();
+	updates.status = updates.status === "complete" ? "not_complete" : "complete";
 }
 
 // watches for updates on the goal title and description
 watch(updates, async (newUpdates) => {
-  // syncronhize state passed in from props with local reactive updates
-  props.goal.title = newUpdates.title;
-  props.goal.description = newUpdates.description;
-  props.goal.status = newUpdates.status;
-  // do not send updates with empty strings, titles and descriptions cannot be empty
-  if (!newUpdates.title || !newUpdates.description) return;
+	// syncronhize state passed in from props with local reactive updates
+	props.goal.title = newUpdates.title;
+	props.goal.description = newUpdates.description;
+	props.goal.status = newUpdates.status;
+	// do not send updates with empty strings, titles and descriptions cannot be empty
+	if (!newUpdates.title || !newUpdates.description) return;
 
-  // in the future we want to use a debouncer to reduce the number of api calls
-  await updateGoalApi(props.goal.id, {
-    title: newUpdates.title,
-    description: newUpdates.description,
-    status: newUpdates.status,
-  });
+	// in the future we want to use a debouncer to reduce the number of api calls
+	await updateGoalApi(props.goal.id, {
+		title: newUpdates.title,
+		description: newUpdates.description,
+		status: newUpdates.status,
+	});
 });
 
 const statuses = [
-  {
-    id: 1,
-    name: "Not Complete",
-    value: "not_complete",
-  },
-  {
-    id: 2,
-    name: "Complete",
-    value: "complete",
-  },
+	{
+		id: 1,
+		name: "Not Complete",
+		value: "not_complete",
+	},
+	{
+		id: 2,
+		name: "Complete",
+		value: "complete",
+	},
 ];
 
 const statusMap = { not_complete: "Not Complete", complete: "Complete" };

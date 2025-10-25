@@ -1,32 +1,32 @@
 <script setup lang="ts">
 import {
-  buttonVariantClasses,
-  type ButtonVariant,
-  type Height,
-  type Width,
+	buttonVariantClasses,
+	type ButtonVariant,
+	type Height,
+	type Width,
 } from "@/utils/tailwind";
 import { computed } from "vue";
 
 const props = withDefaults(
-  defineProps<{
-    variant?: ButtonVariant;
-    height?: Height;
-    width?: Width;
-    class?: string;
-  }>(),
-  {
-    variant: "primary",
-    height: "h-10",
-    width: "w-full",
-  },
+	defineProps<{
+		variant?: ButtonVariant;
+		height?: Height;
+		width?: Width;
+		class?: string;
+	}>(),
+	{
+		variant: "primary",
+		height: "h-10",
+		width: "w-full",
+	},
 );
 
 const classes = computed(() => [
-  "inline-flex justify-center items-center gap-2 rounded-lg text-sm font-medium transition-colors",
-  buttonVariantClasses[props.variant] ?? "",
-  props.height,
-  props.width,
-  props.class ?? "",
+	"inline-flex justify-center items-center gap-2 rounded-lg text-sm font-medium transition-colors",
+	buttonVariantClasses[props.variant] ?? "",
+	props.height,
+	props.width,
+	props.class ?? "",
 ]);
 </script>
 
