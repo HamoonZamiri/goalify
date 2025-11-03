@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { nextTick, ref, watch } from "vue";
+import { ref, watch } from "vue";
 import { TransitionRoot, Dialog, DialogPanel } from "@headlessui/vue";
 import EditGoalForm from "@/features/goals/forms/EditGoalForm.vue";
 import type { Goal } from "@/features/goals/schemas/goal.schema";
@@ -18,10 +18,7 @@ function setIsEditing(value: boolean) {
 }
 
 function openEditingDialog() {
-	setIsEditing(false);
-	nextTick(() => {
-		setIsEditing(true);
-	});
+	setIsEditing(true);
 }
 
 async function handleClose() {

@@ -4,10 +4,10 @@ import { watchDebounced } from "@vueuse/core";
 import { ref } from "vue";
 import { toast } from "vue3-toastify";
 import {
-	Listbox,
-	ListboxButton,
-	ListboxOptions,
-	ListboxOption,
+  Listbox,
+  ListboxButton,
+  ListboxOptions,
+  ListboxOption,
 } from "@headlessui/vue";
 import { useDeleteGoal, useUpdateGoal } from "@/features/goals/queries";
 import type { Goal } from "@/features/goals/schemas/goal.schema";
@@ -17,12 +17,12 @@ import { XMark } from "@/shared/components/icons";
 import { DeleteModal } from "@/shared/components/modals";
 
 const props = defineProps<{
-	goal: Goal;
+  goal: Goal;
 }>();
 
 const emit = defineEmits<{
-	close: [];
-	update: [goal: Goal];
+  close: [];
+  update: [goal: Goal];
 }>();
 
 const isDeleting = ref(false);
@@ -31,14 +31,14 @@ const { mutateAsync: updateGoal } = useUpdateGoal();
 const { mutateAsync: deleteGoalMutation } = useDeleteGoal();
 
 const form = useForm({
-	defaultValues: {
-		title: props.goal.title,
-		description: props.goal.description,
-		status: props.goal.status,
-	},
-	validators: {
-		onChange: editGoalFormSchema,
-	},
+  defaultValues: {
+    title: props.goal.title,
+    description: props.goal.description,
+    status: props.goal.status,
+  },
+  validators: {
+    onChange: editGoalFormSchema,
+  },
 });
 
 const formValues = form.useStore((state) => state.values);
@@ -46,72 +46,72 @@ const isDirty = form.useStore((state) => state.isDirty);
 const isValid = form.useStore((state) => state.isValid);
 
 watchDebounced(
-	formValues,
-	async (values) => {
-		if (!isDirty.value || !isValid.value) return;
+  formValues,
+  async (values) => {
+    if (!isDirty.value || !isValid.value) return;
 
-		try {
-			await updateGoal({
-				goalId: props.goal.id,
-				data: {
-					title: values.title,
-					description: values.description,
-					status: values.status,
-				},
-			});
-		} catch (error) {
-			toast.error(
-				`Failed to update goal: ${error instanceof Error ? error.message : "Unknown error"}`,
-			);
-		}
-	},
-	{ debounce: 500, deep: true },
+    try {
+      await updateGoal({
+        goalId: props.goal.id,
+        data: {
+          title: values.title,
+          description: values.description,
+          status: values.status,
+        },
+      });
+    } catch (error) {
+      toast.error(
+        `Failed to update goal: ${error instanceof Error ? error.message : "Unknown error"}`,
+      );
+    }
+  },
+  { debounce: 500, deep: true },
 );
 
 async function saveIfDirty() {
-	if (isDirty.value && isValid.value) {
-		try {
-			await updateGoal({
-				goalId: props.goal.id,
-				data: {
-					title: formValues.value.title,
-					description: formValues.value.description,
-					status: formValues.value.status,
-				},
-			});
-		} catch (error) {
-			toast.error(
-				`Failed to save goal: ${error instanceof Error ? error.message : "Unknown error"}`,
-			);
-		}
-	}
+  if (isDirty.value && isValid.value) {
+    try {
+      await updateGoal({
+        goalId: props.goal.id,
+        data: {
+          title: formValues.value.title,
+          description: formValues.value.description,
+          status: formValues.value.status,
+        },
+      });
+    } catch (error) {
+      toast.error(
+        `Failed to save goal: ${error instanceof Error ? error.message : "Unknown error"}`,
+      );
+    }
+  }
 }
 
 async function handleDeleteGoal(e: MouseEvent) {
-	e.preventDefault();
-	try {
-		await deleteGoalMutation(props.goal.id);
-		toast.success("Successfully deleted goal");
-		emit("close");
-	} catch (error) {
-		toast.error(
-			`Failed to delete goal: ${error instanceof Error ? error.message : "Unknown error"}`,
-		);
-	}
+  e.preventDefault();
+  try {
+    await deleteGoalMutation(props.goal.id);
+    toast.success("Successfully deleted goal");
+    emit("close");
+  } catch (error) {
+    toast.error(
+      `Failed to delete goal: ${error instanceof Error ? error.message : "Unknown error"}`,
+    );
+  }
 }
 
 function handleClose() {
-	emit("close");
+  emit("close");
 }
 
 const statuses = [
-	{ id: 1, name: "Not Complete", value: "not_complete" },
-	{ id: 2, name: "Complete", value: "complete" },
+  { id: 1, name: "Not Complete", value: "not_complete" },
+  { id: 2, name: "Complete", value: "complete" },
 ];
 
 const statusMap = {
-	not_complete: "Not Complete",
-	complete: "Complete",
+  not_complete: "Not Complete",
+  complete: "Complete",
 } as const;
 
 defineExpose({ saveIfDirty });
@@ -162,8 +162,11 @@ defineExpose({ saveIfDirty });
         <template v-slot="{ field }">
           <Box flex-direction="col" gap="gap-2">
             <Listbox
+              as="div"
+              class="relative"
               :value="field.state.value"
               @update:model-value="field.handleChange"
+              :model-value="field.state.value"
             >
               <ListboxButton
                 :class="{
@@ -174,7 +177,7 @@ defineExpose({ saveIfDirty });
               >
                 <Text color="dark">{{ statusMap[field.state.value] }}</Text>
               </ListboxButton>
-              <ListboxOptions>
+              <ListboxOptions class="absolute z-10 mt-1 flex flex-col gap-1">
                 <ListboxOption
                   v-for="status in statuses"
                   :key="status.id"

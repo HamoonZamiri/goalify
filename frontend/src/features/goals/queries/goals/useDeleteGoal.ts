@@ -1,38 +1,37 @@
 import {
-	type UseMutationOptions,
-	useMutation,
-	useQueryClient,
+  type UseMutationOptions,
+  useMutation,
+  useQueryClient,
 } from "@tanstack/vue-query";
 import { API_BASE, http } from "@/utils/constants";
 import { categoryKeys } from "../queryKeys";
+import { z } from "zod";
+import { zodFetch } from "@/shared/api";
+import { isErrorResponse } from "@/shared/schemas";
 
 async function deleteGoalQueryDataFn(goalId: string): Promise<void> {
-	const res = await fetch(`${API_BASE}/goals/${goalId}`, {
-		method: http.MethodDelete,
-		headers: {
-			"Content-Type": "application/json",
-		},
-	});
+  const res = await zodFetch(`${API_BASE}/goals/${goalId}`, z.object({}), {
+    method: http.MethodDelete,
+  });
 
-	if (!res.ok) {
-		const json = await res.json();
-		throw new Error(json.message || "Failed to delete goal");
-	}
+  if (isErrorResponse(res)) {
+    throw new Error(res.message);
+  }
 }
 
 /**
  * Mutation hook to delete a goal
  */
 export function useDeleteGoal(
-	options?: UseMutationOptions<void, Error, string>,
+  options?: UseMutationOptions<void, Error, string>,
 ) {
-	const queryClient = useQueryClient();
+  const queryClient = useQueryClient();
 
-	return useMutation({
-		...options,
-		mutationFn: deleteGoalQueryDataFn,
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: categoryKeys.all });
-		},
-	});
+  return useMutation({
+    ...options,
+    mutationFn: deleteGoalQueryDataFn,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: categoryKeys.all });
+    },
+  });
 }
