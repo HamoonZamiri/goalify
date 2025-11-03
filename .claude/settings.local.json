@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm test:*)",
+      "Bash(cat:*)",
+      "Bash(pnpm build:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

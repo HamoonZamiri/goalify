@@ -1,12 +1,11 @@
 import { createRouter, createWebHistory } from "vue-router";
-import Login from "@/components/pages/Login.vue";
-import Register from "@/components/pages/Register.vue";
-import Home from "@/components/pages/Home.vue";
+import { LoginPage, RegisterPage } from "@/features/auth";
+import HomePage from "@/pages/HomePage.vue";
 
 const routes = [
-	{ name: "Login", path: "/login", component: Login },
-	{ name: "Register", path: "/register", component: Register },
-	{ name: "Home", path: "/", component: Home },
+	{ name: "Login", path: "/login", component: LoginPage },
+	{ name: "Register", path: "/register", component: RegisterPage },
+	{ name: "Home", path: "/", component: HomePage },
 ];
 const router = createRouter({
 	history: createWebHistory(),
@@ -14,7 +13,7 @@ const router = createRouter({
 });
 
 router.beforeEach(async (to, _) => {
-	const { default: useAuth } = await import("@/hooks/auth/useAuth");
+	const { default: useAuth } = await import("@/shared/hooks/auth/useAuth");
 	const { getUser } = useAuth();
 	const user = getUser();
 
