@@ -5,8 +5,8 @@ import { ref } from "vue";
 import { toast } from "vue3-toastify";
 import { Menu, MenuButton, MenuItems, MenuItem } from "@headlessui/vue";
 import {
-  useDeleteGoalCategory,
-  useUpdateGoalCategory,
+	useDeleteGoalCategory,
+	useUpdateGoalCategory,
 } from "@/features/goals/queries";
 import type { GoalCategory } from "@/features/goals/schemas/goal.schema";
 import { editGoalCategoryFormSchema } from "@/features/goals/schemas/goal-form.schema";
@@ -17,7 +17,7 @@ import CreateGoalButton from "./CreateGoalButton.vue";
 import CreateGoalForm from "../forms/CreateGoalForm.vue";
 
 const props = defineProps<{
-  goalCategory: GoalCategory;
+	goalCategory: GoalCategory;
 }>();
 
 const isCreateGoalDialogOpen = ref(false);
@@ -26,13 +26,13 @@ const { mutateAsync: updateCategory } = useUpdateGoalCategory();
 const { mutateAsync: deleteCategory } = useDeleteGoalCategory();
 
 const form = useForm({
-  defaultValues: {
-    title: props.goalCategory.title,
-    xp_per_goal: props.goalCategory.xp_per_goal,
-  },
-  validators: {
-    onChange: editGoalCategoryFormSchema,
-  },
+	defaultValues: {
+		title: props.goalCategory.title,
+		xp_per_goal: props.goalCategory.xp_per_goal,
+	},
+	validators: {
+		onChange: editGoalCategoryFormSchema,
+	},
 });
 
 const formValues = form.useStore((state) => state.values);
@@ -40,37 +40,37 @@ const isDirty = form.useStore((state) => state.isDirty);
 const isValid = form.useStore((state) => state.isValid);
 
 watchDebounced(
-  formValues,
-  async (values) => {
-    if (!isDirty.value || !isValid.value) return;
+	formValues,
+	async (values) => {
+		if (!isDirty.value || !isValid.value) return;
 
-    try {
-      await updateCategory({
-        categoryId: props.goalCategory.id,
-        data: {
-          title: values.title,
-          xp_per_goal: values.xp_per_goal,
-        },
-      });
-    } catch (error) {
-      toast.error(
-        `Failed to update category: ${error instanceof Error ? error.message : "Unknown error"}`,
-      );
-    }
-  },
-  { debounce: 500, deep: true },
+		try {
+			await updateCategory({
+				categoryId: props.goalCategory.id,
+				data: {
+					title: values.title,
+					xp_per_goal: values.xp_per_goal,
+				},
+			});
+		} catch (error) {
+			toast.error(
+				`Failed to update category: ${error instanceof Error ? error.message : "Unknown error"}`,
+			);
+		}
+	},
+	{ debounce: 500, deep: true },
 );
 
 async function handleDeleteCategory(e: MouseEvent) {
-  e.preventDefault();
-  try {
-    await deleteCategory(props.goalCategory.id);
-    toast.success("Successfully deleted category");
-  } catch (error) {
-    toast.error(
-      `Failed to delete category: ${error instanceof Error ? error.message : "Unknown error"}`,
-    );
-  }
+	e.preventDefault();
+	try {
+		await deleteCategory(props.goalCategory.id);
+		toast.success("Successfully deleted category");
+	} catch (error) {
+		toast.error(
+			`Failed to delete category: ${error instanceof Error ? error.message : "Unknown error"}`,
+		);
+	}
 }
 </script>
 <template>

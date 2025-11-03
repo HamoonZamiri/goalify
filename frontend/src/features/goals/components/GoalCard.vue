@@ -1,14 +1,18 @@
 <script setup lang="ts">
 import { ref, watch } from "vue";
 import { TransitionRoot, Dialog, DialogPanel } from "@headlessui/vue";
+import { toast } from "vue3-toastify";
 import EditGoalForm from "@/features/goals/forms/EditGoalForm.vue";
 import type { Goal } from "@/features/goals/schemas/goal.schema";
+import { useUpdateGoal } from "@/features/goals/queries";
 import { Text } from "@/shared/components/ui";
 import { CheckOutline } from "@/shared/components/icons";
 
 const props = defineProps<{
 	goal: Goal;
 }>();
+
+const { mutateAsync: updateGoal } = useUpdateGoal();
 
 const isEditing = ref(false);
 const editFormRef = ref<InstanceType<typeof EditGoalForm>>();
@@ -24,6 +28,22 @@ function openEditingDialog() {
 async function handleClose() {
 	await editFormRef.value?.saveIfDirty();
 	setIsEditing(false);
+}
+
+async function handleCheckClick() {
+	const newStatus =
+		currentStatus.value === "complete" ? "not_complete" : "complete";
+
+	try {
+		await updateGoal({
+			goalId: props.goal.id,
+			data: { status: newStatus },
+		});
+	} catch (error) {
+		toast.error(
+			`Failed to update goal status: ${error instanceof Error ? error.message : "Unknown error"}`,
+		);
+	}
 }
 
 /**
@@ -46,7 +66,7 @@ watch(
       'bg-green-600 hover:bg-green-700': currentStatus === 'complete',
     }"
   >
-    <CheckOutline />
+    <CheckOutline :onclick="handleCheckClick" class="hover:cursor-pointer" />
     <Text as="span" weight="semibold">{{ props.goal.title }}</Text>
   </header>
   <section>
