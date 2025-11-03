@@ -1,111 +1,111 @@
 <script setup lang="ts">
 import { type InputTypeHTMLAttribute, ref } from "vue";
 import {
-  type Height,
-  type TextColor,
-  textColorMap,
-  type Width,
+	type Height,
+	type TextColor,
+	textColorMap,
+	type Width,
 } from "@/utils/tailwind";
 import Box from "./Box.vue";
 
 defineOptions({
-  inheritAttrs: false,
+	inheritAttrs: false,
 });
 
 type InputFieldProps = {
-  value?: string | number;
-  accept?: string;
-  alt?: string;
-  autocomplete?: string;
-  disabled?: boolean;
-  name?: string;
-  placeholder?: string;
-  type?: InputTypeHTMLAttribute;
-  containerWidth?: Width;
-  width?: Width;
-  height?: Height;
-  textColor?: TextColor;
-  class?: string;
-  bg?: "transparent" | "primary";
-  errorslot?: boolean;
-  compact?: boolean;
-  as?: "input" | "textarea";
+	value?: string | number;
+	accept?: string;
+	alt?: string;
+	autocomplete?: string;
+	disabled?: boolean;
+	name?: string;
+	placeholder?: string;
+	type?: InputTypeHTMLAttribute;
+	containerWidth?: Width;
+	width?: Width;
+	height?: Height;
+	textColor?: TextColor;
+	class?: string;
+	bg?: "transparent" | "primary";
+	errorslot?: boolean;
+	compact?: boolean;
+	as?: "input" | "textarea";
 };
 
 const bgClasses = {
-  transparent: "bg-transparent",
-  primary: "bg-gray-300",
+	transparent: "bg-transparent",
+	primary: "bg-gray-300",
 };
 
 const props = withDefaults(defineProps<InputFieldProps>(), {
-  type: "text",
-  bg: "transparent",
-  textColor: "light",
-  height: "h-10",
-  width: "w-full",
-  compact: false,
-  as: "input",
+	type: "text",
+	bg: "transparent",
+	textColor: "light",
+	height: "h-10",
+	width: "w-full",
+	compact: false,
+	as: "input",
 });
 
 const emit = defineEmits<{
-  input: [value: string | number | null];
-  blur: [event: Event];
+	input: [value: string | number | null];
+	blur: [event: Event];
 }>();
 
 const baseClass = props.compact
-  ? "focus:outline-none placeholder-gray-400 rounded border-0 text-center min-w-0"
-  : "focus:outline-none placeholder-gray-400 sm:flex-1 rounded-lg border-0";
+	? "focus:outline-none placeholder-gray-400 rounded border-0 text-center min-w-0"
+	: "focus:outline-none placeholder-gray-400 sm:flex-1 rounded-lg border-0";
 
 const inputRef = ref<HTMLInputElement | HTMLTextAreaElement | null>(null);
 
 function handleBeforeInput(e: Event) {
-  if (props.type !== "number") return;
+	if (props.type !== "number") return;
 
-  const inputEvent = e as InputEvent;
-  const data = inputEvent.data;
-  if (!data) return; // Allow deletions, etc.
+	const inputEvent = e as InputEvent;
+	const data = inputEvent.data;
+	if (!data) return; // Allow deletions, etc.
 
-  // Only allow digits, decimal point, and minus sign
-  const isValid = /^[\d.-]$/.test(data);
+	// Only allow digits, decimal point, and minus sign
+	const isValid = /^[\d.-]$/.test(data);
 
-  if (!isValid) {
-    e.preventDefault();
-  }
+	if (!isValid) {
+		e.preventDefault();
+	}
 }
 
 function handleInput(e: Event) {
-  const target = e.target as HTMLInputElement | HTMLTextAreaElement;
-  const raw = target.value;
+	const target = e.target as HTMLInputElement | HTMLTextAreaElement;
+	const raw = target.value;
 
-  if (props.type === "number") {
-    if (raw === "" || raw === "-") {
-      emit("input", null);
-      return;
-    }
+	if (props.type === "number") {
+		if (raw === "" || raw === "-") {
+			emit("input", null);
+			return;
+		}
 
-    const parsed = Number(raw);
-    if (Number.isNaN(parsed)) {
-      emit("input", null);
-      return;
-    }
+		const parsed = Number(raw);
+		if (Number.isNaN(parsed)) {
+			emit("input", null);
+			return;
+		}
 
-    emit("input", parsed);
-  } else {
-    emit("input", raw);
-  }
+		emit("input", parsed);
+	} else {
+		emit("input", raw);
+	}
 }
 
 function handleBlur(e: Event) {
-  emit("blur", e);
+	emit("blur", e);
 }
 
 const sharedClasses = [
-  baseClass,
-  bgClasses[props.bg],
-  textColorMap[props.textColor],
-  props.bg !== "transparent" ? "px-1.5 py-1.5" : "",
-  props.compact ? "w-12 text-xs" : "",
-  props.class,
+	baseClass,
+	bgClasses[props.bg],
+	textColorMap[props.textColor],
+	props.bg !== "transparent" ? "px-1.5 py-1.5" : "",
+	props.compact ? "w-12 text-xs" : "",
+	props.class,
 ];
 </script>
 
