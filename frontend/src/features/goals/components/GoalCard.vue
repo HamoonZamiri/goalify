@@ -2,7 +2,7 @@
 import { ref, watch } from "vue";
 import { TransitionRoot, Dialog, DialogPanel } from "@headlessui/vue";
 import { toast } from "vue3-toastify";
-import EditGoalForm from "@/features/goals/forms/EditGoalForm.vue";
+import type EditGoalForm from "@/features/goals/forms/EditGoalForm.vue";
 import type { Goal } from "@/features/goals/schemas/goal.schema";
 import { useUpdateGoal } from "@/features/goals/queries";
 import { Text } from "@/shared/components/ui";

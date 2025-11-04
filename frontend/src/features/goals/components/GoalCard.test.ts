@@ -1,6 +1,6 @@
 import type { VueWrapper } from "@vue/test-utils";
 import { flushPromises } from "@vue/test-utils";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { goal } from "@/__mocks__/mocks";
 import { mountWithPlugins, setupFetchSpies } from "@/shared/test-utils";
 import { API_BASE } from "@/utils/constants";
