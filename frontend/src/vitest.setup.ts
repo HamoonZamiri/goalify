@@ -7,6 +7,13 @@ import { goal, goalCategory, levelOne } from "@/__mocks__/mocks";
  * Global mocks for all tests
  */
 
+// Mock ResizeObserver for HeadlessUI Dialog components
+global.ResizeObserver = class ResizeObserver {
+	observe() {}
+	unobserve() {}
+	disconnect() {}
+};
+
 // Mock useAuth to provide a test user with access token
 vi.mock("@/shared/hooks/auth/useAuth", async () => {
 	const { ref } = await import("vue");

@@ -109,4 +109,25 @@ describe("GoalCard tests", () => {
 		expect(response).toBeInstanceOf(Response);
 		expect(response.ok).toBe(true);
 	});
+
+	it("opens EditGoalForm dialog when goal card is clicked", async () => {
+		setupFetchSpies([
+			{
+				url: `${API_BASE}/goals/${goal.id}`,
+				method: "PUT",
+				response: goal,
+			},
+		]);
+		wrapper = mountComponent();
+
+		const cardHeader = wrapper.find("header");
+		expect(wrapper.findComponent({ name: "EditGoalForm" }).exists()).toBe(
+			false,
+		);
+
+		await cardHeader.trigger("click");
+		await flushPromises();
+
+		expect(wrapper.findComponent({ name: "EditGoalForm" }).exists()).toBe(true);
+	});
 });
