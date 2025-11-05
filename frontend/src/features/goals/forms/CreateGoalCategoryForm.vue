@@ -16,7 +16,6 @@ const { mutateAsync: createCategory, isPending } = useCreateGoalCategory();
 async function handleSubmit(data: CreateGoalCategoryFormData) {
 	try {
 		const result = await createCategory(data);
-		toast.success(`Successfully created category: ${result.title}`);
 		emit("submit", result);
 		emit("close");
 	} catch (error) {

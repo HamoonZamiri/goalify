@@ -4,7 +4,7 @@ import { z } from "zod";
 import { useQueryClient } from "@tanstack/vue-query";
 import { categoryKeys } from "@/features/goals/queries";
 import { GoalSchema } from "@/features/goals/schemas";
-import { events } from "@/utils/constants";
+import { API_BASE, events } from "@/utils/constants";
 import type { User } from "@/features/auth/schemas";
 import useAuth from "../auth/useAuth";
 
@@ -14,6 +14,8 @@ const xpUpdateSchema = z.object({
 });
 
 const eventSource = ref<EventSource>();
+const MAX_RECONNECT_ATTEMPTS = 3;
+const reconnectAttempts = ref(0);
 
 /**
  * Hook for managing Server-Sent Events connection
@@ -29,6 +31,7 @@ export function useSSE() {
 		if (eventSource.value) {
 			eventSource.value.close();
 			eventSource.value = undefined;
+			reconnectAttempts.value = 0;
 		}
 	};
 
@@ -37,8 +40,16 @@ export function useSSE() {
 	 */
 	const setupEventListeners = (es: EventSource) => {
 		es.onerror = () => {
-			toast.warning("There was an issue connecting to the server!");
 			closeConnection();
+
+			if (reconnectAttempts.value < MAX_RECONNECT_ATTEMPTS) {
+				reconnectAttempts.value++;
+				setTimeout(() => {
+					connect(`${API_BASE}/events?token=${getUser()?.access_token}`);
+				}, 1000 * reconnectAttempts.value);
+				return;
+			}
+			toast.error("Failed to connect to the server. Please refresh the page.");
 		};
 
 		es.addEventListener(events.DEFAULT_GOAL_CREATED, (event) => {
