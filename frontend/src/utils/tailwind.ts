@@ -5,6 +5,7 @@ export type Padding = "p-2" | "p-4" | "p-6" | "p-8";
 export type Gap = "gap-1" | "gap-2" | "gap-4" | "gap-6" | "gap-8";
 
 export type Rounding =
+	| "rounded-none"
 	| "rounded"
 	| "rounded-md"
 	| "rounded-lg"

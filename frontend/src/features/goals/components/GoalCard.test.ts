@@ -11,6 +11,7 @@ function mountComponent() {
 	return mountWithPlugins(GoalCard, {
 		props: {
 			goal: goal,
+			xpPerGoal: 50,
 		},
 	});
 }
@@ -83,7 +84,7 @@ describe("GoalCard tests", () => {
 		]);
 
 		wrapper = mountWithPlugins(GoalCard, {
-			props: { goal: completedGoal },
+			props: { goal: completedGoal, xpPerGoal: 50 },
 		});
 
 		const checkIcon = wrapper.find("svg");
@@ -120,7 +121,7 @@ describe("GoalCard tests", () => {
 		]);
 		wrapper = mountComponent();
 
-		const cardHeader = wrapper.find("header");
+		const cardHeader = wrapper.find('[data-testid="goal-card"]');
 		expect(wrapper.findComponent({ name: "EditGoalForm" }).exists()).toBe(
 			false,
 		);

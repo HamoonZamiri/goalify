@@ -31,9 +31,9 @@ const classes = computed(() => [
 </script>
 
 <template>
-  <button :class="classes">
-    <slot name="left" />
-    <slot />
-    <slot name="right" />
-  </button>
+	<button :class="classes">
+		<slot name="left"/>
+		<slot/>
+		<slot name="right"/>
+	</button>
 </template>

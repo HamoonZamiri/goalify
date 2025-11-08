@@ -17,7 +17,8 @@ const flexDirectionClasses = {
 const bgClasses = {
 	darkest: "bg-gray-900",
 	dark: "bg-gray-800",
-};
+	inherit: "bg-inherit",
+} as const;
 
 const props = withDefaults(
 	defineProps<{
@@ -31,9 +32,10 @@ const props = withDefaults(
 		width?: Width;
 		class?: string;
 		bg?: keyof typeof bgClasses;
+		onClick?: () => void;
 	}>(),
 	{
-		rounded: "rounded-xl",
+		rounded: "rounded-none",
 		shadow: "shadow-sm",
 		bordered: false,
 		flexDirection: "col",
@@ -44,8 +46,8 @@ const props = withDefaults(
 </script>
 
 <template>
-  <div
-    :class="[
+	<div
+		:class="[
       'text-gray-300 flex',
       flexDirectionClasses[flexDirection],
       bgClasses[bg],
@@ -58,8 +60,8 @@ const props = withDefaults(
       width,
       props.class,
     ]"
-    v-bind="$attrs"
-  >
-    <slot />
-  </div>
+		v-bind="$attrs"
+	>
+		<slot/>
+	</div>
 </template>

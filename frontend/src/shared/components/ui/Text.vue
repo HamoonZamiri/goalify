@@ -40,15 +40,15 @@ const weightClasses = {
 </script>
 
 <template>
-  <component
-    :is="as"
-    :class="[
+	<component
+		:is="as"
+		:class="[
       sizeClasses[size],
       weightClasses[weight],
       props.class ?? '',
       colorClasses[color],
     ]"
-  >
-    <slot />
-  </component>
+	>
+		<slot/>
+	</component>
 </template>

@@ -5,21 +5,19 @@ function handleClick(e: MouseEvent) {
 	props?.onclick?.(e);
 }
 </script>
-
 <template>
 	<svg
 		xmlns="http://www.w3.org/2000/svg"
 		fill="none"
 		viewBox="0 0 24 24"
 		stroke-width="1.5"
-		stroke="currentColor"
-		class="size-6"
+		class="size-5 stroke-gray-300"
 		@click.stop="handleClick"
 	>
 		<path
 			stroke-linecap="round"
 			stroke-linejoin="round"
-			d="M6 18 18 6M6 6l12 12"
+			d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9"
 		/>
 	</svg>
 </template>

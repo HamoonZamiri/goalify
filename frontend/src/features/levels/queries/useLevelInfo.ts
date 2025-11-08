@@ -1,11 +1,21 @@
-import { useQuery } from "@tanstack/vue-query";
+import {
+	type QueryFunction,
+	type UseQueryOptions,
+	useQuery,
+} from "@tanstack/vue-query";
+import { type Level, LevelSchema } from "@/features/levels/schemas";
 import { zodFetch } from "@/shared/api";
 import { isErrorResponse } from "@/shared/schemas";
-import { LevelSchema, type Level } from "@/features/levels/schemas";
-import { levelKeys } from "./queryKeys";
 import { API_BASE } from "@/utils/constants";
+import { getLevelByIdParams, levelKeys } from "./queryKeys";
 
-async function levelInfoQueryDataFn(levelId: number): Promise<Level> {
+type LevelInfoQueryKey = ReturnType<typeof levelKeys.detail>;
+
+const levelInfoQueryDataFn: QueryFunction<Level, LevelInfoQueryKey> = async ({
+	queryKey,
+}) => {
+	const { levelId } = getLevelByIdParams(queryKey);
+
 	const result = await zodFetch(`${API_BASE}/levels/${levelId}`, LevelSchema);
 
 	if (isErrorResponse(result)) {
@@ -13,12 +23,17 @@ async function levelInfoQueryDataFn(levelId: number): Promise<Level> {
 	}
 
 	return result;
-}
+};
 
-export function useLevelInfo(levelId: number) {
+export const useLevelInfoQuery = (
+	params: ReturnType<typeof getLevelByIdParams>,
+	options?: Partial<
+		UseQueryOptions<Level, Error, Level, Level, LevelInfoQueryKey>
+	>,
+) => {
 	return useQuery({
-		queryKey: levelKeys.detail(levelId),
-		queryFn: () => levelInfoQueryDataFn(levelId),
-		enabled: !!levelId,
+		...options,
+		queryKey: levelKeys.detail(params),
+		queryFn: levelInfoQueryDataFn,
 	});
-}
+};

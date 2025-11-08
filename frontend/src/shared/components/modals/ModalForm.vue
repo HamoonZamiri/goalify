@@ -7,13 +7,13 @@ defineProps<{
 const emit = defineEmits(["update:modelValue"]);
 </script>
 <template>
-  <Dialog
-    class="absolute inset-0 h-screen flex justify-center items-center hover:cursor-pointer bg-gray-600 z-10 w-screen bg-opacity-50 rounded-lg p-4"
-    :open="modelValue"
-    @close="() => emit('update:modelValue', false)"
-  >
-    <DialogPanel>
-      <slot />
-    </DialogPanel>
-  </Dialog>
+	<Dialog
+		class="absolute inset-0 h-screen flex justify-center items-center hover:cursor-pointer bg-gray-600 z-10 w-screen bg-opacity-50 rounded-lg p-4"
+		:open="modelValue"
+		@close="() => emit('update:modelValue', false)"
+	>
+		<DialogPanel>
+			<slot/>
+		</DialogPanel>
+	</Dialog>
 </template>
