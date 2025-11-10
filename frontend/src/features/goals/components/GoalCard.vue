@@ -5,11 +5,12 @@ import { toast } from "vue3-toastify";
 import EditGoalForm from "@/features/goals/forms/EditGoalForm.vue";
 import type { Goal } from "@/features/goals/schemas/goal.schema";
 import { useUpdateGoal } from "@/features/goals/queries";
-import { Text } from "@/shared/components/ui";
+import { Text, Box } from "@/shared/components/ui";
 import { CheckOutline } from "@/shared/components/icons";
 
 const props = defineProps<{
 	goal: Goal;
+	xpPerGoal: number;
 }>();
 
 const { mutateAsync: updateGoal } = useUpdateGoal();
@@ -59,34 +60,41 @@ watch(
 );
 </script>
 <template>
-  <header
-    @click="openEditingDialog()"
-    class="flex p-4 w-full h-full bg-gray-700 hover:cursor-pointer hover:bg-gray-600 gap-x-2 items-center rounded-sm"
-    :class="{
-      'bg-green-600 hover:bg-green-700': currentStatus === 'complete',
-    }"
-  >
-    <CheckOutline :onclick="handleCheckClick" class="hover:cursor-pointer" />
-    <Text as="span" weight="semibold">{{ props.goal.title }}</Text>
-  </header>
-  <section>
-    <TransitionRoot
-      :show="isEditing"
-      appear
-      enter="transition-all ease-in-out duration-500 transform"
-    >
-      <Dialog
-        class="absolute inset-0 h-screen flex justify-end hover:cursor-pointer z-10 w-screen bg-opacity-10 rounded-lg"
-        @close="handleClose"
-      >
-        <DialogPanel class="w-full sm:w-1/2">
-          <EditGoalForm
-            ref="editFormRef"
-            :goal="props.goal"
-            @close="handleClose"
-          />
-        </DialogPanel>
-      </Dialog>
-    </TransitionRoot>
-  </section>
+	<Box
+		data-testid="goal-card"
+		flex-direction="row"
+		gap="gap-4"
+		:onclick="() => openEditingDialog()"
+		class="hover:cursor-pointer hover:bg-gray-700 items-center justify-between"
+	>
+		<Box flex-direction="row" class="gap-x-2 items-center hover:bg-gray-700">
+			<CheckOutline
+				:onclick="handleCheckClick"
+				class="hover:cursor-pointer"
+				:fill="currentStatus === 'complete' ? 'green' : 'none'"
+			/>
+			<Text as="span" size="sm" weight="normal">{{ props.goal.title }}</Text>
+		</Box>
+		<Text as="span" size="sm" weight="normal">{{`${props.xpPerGoal} XP`}}</Text>
+	</Box>
+	<section>
+		<TransitionRoot
+			:show="isEditing"
+			appear
+			enter="transition-all ease-in-out duration-500 transform"
+		>
+			<Dialog
+				class="absolute inset-0 h-screen flex justify-end hover:cursor-pointer z-10 w-screen bg-opacity-10 rounded-lg"
+				@close="handleClose"
+			>
+				<DialogPanel class="w-full sm:w-1/2">
+					<EditGoalForm
+						ref="editFormRef"
+						:goal="props.goal"
+						@close="handleClose"
+					/>
+				</DialogPanel>
+			</Dialog>
+		</TransitionRoot>
+	</section>
 </template>

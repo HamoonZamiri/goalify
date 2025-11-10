@@ -40,87 +40,91 @@ const form = useForm({
 </script>
 
 <template>
-  <form
-    @submit="
+	<form
+		@submit="
       (e) => {
         e.preventDefault();
         e.stopPropagation();
         form.handleSubmit();
       }
     "
-    class="rounded-lg border bg-gray-800 p-6 w-[95vw] sm:w-[40vw] flex flex-col space-y-4 hover:cursor-default"
-  >
-    <Text as="p" size="xl" class="text-center"> Create a New Category </Text>
-    <form.Field name="title">
-      <template v-slot="{ field, state }">
-        <InputField
-          :id="field.name"
-          :name="field.name"
-          :value="field.state.value"
-          bg="primary"
-          text-color="dark"
-          type="text"
-          @input="
+		class="rounded-lg border bg-gray-800 p-6 w-[95vw] sm:w-[40vw] flex flex-col space-y-4 hover:cursor-default"
+	>
+		<Text as="p" size="xl" class="text-center">Create a New Category </Text>
+		<form.Field name="title">
+			<template v-slot="{ field, state }">
+				<InputField
+					:id="field.name"
+					:name="field.name"
+					:value="field.state.value"
+					bg="primary"
+					text-color="dark"
+					type="text"
+					@input="
             (value: string | number | null) => {
               if (typeof value !== 'string') return;
               field.handleChange(value);
             }
           "
-          @blur="field.handleBlur"
-          errorslot
-        >
-          <template #label><Text>Title</Text></template>
-          <template
-            #error
-            v-if="
+					@blur="field.handleBlur"
+					errorslot
+				>
+					<template #label>
+						<Text>Title</Text>
+					</template>
+					<template
+						#error
+						v-if="
               field.state.meta.isTouched && field.state.meta.errors.length > 0
             "
-          >
-            <Text color="error">{{ field.state.meta.errors[0]?.message }}</Text>
-          </template>
-        </InputField>
-      </template>
-    </form.Field>
-    <form.Field name="xp_per_goal">
-      <template v-slot="{ field, state }">
-        <InputField
-          :id="field.name"
-          :name="field.name"
-          :value="field.state.value"
-          bg="primary"
-          text-color="dark"
-          type="number"
-          @input="
+					>
+						<Text color="error">{{ field.state.meta.errors[0]?.message }}</Text>
+					</template>
+				</InputField>
+			</template>
+		</form.Field>
+		<form.Field name="xp_per_goal">
+			<template v-slot="{ field, state }">
+				<InputField
+					:id="field.name"
+					:name="field.name"
+					:value="field.state.value"
+					bg="primary"
+					text-color="dark"
+					type="number"
+					@input="
             (value: string | number | null) => {
               if (typeof value !== 'number') return;
               field.handleChange(value);
             }
           "
-          @blur="field.handleBlur"
-          errorslot
-        >
-          <template #label><Text>XP Per Goal</Text></template>
-          <template
-            #error
-            v-if="
+					@blur="field.handleBlur"
+					errorslot
+				>
+					<template #label>
+						<Text>XP Per Goal</Text>
+					</template>
+					<template
+						#error
+						v-if="
               field.state.meta.isTouched && field.state.meta.errors.length > 0
             "
-          >
-            <Text color="error">{{ field.state.meta.errors[0]?.message }}</Text>
-          </template>
-        </InputField>
-      </template>
-    </form.Field>
-    <form.Subscribe>
-      <template v-slot="{ canSubmit, isSubmitting }">
-        <Button
-          type="submit"
-          :disabled="!canSubmit || isPending || isSubmitting"
-        >
-          <ArrowPath class="animate-spin" v-if="isSubmitting" />
-          <Text v-else> Add Category </Text>
-        </Button>
-      </template>
-    </form.Subscribe>
-  </form>
+					>
+						<Text color="error">{{ field.state.meta.errors[0]?.message }}</Text>
+					</template>
+				</InputField>
+			</template>
+		</form.Field>
+		<form.Subscribe>
+			<template v-slot="{ canSubmit, isSubmitting }">
+				<Button
+					type="submit"
+					:disabled="!canSubmit || isPending || isSubmitting"
+				>
+					<ArrowPath class="animate-spin" v-if="isSubmitting"/>
+					<Text v-else>Add Category </Text>
+				</Button>
+			</template>
+		</form.Subscribe>
+	</form>
 </template>

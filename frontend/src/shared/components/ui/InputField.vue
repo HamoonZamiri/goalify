@@ -110,44 +110,44 @@ const sharedClasses = [
 </script>
 
 <template>
-  <Box class="bg-inherit" flex-direction="col" :width="props.containerWidth">
-    <slot name="label" />
-    <Box flex-direction="row" class="gap-1">
-      <slot name="left" />
-      <input
-        v-if="props.as === 'input'"
-        ref="inputRef"
-        :class="sharedClasses"
-        :id="props.name"
-        :name="props.name"
-        :type="props.type === 'number' ? 'text' : props.type"
-        :inputmode="props.type === 'number' ? 'numeric' : undefined"
-        :value="props.value ?? ''"
-        :placeholder="props.placeholder"
-        :disabled="props.disabled"
-        :accept="props.accept"
-        :autocomplete="props.autocomplete"
-        @beforeinput="handleBeforeInput"
-        @input="handleInput"
-        @blur="handleBlur"
-      />
+	<Box class="bg-inherit" flex-direction="col" :width="props.containerWidth">
+		<slot name="label"/>
+		<Box flex-direction="row" class="gap-1">
+			<slot name="left"/>
+			<input
+				v-if="props.as === 'input'"
+				ref="inputRef"
+				:class="sharedClasses"
+				:id="props.name"
+				:name="props.name"
+				:type="props.type === 'number' ? 'text' : props.type"
+				:inputmode="props.type === 'number' ? 'numeric' : undefined"
+				:value="props.value ?? ''"
+				:placeholder="props.placeholder"
+				:disabled="props.disabled"
+				:accept="props.accept"
+				:autocomplete="props.autocomplete"
+				@beforeinput="handleBeforeInput"
+				@input="handleInput"
+				@blur="handleBlur"
+			>
 
-      <textarea
-        v-else-if="props.as === 'textarea'"
-        ref="inputRef"
-        :class="sharedClasses"
-        :id="props.name"
-        :name="props.name"
-        :placeholder="props.placeholder"
-        :disabled="props.disabled"
-        :value="props.value ?? ''"
-        @input="handleInput"
-        @blur="handleBlur"
-      />
-      <slot name="right" />
-    </Box>
-    <Box v-if="props.errorslot" class="min-h-6 bg-inherit">
-      <slot name="error" />
-    </Box>
-  </Box>
+			<textarea
+				v-else-if="props.as === 'textarea'"
+				ref="inputRef"
+				:class="sharedClasses"
+				:id="props.name"
+				:name="props.name"
+				:placeholder="props.placeholder"
+				:disabled="props.disabled"
+				:value="props.value ?? ''"
+				@input="handleInput"
+				@blur="handleBlur"
+			/>
+			<slot name="right"/>
+		</Box>
+		<Box v-if="props.errorslot" class="min-h-6 bg-inherit">
+			<slot name="error"/>
+		</Box>
+	</Box>
 </template>

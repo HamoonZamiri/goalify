@@ -1,3 +1,8 @@
 export { default as ArrowPath } from "./ArrowPath.vue";
 export { default as CheckOutline } from "./CheckOutline.vue";
+export { default as ChevronUp } from "./ChevronUp.vue";
+export { default as Gear } from "./Gear.vue";
+export { default as Gift } from "./Gift.vue";
+export { default as Home } from "./Home.vue";
+export { default as Signout } from "./Signout.vue";
 export { default as XMark } from "./XMark.vue";

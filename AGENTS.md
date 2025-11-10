@@ -145,12 +145,27 @@ All configuration keys use consistent naming and MUST be documented.
 
 ## Frontend Patterns & Best Practices
 
-### TanStack Query Usage (One Hook Per File)
-```typescript
-// Query hook pattern with inline queryDataFn
-// features/goals/queries/categories/useGoalCategories.ts
+### TanStack Query Usage (Unified Pattern with QueryFunction)
 
-async function goalCategoriesQueryDataFn(): Promise<GoalCategory[]> {
+**All queries MUST use the `QueryFunction` type pattern for consistency and type safety.**
+
+```typescript
+// SIMPLE QUERY (no params) - features/goals/queries/categories/useGoalCategories.ts
+import {
+  type QueryFunction,
+  type UseQueryOptions,
+  useQuery,
+} from "@tanstack/vue-query";
+
+// Define query key type
+type GoalCategoriesQueryKey = ReturnType<typeof categoryKeys.lists>;
+
+// QueryFunction receives { queryKey } - unused for simple queries
+const goalCategoriesQueryDataFn: QueryFunction<
+  GoalCategory[],
+  GoalCategoriesQueryKey
+> = async ({ queryKey }) => {
+  // No params to extract for simple queries
   const result = await zodFetch(
     `${API_BASE}/goals/categories`,
     GoalCategoryResponseArraySchema,
@@ -161,14 +176,62 @@ async function goalCategoriesQueryDataFn(): Promise<GoalCategory[]> {
   }
 
   return result.data;
-}
+};
 
-export function useGoalCategories() {
+export const useGoalCategoriesQuery = (
+  options?: Partial<
+    UseQueryOptions<
+      GoalCategory[],
+      Error,
+      GoalCategory[],
+      GoalCategory[],
+      GoalCategoriesQueryKey
+    >
+  >,
+) => {
   return useQuery({
+    ...options,
     queryKey: categoryKeys.lists(),
     queryFn: goalCategoriesQueryDataFn,
   });
-}
+};
+
+// QUERY WITH PARAMS - features/levels/queries/useLevelInfo.ts
+import {
+  type QueryFunction,
+  type UseQueryOptions,
+  useQuery,
+} from "@tanstack/vue-query";
+
+type LevelInfoQueryKey = ReturnType<typeof levelKeys.detail>;
+
+const levelInfoQueryDataFn: QueryFunction<Level, LevelInfoQueryKey> = async ({
+  queryKey,
+}) => {
+  // Extract params from query key
+  const { levelId } = getLevelByIdParams(queryKey);
+
+  const result = await zodFetch(`${API_BASE}/levels/${levelId}`, LevelSchema);
+
+  if (isErrorResponse(result)) {
+    throw new Error(result.message);
+  }
+
+  return result;
+};
+
+export const useLevelInfoQuery = (
+  params: ReturnType<typeof getLevelByIdParams>,
+  options?: Partial<
+    UseQueryOptions<Level, Error, Level, Level, LevelInfoQueryKey>
+  >,
+) => {
+  return useQuery({
+    ...options,
+    queryKey: levelKeys.detail(params),
+    queryFn: levelInfoQueryDataFn,
+  });
+};
 
 // Mutation hook pattern with inline queryDataFn
 // features/goals/queries/goals/useCreateGoal.ts
@@ -206,12 +269,124 @@ const { data, isLoading, error } = useGoalCategories();
 const { mutate: createGoal, isPending } = useCreateGoal();
 ```
 
-**Naming Convention:**
-- Query data functions follow the pattern: `{hookName without "use"}QueryDataFn()`
-- Example: `useGoalCategories()` hook → `goalCategoriesQueryDataFn()`
-- Example: `useCreateGoal()` hook → `createGoalQueryDataFn()`
+**Naming Conventions:**
+- Query data functions: `{hookName without "use" and "Query"}QueryDataFn`
+  - Example: `useLevelInfoQuery` → `levelInfoQueryDataFn`
+  - Example: `useGoalCategoriesQuery` → `goalCategoriesQueryDataFn`
+- Query hooks: `use{Feature}{Action}Query`
+  - Example: `useLevelInfoQuery`, `useGoalCategoriesQuery`
+- Mutation data functions: `{hookName without "use"}QueryDataFn`
+  - Example: `useCreateGoal` → `createGoalQueryDataFn`
+- Query key type: `{Feature}{Action}QueryKey`
+  - Example: `LevelInfoQueryKey`, `GoalCategoriesQueryKey`
+- Params type: `{Feature}By{Criteria}Params`
+  - Example: `LevelByIdParams`, `UserByEmailParams`
+- Params getter: `get{Feature}By{Criteria}Params`
+  - Example: `getLevelByIdParams`, `getUserByEmailParams`
 - Data functions are NOT exported - they're internal to the hook file
 - Each hook lives in its own file for better organization and Git diffs
+
+**Step-by-Step: Adding a New Query Hook**
+
+1. **Define params schema** (if query needs parameters)
+   ```typescript
+   // features/levels/schemas/level.schema.ts
+   export const LevelByIdParams = z.object({
+     levelId: z.number(),
+   });
+   export type LevelByIdParams = z.infer<typeof LevelByIdParams>;
+   ```
+
+2. **Add query key with params getter** (in queryKeys.ts)
+   ```typescript
+   // features/levels/queries/queryKeys.ts
+   import type { LevelByIdParams } from "../schemas";
+
+   export const levelKeys = {
+     all: ["levels"] as const,
+     details: () => [...levelKeys.all, "detail"] as const,
+     detail: (params: LevelByIdParams) =>
+       [...levelKeys.details(), params] as const,
+   };
+
+   // Getter to extract params from query key
+   export const getLevelByIdParams = (
+     queryKey: ReturnType<typeof levelKeys.detail>,
+   ): LevelByIdParams => {
+     return queryKey[2]; // params are at index 2
+   };
+   ```
+
+3. **Create query hook file** (one hook per file)
+   ```typescript
+   // features/levels/queries/useLevelInfo.ts
+   import {
+     type QueryFunction,
+     type UseQueryOptions,
+     useQuery,
+   } from "@tanstack/vue-query";
+   import { type Level, LevelSchema } from "@/features/levels/schemas";
+   import { zodFetch } from "@/shared/api";
+   import { isErrorResponse } from "@/shared/schemas";
+   import { API_BASE } from "@/utils/constants";
+   import { getLevelByIdParams, levelKeys } from "./queryKeys";
+
+   // Define query key type
+   type LevelInfoQueryKey = ReturnType<typeof levelKeys.detail>;
+
+   // QueryFunction receives { queryKey } destructured
+   const levelInfoQueryDataFn: QueryFunction<
+     Level,
+     LevelInfoQueryKey
+   > = async ({ queryKey }) => {
+     const { levelId } = getLevelByIdParams(queryKey);
+
+     const result = await zodFetch(
+       `${API_BASE}/levels/${levelId}`,
+       LevelSchema
+     );
+
+     if (isErrorResponse(result)) {
+       throw new Error(result.message);
+     }
+
+     return result;
+   };
+
+   export const useLevelInfoQuery = (
+     params: ReturnType<typeof getLevelByIdParams>,
+     options?: Partial<
+       UseQueryOptions<Level, Error, Level, Level, LevelInfoQueryKey>
+     >,
+   ) => {
+     return useQuery({
+       ...options,
+       queryKey: levelKeys.detail(params),
+       queryFn: levelInfoQueryDataFn,
+     });
+   };
+   ```
+
+4. **Export from barrel file**
+   ```typescript
+   // features/levels/queries/index.ts
+   export * from "./queryKeys";
+   export * from "./useLevelInfo";
+   ```
+
+**UseQueryOptions Generics Breakdown:**
+```typescript
+UseQueryOptions<TQueryFnData, TError, TData, TSelect, TQueryKey>
+
+// TQueryFnData: Data returned by queryFn
+// TError: Error type (usually Error)
+// TData: Final data type (same as TQueryFnData if no select)
+// TSelect: Selected data type (same as TData if no select)
+// TQueryKey: Query key type (ReturnType<typeof queryKeys.detail>)
+
+// Example:
+UseQueryOptions<Level, Error, Level, Level, LevelInfoQueryKey>
+```
 
 **Authentication & Error Handling:**
 - `zodFetch` automatically adds Authorization headers using `useAuth().getUser()?.access_token`
@@ -219,7 +394,7 @@ const { mutate: createGoal, isPending } = useCreateGoal();
 - If token is undefined (user not logged in), it's simply omitted from headers
 - Server returns 401 for auth failures, triggering automatic token refresh flow
 - queryDataFns handle error checking internally and throw errors
-- Return type is clean data (`Promise<Goal>`) not union (`Promise<Goal | ErrorResponse>`)
+- Return type is clean data (`Promise<Level>`) not union (`Promise<Level | ErrorResponse>`)
 - Hooks simply call the queryDataFn and let errors propagate to TanStack Query
 - onError callbacks in mutations handle toast notifications
 
@@ -341,7 +516,16 @@ features/auth/
 ```
 
 ### Migration Status
-- ✅ Goals feature fully migrated to new structure
+- ✅ Levels feature - migrated to unified QueryFunction pattern
+- ⏳ Goals feature - needs migration to unified QueryFunction pattern
 - ⏳ Auth feature (uses old hooks/api/useApi.ts)
-- ⏳ Levels feature
 - Old code in `components/goals/`, `hooks/goals/`, `components/primitives/` can be deleted after validation
+
+**Migration Checklist for Existing Queries:**
+1. Add `QueryFunction` type to queryDataFn with `{ queryKey }` destructuring
+2. Define query key type: `type XQueryKey = ReturnType<typeof keys.method>`
+3. If query has params: create params schema + getter function in queryKeys.ts
+4. Update hook signature to accept `options?: Partial<UseQueryOptions<...>>`
+5. Add all 5 generics to `UseQueryOptions<TData, Error, TData, TData, TQueryKey>`
+6. Rename hook to include "Query" suffix (e.g., `useGoalCategories` → `useGoalCategoriesQuery`)
+7. Spread `...options` in useQuery call
