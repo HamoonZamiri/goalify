@@ -21,7 +21,7 @@ if (!isLoggedIn()) {
 			</Box>
 		</header>
 		<Box flex-direction="row" class="w-full">
-			<Sidebar class="rounded-none text-nowrap"/>
+			<Sidebar v-if="isLoggedIn()" class="rounded-none text-nowrap"/>
 			<RouterView class="rounded-none"/>
 		</Box>
 	</Box>
