@@ -114,11 +114,7 @@ async function handleDeleteCategory(e: MouseEvent) {
 				</Box>
 			</header>
 			<DisclosurePanel class="transition w-full mt-4">
-				<Box
-					flex-direction="col"
-					gap="gap-4"
-					v-for="goal in goalCategory.goals"
-				>
+				<Box flex-direction="col" v-for="goal in goalCategory.goals">
 					<GoalCard :goal="goal" :xp-per-goal="goalCategory.xp_per_goal"/>
 				</Box>
 			</DisclosurePanel>
