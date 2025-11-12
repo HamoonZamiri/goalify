@@ -65,15 +65,22 @@ watch(
 		flex-direction="row"
 		gap="gap-4"
 		:onclick="() => openEditingDialog()"
-		class="hover:cursor-pointer hover:bg-gray-700 items-center justify-between"
+		class="hover:cursor-pointer hover:bg-gray-700 items-center justify-between p-1 rounded-xl"
 	>
-		<Box flex-direction="row" class="gap-x-2 items-center hover:bg-gray-700">
+		<Box flex-direction="row" class="gap-x-2 items-center" bg="inherit">
 			<CheckOutline
 				:onclick="handleCheckClick"
 				class="hover:cursor-pointer"
 				:fill="currentStatus === 'complete' ? 'green' : 'none'"
 			/>
-			<Text as="span" size="sm" weight="normal">{{ props.goal.title }}</Text>
+			<Text
+				as="span"
+				size="sm"
+				weight="normal"
+				:class="currentStatus === 'complete' ? 'line-through opacity-50' : ''"
+			>
+				{{ props.goal.title }}
+			</Text>
 		</Box>
 		<Text as="span" size="sm" weight="normal">{{`${props.xpPerGoal} XP`}}</Text>
 	</Box>
