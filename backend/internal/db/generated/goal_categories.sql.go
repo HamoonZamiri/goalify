@@ -85,7 +85,7 @@ SELECT
 FROM goal_categories gc
 LEFT JOIN goals g ON gc.id = g.category_id
 WHERE gc.user_id = $1
-ORDER BY gc.created_at
+ORDER BY gc.created_at, g.created_at DESC
 `
 
 type GetGoalCategoriesWithGoalsByUserIdRow struct {
@@ -162,6 +162,7 @@ SELECT
 FROM goal_categories gc
 LEFT JOIN goals g ON gc.id = g.category_id
 WHERE gc.id = $1
+ORDER BY g.created_at DESC
 `
 
 type GetGoalCategoryWithGoalsByIdRow struct {
