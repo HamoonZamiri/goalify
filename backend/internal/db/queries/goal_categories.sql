@@ -27,7 +27,7 @@ SELECT
 FROM goal_categories gc
 LEFT JOIN goals g ON gc.id = g.category_id
 WHERE gc.user_id = $1
-ORDER BY gc.created_at;
+ORDER BY gc.created_at, g.created_at DESC;
 
 -- name: GetGoalCategoryWithGoalsById :many
 SELECT
@@ -36,4 +36,5 @@ SELECT
     g.created_at as goal_created_at, g.updated_at as goal_updated_at
 FROM goal_categories gc
 LEFT JOIN goals g ON gc.id = g.category_id
-WHERE gc.id = $1;
+WHERE gc.id = $1
+ORDER BY g.created_at DESC;
