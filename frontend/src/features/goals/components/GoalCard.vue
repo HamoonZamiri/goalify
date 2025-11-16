@@ -64,7 +64,7 @@ watch(
 		data-testid="goal-card"
 		flex-direction="row"
 		gap="gap-4"
-		:onclick="() => openEditingDialog()"
+		@click.stop="() => openEditingDialog()"
 		class="hover:cursor-pointer hover:bg-gray-700 items-center justify-between p-1 rounded-xl"
 	>
 		<Box flex-direction="row" class="gap-x-2 items-center" bg="inherit">
