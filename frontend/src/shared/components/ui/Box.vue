@@ -32,7 +32,6 @@ const props = withDefaults(
 		width?: Width;
 		class?: string;
 		bg?: keyof typeof bgClasses;
-		onClick?: () => void;
 	}>(),
 	{
 		rounded: "rounded-none",
