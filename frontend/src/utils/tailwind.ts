@@ -6,7 +6,7 @@ export type Gap = "gap-1" | "gap-2" | "gap-4" | "gap-6" | "gap-8";
 
 export type Rounding =
 	| "rounded-none"
-	| "rounded"
+	| "rounded-sm"
 	| "rounded-md"
 	| "rounded-lg"
 	| "rounded-xl"
@@ -14,8 +14,8 @@ export type Rounding =
 
 export type Shadow =
 	| "shadow-none"
+	| "shadow-xs"
 	| "shadow-sm"
-	| "shadow"
 	| "shadow-md"
 	| "shadow-lg";
 

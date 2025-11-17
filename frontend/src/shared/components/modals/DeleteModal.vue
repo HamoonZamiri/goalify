@@ -12,7 +12,7 @@ const props = defineProps<Props>();
 </script>
 <template>
 	<Dialog
-		class="absolute inset-0 h-screen flex justify-center items-center hover:cursor-pointer z-20 w-screen bg-opacity-10 rounded-lg"
+		class="absolute inset-0 h-screen flex justify-center items-center hover:cursor-pointer z-20 w-screen bg-inherit/50 rounded-lg"
 		:open="props.isOpen"
 		@close="setOpener(false)"
 	>

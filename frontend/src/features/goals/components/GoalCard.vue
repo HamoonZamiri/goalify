@@ -91,7 +91,7 @@ watch(
 			enter="transition-all ease-in-out duration-500 transform"
 		>
 			<Dialog
-				class="absolute inset-0 h-screen flex justify-end hover:cursor-pointer z-10 w-screen bg-opacity-10 rounded-lg"
+				class="absolute inset-0 h-screen flex justify-end hover:cursor-pointer z-10 w-screen bg-inherit/50 rounded-lg"
 				@close="handleClose"
 			>
 				<DialogPanel class="w-full sm:w-1/2">
