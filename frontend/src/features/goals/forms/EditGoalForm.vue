@@ -212,7 +212,7 @@ defineExpose({ saveIfDirty });
               }
             "
 						@blur="field.handleBlur"
-						class="w-full bg-gray-300 focus:outline-none h-64 p-2 text-gray-600"
+						class="w-full bg-gray-300 focus:outline-hidden h-64 p-2 text-gray-600"
 					/>
 				</template>
 			</form.Field>

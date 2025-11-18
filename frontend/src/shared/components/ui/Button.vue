@@ -22,7 +22,7 @@ const props = withDefaults(
 );
 
 const classes = computed(() => [
-	"inline-flex justify-center items-center gap-2 rounded-lg text-sm font-medium transition-colors",
+	"inline-flex justify-center items-center gap-2 rounded-lg text-sm font-medium transition-colors hover:cursor-pointer",
 	buttonVariantClasses[props.variant] ?? "",
 	props.height,
 	props.width,

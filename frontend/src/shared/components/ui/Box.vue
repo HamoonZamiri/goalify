@@ -35,7 +35,7 @@ const props = withDefaults(
 	}>(),
 	{
 		rounded: "rounded-none",
-		shadow: "shadow-sm",
+		shadow: "shadow-xs",
 		bordered: false,
 		flexDirection: "col",
 		bg: "dark",
