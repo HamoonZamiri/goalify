@@ -28,7 +28,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-	<ArrowPath class="animate-spin" v-if="isLoading"/>
+	<div class="skeleton h-full w-full rounded-full" v-if="isLoading"/>
 	<Box
 		v-else-if="error"
 		height="h-full"

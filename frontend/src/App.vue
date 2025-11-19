@@ -20,9 +20,9 @@ if (!isLoggedIn()) {
 				<Navbar/>
 			</Box>
 		</header>
-		<Box flex-direction="row" class="w-full">
+		<Box flex-direction="row" class="w-full h-full">
 			<Sidebar v-if="isLoggedIn()" class="rounded-none text-nowrap"/>
-			<RouterView class="rounded-none"/>
+			<RouterView class="rounded-none w-full h-full"/>
 		</Box>
 	</Box>
 </template>
