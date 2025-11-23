@@ -8,28 +8,28 @@ import (
 
 type User struct {
 	RefreshTokenExpiry time.Time `db:"refresh_token_expiry" json:"refresh_token_expiry"`
-	CreatedAt          time.Time `db:"created_at" json:"created_at"`
-	UpdatedAt          time.Time `db:"updated_at" json:"updated_at"`
-	Email              string    `db:"email" json:"email"`
+	CreatedAt          time.Time `db:"created_at"           json:"created_at"`
+	UpdatedAt          time.Time `db:"updated_at"           json:"updated_at"`
+	Email              string    `db:"email"                json:"email"`
 	Password           string    `db:"password"`
-	Xp                 int       `db:"xp" json:"xp"`
-	LevelId            int       `db:"level_id" json:"level_id"`
-	CashAvailable      int       `db:"cash_available" json:"cash_available"`
-	Id                 uuid.UUID `db:"id" json:"id"`
-	RefreshToken       uuid.UUID `db:"refresh_token" json:"refresh_token"`
+	Xp                 int       `db:"xp"                   json:"xp"`
+	LevelID            int       `db:"level_id"             json:"level_id"`
+	CashAvailable      int       `db:"cash_available"       json:"cash_available"`
+	ID                 uuid.UUID `db:"id"                   json:"id"`
+	RefreshToken       uuid.UUID `db:"refresh_token"        json:"refresh_token"`
 }
 
 type UserDTO struct {
 	RefreshTokenExpiry time.Time `db:"refresh_token_expiry" json:"refresh_token_expiry"`
-	CreatedAt          time.Time `db:"created_at" json:"created_at"`
-	UpdatedAt          time.Time `db:"updated_at" json:"updated_at"`
-	Email              string    `db:"email" json:"email"`
-	AccessToken        string    `json:"access_token"`
-	Xp                 int       `db:"xp" json:"xp"`
-	LevelId            int       `db:"level_id" json:"level_id"`
-	CashAvailable      int       `db:"cash_available" json:"cash_available"`
-	Id                 uuid.UUID `db:"id" json:"id"`
-	RefreshToken       uuid.UUID `db:"refresh_token" json:"refresh_token"`
+	CreatedAt          time.Time `db:"created_at"           json:"created_at"`
+	UpdatedAt          time.Time `db:"updated_at"           json:"updated_at"`
+	Email              string    `db:"email"                json:"email"`
+	AccessToken        string    `                          json:"access_token"`
+	Xp                 int       `db:"xp"                   json:"xp"`
+	LevelID            int       `db:"level_id"             json:"level_id"`
+	CashAvailable      int       `db:"cash_available"       json:"cash_available"`
+	ID                 uuid.UUID `db:"id"                   json:"id"`
+	RefreshToken       uuid.UUID `db:"refresh_token"        json:"refresh_token"`
 }
 
 func (u *User) ToUserDTO(accessToken string) *UserDTO {
@@ -40,17 +40,17 @@ func (u *User) ToUserDTO(accessToken string) *UserDTO {
 		Email:              u.Email,
 		AccessToken:        accessToken,
 		Xp:                 u.Xp,
-		LevelId:            u.LevelId,
+		LevelID:            u.LevelID,
 		CashAvailable:      u.CashAvailable,
-		Id:                 u.Id,
+		ID:                 u.ID,
 		RefreshToken:       u.RefreshToken,
 	}
 }
 
 type Level struct {
-	Id         int       `db:"id" json:"id"`
+	CreatedAt  time.Time `db:"created_at"  json:"created_at"`
+	UpdatedAt  time.Time `db:"updated_at"  json:"updated_at"`
+	ID         int       `db:"id"          json:"id"`
 	LevelUpXp  int       `db:"level_up_xp" json:"level_up_xp"`
 	CashReward int       `db:"cash_reward" json:"cash_reward"`
-	CreatedAt  time.Time `db:"created_at" json:"created_at"`
-	UpdatedAt  time.Time `db:"updated_at" json:"updated_at"`
 }

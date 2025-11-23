@@ -1,3 +1,4 @@
+// Package events contains utilities for publishing and subscribing to events
 package events
 
 import (
@@ -13,19 +14,19 @@ import (
 type Event struct {
 	Data      any                    `json:"data"`
 	EventType string                 `json:"event_type"`
-	UserId    options.Option[string] `json:"user_id"`
+	UserID    options.Option[string] `json:"user_id"`
 }
 
 const (
-	QUEUE_MAX_SIZE        int    = 1000
-	USER_CREATED          string = "user_created"
-	GOAL_CREATED          string = "goal_created"
-	GOAL_UPDATED          string = "goal_updated"
-	USER_UPDATED          string = "user_updated"
-	GOAL_CATEGORY_CREATED string = "goal_category_created"
-	DEFAULT_GOAL_CREATED  string = "default_goal_created"
-	SSE_CONNECTED         string = "sse_connected"
-	XP_UPDATED            string = "xp_updated"
+	QueueMaxSize        int    = 1000
+	UserCreated         string = "user_created"
+	GoalCreated         string = "goal_created"
+	GoalUpdated         string = "goal_updated"
+	UserUpdated         string = "user_updated"
+	GoalCategoryCreated string = "goal_category_created"
+	DefaultGoalCreated  string = "default_goal_created"
+	SSEConnected        string = "sse_connected"
+	XPUpdated           string = "xp_updated"
 )
 
 func ParseEventData[T any](event Event) (T, error) {
@@ -51,8 +52,8 @@ type EventPublisher interface {
 	Subscribe(eventType string, subscriber Subscriber)
 	Publish(event Event)
 	Unsubscribe(eventType string, subscriber Subscriber)
-	SubscribeToUserEvents(userId string, subscriber Subscriber)
-	UnsubscribeFromUserEvents(userId string, subscriber Subscriber)
+	SubscribeToUserEvents(userID string, subscriber Subscriber)
+	UnsubscribeFromUserEvents(userID string, subscriber Subscriber)
 }
 
 type EventManager struct {
@@ -66,21 +67,21 @@ func NewEvent(eventType string, data any) Event {
 	return Event{
 		Data:      data,
 		EventType: eventType,
-		UserId:    options.None[string](),
+		UserID:    options.None[string](),
 	}
 }
 
-func NewEventWithUserId(eventType string, data any, userId string) Event {
+func NewEventWithUserID(eventType string, data any, userID string) Event {
 	return Event{
 		Data:      data,
 		EventType: eventType,
-		UserId:    options.Some(userId),
+		UserID:    options.Some(userID),
 	}
 }
 
 func NewEventManager() *EventManager {
 	em := &EventManager{
-		eventQueue:  make(chan Event, QUEUE_MAX_SIZE),
+		eventQueue:  make(chan Event, QueueMaxSize),
 		subscribers: make(map[string]*lists.TypedList[Subscriber]),
 		userSubs:    make(map[string]*lists.TypedList[Subscriber]),
 		mu:          sync.Mutex{},
@@ -134,12 +135,12 @@ func (em *EventManager) broadcastByType(event Event) {
 }
 
 func (em *EventManager) broadcastByUser(event Event) {
-	if !event.UserId.IsPresent() {
+	if !event.UserID.IsPresent() {
 		return
 	}
 
-	userId := event.UserId.ValueOrZero()
-	userSubList, ok := em.userSubs[userId]
+	userID := event.UserID.ValueOrZero()
+	userSubList, ok := em.userSubs[userID]
 	if !ok {
 		return
 	}
@@ -186,19 +187,19 @@ func (em *EventManager) Unsubscribe(eventType string, subscriber Subscriber) {
 	}
 }
 
-func (em *EventManager) SubscribeToUserEvents(userId string, subscriber Subscriber) {
+func (em *EventManager) SubscribeToUserEvents(userID string, subscriber Subscriber) {
 	em.mu.Lock()
 	defer em.mu.Unlock()
-	if _, ok := em.userSubs[userId]; !ok {
-		em.userSubs[userId] = lists.New[Subscriber]()
+	if _, ok := em.userSubs[userID]; !ok {
+		em.userSubs[userID] = lists.New[Subscriber]()
 	}
-	em.userSubs[userId].PushBack(subscriber)
+	em.userSubs[userID].PushBack(subscriber)
 }
 
-func (em *EventManager) UnsubscribeFromUserEvents(userId string, subscriber Subscriber) {
+func (em *EventManager) UnsubscribeFromUserEvents(userID string, subscriber Subscriber) {
 	em.mu.Lock()
 	defer em.mu.Unlock()
-	subList := em.userSubs[userId].GetList()
+	subList := em.userSubs[userID].GetList()
 	for e := subList.Front(); e != nil; e = e.Next() {
 		if e.Value == subscriber {
 			subList.Remove(e)

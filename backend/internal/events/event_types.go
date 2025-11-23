@@ -9,6 +9,6 @@ type GoalUpdatedData struct {
 }
 
 type XpUpdatedData struct {
-	LevelId int `json:"level_id"`
+	LevelID int `json:"level_id"`
 	Xp      int `json:"xp"`
 }

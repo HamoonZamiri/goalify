@@ -5,16 +5,16 @@ import (
 	"log/slog"
 )
 
-func (us *userService) HandleEvent(event events.Event) {
+func (s *userService) HandleEvent(event events.Event) {
 	switch event.EventType {
-	case events.GOAL_UPDATED:
-		us.handleGoalUpdatedEvent(event)
+	case events.GoalUpdated:
+		s.handleGoalUpdatedEvent(event)
 	default:
 		slog.Error("service.HandleEvent: unknown event type", "eventType", event.EventType)
 	}
 }
 
-func (us *userService) handleGoalUpdatedEvent(event events.Event) {
+func (s *userService) handleGoalUpdatedEvent(event events.Event) {
 	eventData, err := events.ParseEventData[*events.GoalUpdatedData](event)
 	if err != nil {
 		slog.Error("service.handleGoalUpdatedEvent: events.ParseEventData:", "err", err)
@@ -27,24 +27,24 @@ func (us *userService) handleGoalUpdatedEvent(event events.Event) {
 
 	if oldGoal.Status != newGoal.Status && newGoal.Status == "complete" {
 		// we need to update the xp of the user
-		user, err := us.userStore.GetUserById(oldGoal.UserId.String())
+		user, err := s.userStore.GetUserByID(oldGoal.UserID.String())
 		if err != nil {
 			slog.Error("service.handleGoalUpdatedEvent: store.GetUserById:", "err", err)
 			return
 		}
-		level, err := us.userStore.GetLevelById(user.LevelId)
+		level, err := s.userStore.GetLevelByID(user.LevelID)
 		if err != nil {
 			slog.Error("service.handleGoalUpdatedEvent: store.GetLevelById:", "err", err)
 			return
 		}
 		newXp := user.Xp + xp
-		newLevel := user.LevelId
+		newLevel := user.LevelID
 		if newXp >= level.LevelUpXp {
 			newXp %= level.LevelUpXp
 			newLevel += 1
 		}
 
-		_, err = us.userStore.UpdateUserById(user.Id, map[string]any{
+		_, err = s.userStore.UpdateUserByID(user.ID, map[string]any{
 			"xp":       newXp,
 			"level_id": newLevel,
 		})
@@ -54,10 +54,12 @@ func (us *userService) handleGoalUpdatedEvent(event events.Event) {
 		}
 
 		eventData := &events.XpUpdatedData{
-			LevelId: newLevel,
+			LevelID: newLevel,
 			Xp:      newXp,
 		}
-		us.eventPublisher.Publish(events.NewEventWithUserId(events.XP_UPDATED, eventData, oldGoal.UserId.String()))
+		s.eventPublisher.Publish(
+			events.NewEventWithUserID(events.XPUpdated, eventData, oldGoal.UserID.String()),
+		)
 
 	}
 }

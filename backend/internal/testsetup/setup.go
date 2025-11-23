@@ -1,3 +1,5 @@
+// Package testsetup is used to setup the postgres testcontainers instance for all integration test
+// files
 package testsetup
 
 import (

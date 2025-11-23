@@ -2,21 +2,21 @@ package tests
 
 import (
 	"context"
+	"goalify/cmd/app"
+	"goalify/internal/config"
+	"goalify/internal/testsetup"
 	"log"
 	"os"
 	"testing"
 	"time"
 
-	"goalify/cmd/app"
-	"goalify/internal/config"
-	sqlcdb "goalify/internal/db/generated"
-	"goalify/internal/testsetup"
-
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
+
+	sqlcdb "goalify/internal/db/generated"
 )
 
-const BASE_URL = "http://localhost:8080"
+const BaseURL = "http://localhost:8080"
 
 var (
 	pgxPool     *pgxpool.Pool
@@ -39,7 +39,7 @@ func setup(ctx context.Context) {
 
 	// Set environment and database connection string before getting config
 	config.SetEnv(config.ENV, string(config.LocalTest))
-	config.SetEnv(config.TEST_DB_CONN_STRING, connStr)
+	config.SetEnv(config.TestDBConnString, connStr)
 
 	// Reset config singleton to pick up test environment variables
 	config.ResetForTesting()

@@ -17,7 +17,7 @@ type (
 	CreateGoalRequest struct {
 		Title       string `json:"title"`
 		Description string `json:"description"`
-		CategoryId  string `json:"category_id"`
+		CategoryID  string `json:"category_id"`
 	}
 	CreateGoalCategoryRequest struct {
 		Title     string `json:"title"`
@@ -30,21 +30,24 @@ type (
 	UpdateGoalRequest struct {
 		Title       options.Option[string] `json:"title"`
 		Description options.Option[string] `json:"description"`
-		CategoryId  options.Option[string] `json:"category_id"`
+		CategoryID  options.Option[string] `json:"category_id"`
 		Status      options.Option[string] `json:"status"`
 	}
 	DeleteGoalRequest struct {
-		GoalId string `json:"goal_id"`
+		GoalID string `json:"goal_id"`
 	}
 )
 
-func NewGoalHandler(goalService service.GoalService, traceLogger stacktrace.TraceLogger) *GoalHandler {
+func NewGoalHandler(
+	goalService service.GoalService,
+	traceLogger stacktrace.TraceLogger,
+) *GoalHandler {
 	return &GoalHandler{goalService, traceLogger}
 }
 
 const (
-	TEXT_MAX_LEN    = 255
-	XP_MAX_PER_GOAL = 100
+	TextMaxLen   = 255
+	XPMaxPerGoal = 100
 )
 
 func NewGoalCategoryRequest(title string, xpPerGoal int) CreateGoalCategoryRequest {
@@ -61,14 +64,14 @@ func (r CreateGoalCategoryRequest) Valid() map[string]string {
 
 	if r.Title == "" {
 		problems["title"] = "title is required"
-	} else if len(r.Title) > TEXT_MAX_LEN {
+	} else if len(r.Title) > TextMaxLen {
 		problems["title"] = "title must be less than 255 characters"
 	}
 
 	if r.XpPerGoal <= 0 {
 		problems["xp_per_goal"] = "xp per goal must be greater than 0"
-	} else if r.XpPerGoal > XP_MAX_PER_GOAL {
-		problems["xp_per_goal"] = fmt.Sprintf("xp per goal must be less than %d", XP_MAX_PER_GOAL)
+	} else if r.XpPerGoal > XPMaxPerGoal {
+		problems["xp_per_goal"] = fmt.Sprintf("xp per goal must be less than %d", XPMaxPerGoal)
 	}
 	return problems
 }
@@ -83,8 +86,8 @@ func (r UpdateGoalCategoryRequest) Valid() map[string]string {
 		problems["xp_per_goal"] = "xp per goal must be greater than 0"
 	}
 
-	if r.XpPerGoal.IsPresent() && r.XpPerGoal.ValueOrZero() > XP_MAX_PER_GOAL {
-		problems["xp_per_goal"] = fmt.Sprintf("xp per goal must be less than %d", XP_MAX_PER_GOAL)
+	if r.XpPerGoal.IsPresent() && r.XpPerGoal.ValueOrZero() > XPMaxPerGoal {
+		problems["xp_per_goal"] = fmt.Sprintf("xp per goal must be less than %d", XPMaxPerGoal)
 	}
 
 	return problems
@@ -96,18 +99,18 @@ func (r CreateGoalRequest) Valid() map[string]string {
 	if r.Title == "" {
 		problems["title"] = "title is required"
 	}
-	if len(r.Title) > TEXT_MAX_LEN {
+	if len(r.Title) > TextMaxLen {
 		problems["title"] = "title must be less than 255 characters"
 	}
 
 	if r.Description == "" {
 		problems["description"] = "description is required"
 	}
-	if len(r.Description) > TEXT_MAX_LEN {
+	if len(r.Description) > TextMaxLen {
 		problems["description"] = "description must be less than 255 characters"
 	}
 
-	if r.CategoryId == "" {
+	if r.CategoryID == "" {
 		problems["category_id"] = "category id is required"
 	}
 
@@ -121,11 +124,11 @@ func (r UpdateGoalRequest) Valid() map[string]string {
 		problems["title"] = "title cannot be empty"
 	}
 
-	if r.Title.IsPresent() && len(r.Title.ValueOrZero()) > TEXT_MAX_LEN {
+	if r.Title.IsPresent() && len(r.Title.ValueOrZero()) > TextMaxLen {
 		problems["title"] = "title must be less than 255 characters"
 	}
 
-	if r.Description.IsPresent() && len(r.Description.ValueOrZero()) > TEXT_MAX_LEN {
+	if r.Description.IsPresent() && len(r.Description.ValueOrZero()) > TextMaxLen {
 		problems["description"] = "description must be less than 255 characters"
 	}
 
@@ -133,15 +136,16 @@ func (r UpdateGoalRequest) Valid() map[string]string {
 		problems["description"] = "description cannot be empty"
 	}
 
-	if r.CategoryId.IsPresent() && r.CategoryId.ValueOrZero() == "" {
+	if r.CategoryID.IsPresent() && r.CategoryID.ValueOrZero() == "" {
 		problems["category_id"] = "category id cannot be empty"
 	}
 
-	if r.CategoryId.IsPresent() && !isValidUUID(r.CategoryId.ValueOrZero()) {
+	if r.CategoryID.IsPresent() && !isValidUUID(r.CategoryID.ValueOrZero()) {
 		problems["category_id"] = "category id must be a valid UUID"
 	}
 
-	if r.Status.IsPresent() && r.Status.ValueOrZero() != "complete" && r.Status.ValueOrZero() != "not_complete" {
+	if r.Status.IsPresent() && r.Status.ValueOrZero() != "complete" &&
+		r.Status.ValueOrZero() != "not_complete" {
 		problems["status"] = "status must be either 'complete' or 'not_complete'"
 	}
 	return problems

@@ -2,20 +2,21 @@ package stores
 
 import (
 	"context"
-	sqlcdb "goalify/internal/db/generated"
 	"goalify/internal/entities"
+
+	sqlcdb "goalify/internal/db/generated"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type GoalStore interface {
-	CreateGoal(title, description string, userId, categoryId uuid.UUID) (*entities.Goal, error)
-	UpdateGoalStatus(goalId uuid.UUID, status string) (*entities.Goal, error)
-	GetGoalsByUserId(userId uuid.UUID) ([]*entities.Goal, error)
-	GetGoalById(goalId uuid.UUID) (*entities.Goal, error)
-	UpdateGoalById(goalId uuid.UUID, updates map[string]interface{}) (*entities.Goal, error)
-	DeleteGoalById(goalId uuid.UUID) error
+	CreateGoal(title, description string, userID, categoryID uuid.UUID) (*entities.Goal, error)
+	UpdateGoalStatus(goalID uuid.UUID, status string) (*entities.Goal, error)
+	GetGoalsByUserID(userID uuid.UUID) ([]*entities.Goal, error)
+	GetGoalByID(goalID uuid.UUID) (*entities.Goal, error)
+	UpdateGoalByID(goalID uuid.UUID, updates map[string]any) (*entities.Goal, error)
+	DeleteGoalByID(goalID uuid.UUID) error
 }
 
 type goalStore struct {
@@ -25,11 +26,11 @@ type goalStore struct {
 // Helper function to convert sqlc Goal to entity Goal
 func pgxGoalToEntity(g sqlcdb.Goal) *entities.Goal {
 	return &entities.Goal{
-		Id:          uuid.UUID(g.ID.Bytes),
+		ID:          uuid.UUID(g.ID.Bytes),
 		Title:       g.Title,
 		Description: g.Description.String,
-		UserId:      uuid.UUID(g.UserID.Bytes),
-		CategoryId:  uuid.UUID(g.CategoryID.Bytes),
+		UserID:      uuid.UUID(g.UserID.Bytes),
+		CategoryID:  uuid.UUID(g.CategoryID.Bytes),
 		Status:      string(g.Status.GoalStatus),
 		CreatedAt:   g.CreatedAt.Time,
 		UpdatedAt:   g.UpdatedAt.Time,
@@ -42,12 +43,15 @@ func NewGoalStore(queries *sqlcdb.Queries) GoalStore {
 	}
 }
 
-func (s *goalStore) CreateGoal(title, description string, userId, categoryId uuid.UUID) (*entities.Goal, error) {
+func (s *goalStore) CreateGoal(
+	title, description string,
+	userID, categoryID uuid.UUID,
+) (*entities.Goal, error) {
 	params := sqlcdb.CreateGoalParams{
 		Title:       title,
 		Description: pgtype.Text{String: description, Valid: true},
-		UserID:      pgtype.UUID{Bytes: userId, Valid: true},
-		CategoryID:  pgtype.UUID{Bytes: categoryId, Valid: true},
+		UserID:      pgtype.UUID{Bytes: userID, Valid: true},
+		CategoryID:  pgtype.UUID{Bytes: categoryID, Valid: true},
 	}
 
 	goal, err := s.queries.CreateGoal(context.Background(), params)
@@ -58,10 +62,10 @@ func (s *goalStore) CreateGoal(title, description string, userId, categoryId uui
 	return pgxGoalToEntity(goal), nil
 }
 
-func (s *goalStore) UpdateGoalStatus(goalId uuid.UUID, status string) (*entities.Goal, error) {
+func (s *goalStore) UpdateGoalStatus(goalID uuid.UUID, status string) (*entities.Goal, error) {
 	params := sqlcdb.UpdateGoalStatusParams{
 		Status: sqlcdb.NullGoalStatus{GoalStatus: sqlcdb.GoalStatus(status), Valid: true},
-		ID:     pgtype.UUID{Bytes: goalId, Valid: true},
+		ID:     pgtype.UUID{Bytes: goalID, Valid: true},
 	}
 
 	goal, err := s.queries.UpdateGoalStatus(context.Background(), params)
@@ -72,8 +76,11 @@ func (s *goalStore) UpdateGoalStatus(goalId uuid.UUID, status string) (*entities
 	return pgxGoalToEntity(goal), nil
 }
 
-func (s *goalStore) GetGoalsByUserId(userId uuid.UUID) ([]*entities.Goal, error) {
-	goals, err := s.queries.GetGoalsByUserId(context.Background(), pgtype.UUID{Bytes: userId, Valid: true})
+func (s *goalStore) GetGoalsByUserID(userID uuid.UUID) ([]*entities.Goal, error) {
+	goals, err := s.queries.GetGoalsByUserId(
+		context.Background(),
+		pgtype.UUID{Bytes: userID, Valid: true},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -86,8 +93,11 @@ func (s *goalStore) GetGoalsByUserId(userId uuid.UUID) ([]*entities.Goal, error)
 	return result, nil
 }
 
-func (s *goalStore) GetGoalById(goalId uuid.UUID) (*entities.Goal, error) {
-	goal, err := s.queries.GetGoalById(context.Background(), pgtype.UUID{Bytes: goalId, Valid: true})
+func (s *goalStore) GetGoalByID(goalID uuid.UUID) (*entities.Goal, error) {
+	goal, err := s.queries.GetGoalById(
+		context.Background(),
+		pgtype.UUID{Bytes: goalID, Valid: true},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -95,17 +105,27 @@ func (s *goalStore) GetGoalById(goalId uuid.UUID) (*entities.Goal, error) {
 	return pgxGoalToEntity(goal), nil
 }
 
-func (s *goalStore) UpdateGoalById(goalId uuid.UUID, updates map[string]interface{}) (*entities.Goal, error) {
+func anyToString(v any) (str string, ok bool) {
+	if v == nil {
+		return "", false
+	}
+	str, ok = v.(string)
+	return str, ok
+}
+
+func (s *goalStore) UpdateGoalByID(
+	goalID uuid.UUID,
+	updates map[string]any,
+) (*entities.Goal, error) {
 	params := sqlcdb.UpdateGoalByIdParams{
-		ID: pgtype.UUID{Bytes: goalId, Valid: true},
+		ID: pgtype.UUID{Bytes: goalID, Valid: true},
 	}
 
 	// Convert map updates to typed parameters
-	if title, ok := updates["title"]; ok {
-		if titleStr, ok := title.(string); ok {
-			params.Title = pgtype.Text{String: titleStr, Valid: true}
-		}
+	if title, ok := anyToString(updates["title"]); ok {
+		params.Title = pgtype.Text{String: title, Valid: true}
 	}
+
 	if description, ok := updates["description"]; ok {
 		if descStr, ok := description.(string); ok {
 			params.Description = pgtype.Text{String: descStr, Valid: true}
@@ -113,11 +133,14 @@ func (s *goalStore) UpdateGoalById(goalId uuid.UUID, updates map[string]interfac
 	}
 	if status, ok := updates["status"]; ok {
 		if statusStr, ok := status.(string); ok {
-			params.Status = sqlcdb.NullGoalStatus{GoalStatus: sqlcdb.GoalStatus(statusStr), Valid: true}
+			params.Status = sqlcdb.NullGoalStatus{
+				GoalStatus: sqlcdb.GoalStatus(statusStr),
+				Valid:      true,
+			}
 		}
 	}
-	if categoryId, ok := updates["category_id"]; ok {
-		if catUUID, ok := categoryId.(uuid.UUID); ok {
+	if categoryID, ok := updates["category_id"]; ok {
+		if catUUID, ok := categoryID.(uuid.UUID); ok {
 			params.CategoryID = pgtype.UUID{Bytes: catUUID, Valid: true}
 		}
 	}
@@ -130,6 +153,6 @@ func (s *goalStore) UpdateGoalById(goalId uuid.UUID, updates map[string]interfac
 	return pgxGoalToEntity(goal), nil
 }
 
-func (s *goalStore) DeleteGoalById(goalId uuid.UUID) error {
-	return s.queries.DeleteGoalById(context.Background(), pgtype.UUID{Bytes: goalId, Valid: true})
+func (s *goalStore) DeleteGoalByID(goalID uuid.UUID) error {
+	return s.queries.DeleteGoalById(context.Background(), pgtype.UUID{Bytes: goalID, Valid: true})
 }

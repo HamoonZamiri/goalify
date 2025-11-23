@@ -4,11 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"net/http"
-	"testing"
-
 	"goalify/internal/entities"
 	"goalify/internal/users/handler"
+	"net/http"
+	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -18,11 +17,19 @@ func TestSignup(t *testing.T) {
 	t.Parallel()
 
 	email := t.Name() + "@mail.com"
-	reqBody := handler.SignupRequest{Email: email, Password: "password123!", ConfirmPassword: "password123!"}
+	reqBody := handler.SignupRequest{
+		Email:           email,
+		Password:        "password123!",
+		ConfirmPassword: "password123!",
+	}
 	stringifiedBody, err := json.Marshal(reqBody)
 	assert.Nil(t, err)
 
-	res, err := http.Post(BASE_URL+"/api/users/signup", "application/json", bytes.NewReader(stringifiedBody))
+	res, err := http.Post(
+		BaseURL+"/api/users/signup",
+		"application/json",
+		bytes.NewReader(stringifiedBody),
+	)
 	assert.Nil(t, err)
 
 	assert.Equal(t, http.StatusCreated, res.StatusCode)
@@ -39,11 +46,19 @@ func TestSignupEmailExists(t *testing.T) {
 
 	email := t.Name() + "@mail.com"
 	createUser(email, "password123!")
-	reqBody := handler.SignupRequest{Email: email, Password: "password123!", ConfirmPassword: "password123!"}
+	reqBody := handler.SignupRequest{
+		Email:           email,
+		Password:        "password123!",
+		ConfirmPassword: "password123!",
+	}
 	stringifiedBody, err := json.Marshal(reqBody)
 	assert.Nil(t, err)
 
-	res, _ := http.Post(BASE_URL+"/api/users/signup", "application/json", bytes.NewReader(stringifiedBody))
+	res, _ := http.Post(
+		BaseURL+"/api/users/signup",
+		"application/json",
+		bytes.NewReader(stringifiedBody),
+	)
 	assert.Equal(t, http.StatusBadRequest, res.StatusCode)
 }
 
@@ -56,7 +71,11 @@ func TestLogin(t *testing.T) {
 	stringifiedBody, err := json.Marshal(reqBody)
 	assert.Nil(t, err)
 
-	res, _ := http.Post(BASE_URL+"/api/users/login", "application/json", bytes.NewReader(stringifiedBody))
+	res, _ := http.Post(
+		BaseURL+"/api/users/login",
+		"application/json",
+		bytes.NewReader(stringifiedBody),
+	)
 	assert.Equal(t, http.StatusOK, res.StatusCode)
 	assert.Nil(t, err)
 
@@ -75,7 +94,11 @@ func TestLoginIncorrectPassword(t *testing.T) {
 	stringifiedBody, err := json.Marshal(reqBody)
 	assert.Nil(t, err)
 
-	res, _ := http.Post(BASE_URL+"/api/users/login", "application/json", bytes.NewReader(stringifiedBody))
+	res, _ := http.Post(
+		BaseURL+"/api/users/login",
+		"application/json",
+		bytes.NewReader(stringifiedBody),
+	)
 	assert.Equal(t, http.StatusBadRequest, res.StatusCode)
 }
 
@@ -85,11 +108,11 @@ func TestRefresh(t *testing.T) {
 	email := t.Name() + "@mail.com"
 	user := createUser(email, "password123!")
 	prevToken := user.RefreshToken
-	reqBody := map[string]any{"user_id": user.Id, "refresh_token": prevToken}
+	reqBody := map[string]any{"user_id": user.ID, "refresh_token": prevToken}
 	stringifiedBody, err := json.Marshal(reqBody)
 	assert.Nil(t, err)
 
-	url := fmt.Sprintf("%s/api/users/refresh", BASE_URL)
+	url := fmt.Sprintf("%s/api/users/refresh", BaseURL)
 	res, err := http.Post(url, "application/json", bytes.NewReader(stringifiedBody))
 	assert.Nil(t, err)
 
@@ -107,8 +130,13 @@ func TestIncorrectRefresh(t *testing.T) {
 	email := t.Name() + "@mail.com"
 	userDto := createUser(email, "password123!")
 
-	reqBody := map[string]any{"user_id": userDto.Id, "refresh": "incorrect"}
-	res, err := buildAndSendRequest("POST", fmt.Sprintf("%s/api/users/refresh", BASE_URL), reqBody, userDto.AccessToken)
+	reqBody := map[string]any{"user_id": userDto.ID, "refresh": "incorrect"}
+	res, err := buildAndSendRequest(
+		"POST",
+		fmt.Sprintf("%s/api/users/refresh", BaseURL),
+		reqBody,
+		userDto.AccessToken,
+	)
 	assert.Nil(t, err)
 
 	assert.Equal(t, http.StatusUnprocessableEntity, res.StatusCode)
@@ -121,7 +149,12 @@ func TestUpdateUserById(t *testing.T) {
 	userDto := createUser(email, "password123!")
 
 	reqBody := map[string]any{"xp": 100, "cash_available": 100}
-	res, err := buildAndSendRequest("PUT", fmt.Sprintf("%s/api/users", BASE_URL), reqBody, userDto.AccessToken)
+	res, err := buildAndSendRequest(
+		"PUT",
+		fmt.Sprintf("%s/api/users", BaseURL),
+		reqBody,
+		userDto.AccessToken,
+	)
 	require.Nil(t, err)
 
 	resBody, err := unmarshalResponse[entities.UserDTO](res)
@@ -137,7 +170,12 @@ func TestIncorrectUpdateUserById(t *testing.T) {
 	userDto := createUser(email, "password123!")
 
 	reqBody := map[string]any{"xp": "incorrect", "cash_available": "incorrect"}
-	res, err := buildAndSendRequest("PUT", fmt.Sprintf("%s/api/users", BASE_URL), reqBody, userDto.AccessToken)
+	res, err := buildAndSendRequest(
+		"PUT",
+		fmt.Sprintf("%s/api/users", BaseURL),
+		reqBody,
+		userDto.AccessToken,
+	)
 	require.Nil(t, err)
 
 	assert.Equal(t, http.StatusBadRequest, res.StatusCode)
@@ -147,7 +185,7 @@ func TestGetLevelById(t *testing.T) {
 	t.Parallel()
 	user := createUser(t.Name()+"@mail.com", "Password123!")
 	for level := 1; level <= 100; level++ {
-		url := fmt.Sprintf("%s/api/levels/%d", BASE_URL, level)
+		url := fmt.Sprintf("%s/api/levels/%d", BaseURL, level)
 		res, err := buildAndSendRequest("GET", url, nil, user.AccessToken)
 		assert.Nil(t, err)
 		assert.Equal(t, http.StatusOK, res.StatusCode)

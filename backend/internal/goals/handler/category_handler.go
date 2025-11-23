@@ -1,11 +1,12 @@
+// Package handler is the API request/response handling for goals and goal categories
 package handler
 
 import (
 	"fmt"
 	"goalify/internal/entities"
 	"goalify/internal/middleware"
-	"goalify/pkg/jsonutil"
 	"goalify/internal/responses"
+	"goalify/pkg/jsonutil"
 	"log/slog"
 	"net/http"
 
@@ -19,14 +20,14 @@ func (h *GoalHandler) HandleCreateGoalCategory(w http.ResponseWriter, r *http.Re
 		responses.HandleDecodeError(w, r, problems, err)
 		return
 	}
-	userId, err := middleware.GetIdFromHeader(r)
+	userID, err := middleware.GetIDFromHeader(r)
 	if err != nil {
 		slog.Error(fmt.Sprintf("%s: middleware.GetIdFromHeader:", funcStr), "err", err)
 		responses.SendAPIError(w, r, http.StatusUnauthorized, "user is not authenticated", nil)
 		return
 	}
 
-	parsedUUID, err := uuid.Parse(userId)
+	parsedUUID, err := uuid.Parse(userID)
 	if err != nil {
 		slog.Error(fmt.Sprintf("%s: uuid.Parse:", funcStr), "err", err)
 		responses.SendAPIError(w, r, http.StatusInternalServerError, "error parsing user id", nil)
@@ -42,23 +43,23 @@ func (h *GoalHandler) HandleCreateGoalCategory(w http.ResponseWriter, r *http.Re
 	responses.SendResponse(w, r, http.StatusCreated, category)
 }
 
-func (h *GoalHandler) HandleGetGoalCategoriesByUserId(w http.ResponseWriter, r *http.Request) {
+func (h *GoalHandler) HandleGetGoalCategoriesByUserID(w http.ResponseWriter, r *http.Request) {
 	funcStr := h.traceLogger.GetTrace("handler.HandleGetGoalCategoriesByUserId")
-	userId, err := middleware.GetIdFromHeader(r)
+	userID, err := middleware.GetIDFromHeader(r)
 	if err != nil {
 		slog.Error(fmt.Sprintf("%s: middleware.GetIdFromHeader:", funcStr), "err", err)
 		responses.SendInternalServerError(w, r)
 		return
 	}
 
-	parsedUUID, err := uuid.Parse(userId)
+	parsedUUID, err := uuid.Parse(userID)
 	if err != nil {
 		slog.Error(fmt.Sprintf("%s: uuid.Parse:", funcStr), "err", err)
 		responses.SendInternalServerError(w, r)
 		return
 	}
 
-	cats, err := h.goalService.GetGoalCategoriesByUserId(parsedUUID)
+	cats, err := h.goalService.GetGoalCategoriesByUserID(parsedUUID)
 	if err != nil {
 		responses.SendAPIError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
@@ -71,30 +72,30 @@ func (h *GoalHandler) HandleGetGoalCategoriesByUserId(w http.ResponseWriter, r *
 	responses.SendResponse(w, r, http.StatusOK, res)
 }
 
-func (h *GoalHandler) HandleGetGoalCategoryById(w http.ResponseWriter, r *http.Request) {
+func (h *GoalHandler) HandleGetGoalCategoryByID(w http.ResponseWriter, r *http.Request) {
 	funcStr := h.traceLogger.GetTrace("handler.HandleGetGoalCategoryById")
-	userId, err := middleware.GetIdFromHeader(r)
+	userID, err := middleware.GetIDFromHeader(r)
 	if err != nil {
 		slog.Error(fmt.Sprintf("%s: middleware.GetIdFromHeader:", funcStr), "err", err)
 		responses.SendInternalServerError(w, r)
 		return
 	}
 
-	parsedUUID, err := uuid.Parse(userId)
+	parsedUUID, err := uuid.Parse(userID)
 	if err != nil {
 		slog.Error(fmt.Sprintf("%s: uuid.Parse:", funcStr), "err", err)
 		responses.SendInternalServerError(w, r)
 		return
 	}
 
-	categoryId := r.PathValue("categoryId")
-	parsedCategoryId, err := uuid.Parse(categoryId)
+	categoryID := r.PathValue("categoryId")
+	parsedCategoryID, err := uuid.Parse(categoryID)
 	if err != nil {
 		responses.SendAPIError(w, r, http.StatusBadRequest, "bad request: invalid category id", nil)
 		return
 	}
 
-	cat, err := h.goalService.GetGoalCategoryById(parsedCategoryId, parsedUUID)
+	cat, err := h.goalService.GetGoalCategoryByID(parsedCategoryID, parsedUUID)
 	if err != nil {
 		responses.SendAPIError(w, r, responses.GetErrorCode(err), err.Error(), nil)
 		return
@@ -103,24 +104,24 @@ func (h *GoalHandler) HandleGetGoalCategoryById(w http.ResponseWriter, r *http.R
 	responses.SendResponse(w, r, http.StatusOK, cat)
 }
 
-func (h *GoalHandler) HandleUpdateGoalCategoryById(w http.ResponseWriter, r *http.Request) {
+func (h *GoalHandler) HandleUpdateGoalCategoryByID(w http.ResponseWriter, r *http.Request) {
 	funcStr := h.traceLogger.GetTrace("handler.HandleUpdateGoalCategoryById")
-	userId, err := middleware.GetIdFromHeader(r)
+	userID, err := middleware.GetIDFromHeader(r)
 	if err != nil {
 		slog.Error(fmt.Sprintf("%s: middleware.GetIdFromHeader:", funcStr), "err", err)
 		responses.SendAPIError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
 	}
 
-	parsedUUID, err := uuid.Parse(userId)
+	parsedUUID, err := uuid.Parse(userID)
 	if err != nil {
 		slog.Error(fmt.Sprintf("%s: uuid.Parse:", funcStr), "err", err)
 		responses.SendAPIError(w, r, http.StatusInternalServerError, err.Error(), nil)
 		return
 	}
 
-	categoryId := r.PathValue("categoryId")
-	parsedCategoryId, err := uuid.Parse(categoryId)
+	categoryID := r.PathValue("categoryId")
+	parsedCategoryID, err := uuid.Parse(categoryID)
 	if err != nil {
 		responses.SendAPIError(w, r, http.StatusBadRequest, "bad request: invalid category id", nil)
 		return
@@ -147,7 +148,7 @@ func (h *GoalHandler) HandleUpdateGoalCategoryById(w http.ResponseWriter, r *htt
 		return
 	}
 
-	cat, err := h.goalService.UpdateGoalCategoryById(parsedCategoryId, updates, parsedUUID)
+	cat, err := h.goalService.UpdateGoalCategoryByID(parsedCategoryID, updates, parsedUUID)
 	if err != nil {
 		responses.SendAPIError(w, r, responses.GetErrorCode(err), err.Error(), nil)
 		return
@@ -156,37 +157,43 @@ func (h *GoalHandler) HandleUpdateGoalCategoryById(w http.ResponseWriter, r *htt
 	responses.SendResponse(w, r, http.StatusOK, cat)
 }
 
-func (h *GoalHandler) HandleDeleteGoalCategoryById(w http.ResponseWriter, r *http.Request) {
+func (h *GoalHandler) HandleDeleteGoalCategoryByID(w http.ResponseWriter, r *http.Request) {
 	funcStr := h.traceLogger.GetTrace("handler.HandleDeleteGoalCategoryById")
-	userId, err := middleware.GetIdFromHeader(r)
+	userID, err := middleware.GetIDFromHeader(r)
 	if err != nil {
 		slog.Error(fmt.Sprintf("%s: middleware.GetIdFromHeader:", funcStr), "err", err)
 		responses.SendAPIError(w, r, responses.GetErrorCode(err), err.Error(), nil)
 		return
 	}
 
-	parsedUUID, err := uuid.Parse(userId)
+	parsedUUID, err := uuid.Parse(userID)
 	if err != nil {
 		slog.Error(fmt.Sprintf("%s: uuid.Parse:", funcStr), "err", err)
 		responses.SendAPIError(w, r, responses.GetErrorCode(err), err.Error(), nil)
 		return
 	}
 
-	categoryId := r.PathValue("categoryId")
-	parsedCategoryId, err := uuid.Parse(categoryId)
+	categoryID := r.PathValue("categoryId")
+	parsedCategoryID, err := uuid.Parse(categoryID)
 	if err != nil {
 		slog.Error(fmt.Sprintf("%s: uuid.Parse:", funcStr), "err", err)
-		responses.SendAPIError(w, r, http.StatusBadRequest, "error parsing /{categoryId} param", nil)
+		responses.SendAPIError(
+			w,
+			r,
+			http.StatusBadRequest,
+			"error parsing /{categoryId} param",
+			nil,
+		)
 		return
 	}
 
-	err = h.goalService.DeleteGoalCategoryById(parsedCategoryId, parsedUUID)
+	err = h.goalService.DeleteGoalCategoryByID(parsedCategoryID, parsedUUID)
 	if err != nil {
 		slog.Error(fmt.Sprintf("%s: goalService.DeleteGoalCategoryById:", funcStr), "err", err)
 		responses.SendAPIError(w, r, responses.GetErrorCode(err), err.Error(), nil)
 		return
 	}
 
-	res := map[string]any{"id": categoryId, "deleted": true}
-	responses.SendResponse[map[string]any](w, r, http.StatusOK, res)
+	res := map[string]any{"id": categoryID, "deleted": true}
+	responses.SendResponse(w, r, http.StatusOK, res)
 }

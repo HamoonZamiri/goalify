@@ -1,3 +1,4 @@
+// Package service is the business logic layer for goals and goal categories
 package service
 
 import (
@@ -5,8 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"goalify/internal/entities"
-	"goalify/internal/goals/stores"
 	"goalify/internal/events"
+	"goalify/internal/goals/stores"
 	"goalify/internal/responses"
 	"goalify/pkg/stacktrace"
 	"log/slog"
@@ -16,26 +17,38 @@ import (
 )
 
 const (
-	XP_PER_GOAL_MAX int = 100
+	XPPerGoalMax int = 100
 )
 
-var subscribedEvents = []string{events.GOAL_CATEGORY_CREATED, events.USER_CREATED}
+var subscribedEvents = []string{events.GoalCategoryCreated, events.UserCreated}
 
 type GoalService interface {
 	// goals
-	CreateGoal(title, description string, userId, categoryId uuid.UUID) (*entities.Goal, error)
-	UpdateGoalStatus(status string, goalId, userId uuid.UUID) (*entities.Goal, error)
-	GetGoalsByUserId(userId uuid.UUID) ([]*entities.Goal, error)
-	GetGoalById(goalId uuid.UUID) (*entities.Goal, error)
-	UpdateGoalById(goalId uuid.UUID, updates map[string]any, userId uuid.UUID) (*entities.Goal, error)
-	DeleteGoalById(goalId, userId uuid.UUID) error
+	CreateGoal(title, description string, userID, categoryID uuid.UUID) (*entities.Goal, error)
+	UpdateGoalStatus(status string, goalID, userID uuid.UUID) (*entities.Goal, error)
+	GetGoalsByUserID(userID uuid.UUID) ([]*entities.Goal, error)
+	GetGoalByID(goalID uuid.UUID) (*entities.Goal, error)
+	UpdateGoalByID(
+		goalID uuid.UUID,
+		updates map[string]any,
+		userID uuid.UUID,
+	) (*entities.Goal, error)
+	DeleteGoalByID(goalID, userID uuid.UUID) error
 
 	// categories
-	CreateGoalCategory(title string, xpPerGoal int, userId uuid.UUID) (*entities.GoalCategory, error)
-	GetGoalCategoriesByUserId(userId uuid.UUID) ([]*entities.GoalCategory, error)
-	GetGoalCategoryById(categoryId, userId uuid.UUID) (*entities.GoalCategory, error)
-	UpdateGoalCategoryById(categoryId uuid.UUID, updates map[string]any, userId uuid.UUID) (*entities.GoalCategory, error)
-	DeleteGoalCategoryById(categoryId, userId uuid.UUID) error
+	CreateGoalCategory(
+		title string,
+		xpPerGoal int,
+		userID uuid.UUID,
+	) (*entities.GoalCategory, error)
+	GetGoalCategoriesByUserID(userID uuid.UUID) ([]*entities.GoalCategory, error)
+	GetGoalCategoryByID(categoryID, userID uuid.UUID) (*entities.GoalCategory, error)
+	UpdateGoalCategoryByID(
+		categoryID uuid.UUID,
+		updates map[string]any,
+		userID uuid.UUID,
+	) (*entities.GoalCategory, error)
+	DeleteGoalCategoryByID(categoryID, userID uuid.UUID) error
 }
 
 type goalService struct {
@@ -63,9 +76,12 @@ func NewGoalService(goalStore stores.GoalStore,
 	return gs
 }
 
-func (gs *goalService) CreateGoal(title, description string, userId, categoryId uuid.UUID) (*entities.Goal, error) {
+func (gs *goalService) CreateGoal(
+	title, description string,
+	userID, categoryID uuid.UUID,
+) (*entities.Goal, error) {
 	funcStr := gs.traceLogger.GetTrace("service.CreateGoal")
-	_, err := gs.goalCategoryStore.GetGoalCategoryById(categoryId)
+	_, err := gs.goalCategoryStore.GetGoalCategoryByID(categoryID)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, fmt.Errorf("%w: invalid category id", responses.ErrBadRequest)
 	}
@@ -74,7 +90,7 @@ func (gs *goalService) CreateGoal(title, description string, userId, categoryId 
 		return nil, responses.ErrInternalServer
 	}
 
-	createdGoal, err := gs.goalStore.CreateGoal(title, description, userId, categoryId)
+	createdGoal, err := gs.goalStore.CreateGoal(title, description, userID, categoryID)
 	if err != nil {
 		slog.Error(fmt.Sprintf("%s: store.CreateGoal:", funcStr), "err", err)
 		return nil, fmt.Errorf("%w: error creating goal", responses.ErrInternalServer)
@@ -82,27 +98,30 @@ func (gs *goalService) CreateGoal(title, description string, userId, categoryId 
 	return createdGoal, nil
 }
 
-func (gs *goalService) UpdateGoalStatus(status string, goalId, userId uuid.UUID) (*entities.Goal, error) {
+func (gs *goalService) UpdateGoalStatus(
+	status string,
+	goalID, userID uuid.UUID,
+) (*entities.Goal, error) {
 	cleanStatus := strings.ToLower(status)
 
 	if cleanStatus != "completed" && cleanStatus != "not_completed" {
 		return nil, errors.New("status must be either 'completed' or 'not_completed'")
 	}
 
-	goal, err := gs.goalStore.GetGoalById(goalId)
+	goal, err := gs.goalStore.GetGoalByID(goalID)
 	if err != nil {
 		return nil, err
 	}
-	if goal.UserId != userId {
+	if goal.UserID != userID {
 		return nil, errors.New("user does not own this goal")
 	}
 
-	return gs.goalStore.UpdateGoalStatus(goalId, status)
+	return gs.goalStore.UpdateGoalStatus(goalID, status)
 }
 
-func (gs *goalService) GetGoalsByUserId(userId uuid.UUID) ([]*entities.Goal, error) {
+func (gs *goalService) GetGoalsByUserID(userID uuid.UUID) ([]*entities.Goal, error) {
 	funcStr := gs.traceLogger.GetTrace("service.GetGoalsByUserId")
-	goals, err := gs.goalStore.GetGoalsByUserId(userId)
+	goals, err := gs.goalStore.GetGoalsByUserID(userID)
 	if errors.Is(err, sql.ErrNoRows) {
 		return goals, nil
 	}
@@ -114,9 +133,9 @@ func (gs *goalService) GetGoalsByUserId(userId uuid.UUID) ([]*entities.Goal, err
 	return goals, nil
 }
 
-func (gs *goalService) GetGoalById(goalId uuid.UUID) (*entities.Goal, error) {
+func (gs *goalService) GetGoalByID(goalID uuid.UUID) (*entities.Goal, error) {
 	funcStr := gs.traceLogger.GetTrace("service.GetGoalById")
-	goal, err := gs.goalStore.GetGoalById(goalId)
+	goal, err := gs.goalStore.GetGoalByID(goalID)
 
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, fmt.Errorf("%w: invalid goal id", responses.ErrNotFound)
@@ -130,59 +149,79 @@ func (gs *goalService) GetGoalById(goalId uuid.UUID) (*entities.Goal, error) {
 	return goal, nil
 }
 
-func (gs *goalService) CreateGoalCategory(title string, xpPerGoal int, userId uuid.UUID) (*entities.GoalCategory, error) {
+func (gs *goalService) CreateGoalCategory(
+	title string,
+	xpPerGoal int,
+	userID uuid.UUID,
+) (*entities.GoalCategory, error) {
 	funcStr := gs.traceLogger.GetTrace("service.CreateGoalCategory")
 
-	cat, err := gs.goalCategoryStore.CreateGoalCategory(title, xpPerGoal, userId)
+	cat, err := gs.goalCategoryStore.CreateGoalCategory(title, xpPerGoal, userID)
 	if err != nil {
 		slog.Error(fmt.Sprintf("%s: store.CreateGoalCategory:", funcStr), "err", err)
 		return nil, fmt.Errorf("%w: error creating goal category", responses.ErrInternalServer)
 	}
 
-	e := events.NewEventWithUserId(events.GOAL_CATEGORY_CREATED, cat, cat.UserId.String())
+	e := events.NewEventWithUserID(events.GoalCategoryCreated, cat, cat.UserID.String())
 	slog.Info("Publishing GOAL_CATEGORY_CREATED event",
-		slog.String("categoryId", cat.Id.String()),
-		slog.String("userId", cat.UserId.String()))
+		slog.String("categoryId", cat.ID.String()),
+		slog.String("userId", cat.UserID.String()))
 	gs.eventPublisher.Publish(e)
 
 	return cat, nil
 }
 
-func (gs *goalService) GetGoalCategoriesByUserId(userId uuid.UUID) ([]*entities.GoalCategory, error) {
-	categories, err := gs.goalCategoryStore.GetGoalCategoriesByUserId(userId)
+func (gs *goalService) GetGoalCategoriesByUserID(
+	userID uuid.UUID,
+) ([]*entities.GoalCategory, error) {
+	categories, err := gs.goalCategoryStore.GetGoalCategoriesByUserID(userID)
 	if err != nil {
 		return nil, responses.ErrInternalServer
 	}
 	return categories, nil
 }
 
-func (gs *goalService) GetGoalCategoryById(categoryId, userId uuid.UUID) (*entities.GoalCategory, error) {
+func (gs *goalService) GetGoalCategoryByID(
+	categoryID, userID uuid.UUID,
+) (*entities.GoalCategory, error) {
 	funcStr := gs.traceLogger.GetTrace("service.GetGoalCategoryById")
 
-	invalidIdErr := fmt.Errorf("%w: invalid category id", responses.ErrBadRequest)
+	invalidIDErr := fmt.Errorf("%w: invalid category id", responses.ErrBadRequest)
 
-	gc, err := gs.goalCategoryStore.GetGoalCategoryById(categoryId)
+	gc, err := gs.goalCategoryStore.GetGoalCategoryByID(categoryID)
 	if errors.Is(err, sql.ErrNoRows) {
-		return nil, invalidIdErr
+		return nil, invalidIDErr
 	}
 	if err != nil {
 		slog.Error(fmt.Sprintf("%s: store.GetGoalCategoryById:", funcStr), "err", err)
 		return nil, responses.ErrInternalServer
 	}
 
-	if gc.UserId != userId {
-		slog.Error(fmt.Sprintf("%s: user does not own this category", funcStr), "userId", userId, "categoryId", categoryId, "ownerId", gc.UserId)
-		return nil, invalidIdErr
+	if gc.UserID != userID {
+		slog.Error(
+			fmt.Sprintf("%s: user does not own this category", funcStr),
+			"userId",
+			userID,
+			"categoryId",
+			categoryID,
+			"ownerId",
+			gc.UserID,
+		)
+		return nil, invalidIDErr
 	}
 
 	return gc, nil
 }
 
-func (gs *goalService) UpdateGoalCategoryById(categoryId uuid.UUID, updates map[string]interface{}, userId uuid.UUID) (*entities.GoalCategory, error) {
+func (gs *goalService) UpdateGoalCategoryByID(
+	categoryID uuid.UUID,
+	updates map[string]any,
+	userID uuid.UUID,
+) (*entities.GoalCategory, error) {
 	funcStr := gs.traceLogger.GetTrace("service.UpdateGoalCategoryById")
 	badReqErr := fmt.Errorf("%w: invalid request", responses.ErrBadRequest)
 
-	cat, err := gs.goalCategoryStore.GetGoalCategoryById(categoryId)
+	cat, err := gs.goalCategoryStore.GetGoalCategoryByID(categoryID)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, badReqErr
 	}
@@ -191,16 +230,16 @@ func (gs *goalService) UpdateGoalCategoryById(categoryId uuid.UUID, updates map[
 		return nil, responses.ErrInternalServer
 	}
 
-	if cat.UserId != userId {
+	if cat.UserID != userID {
 		slog.Error("user does not own this category",
-			"userId", userId,
-			"categoryId", categoryId,
-			"ownerId", cat.UserId,
+			"userId", userID,
+			"categoryId", categoryID,
+			"ownerId", cat.UserID,
 			"trace", funcStr)
 		return nil, badReqErr
 	}
 
-	updatedCat, err := gs.goalCategoryStore.UpdateGoalCategoryById(categoryId, updates)
+	updatedCat, err := gs.goalCategoryStore.UpdateGoalCategoryByID(categoryID, updates)
 	if err != nil {
 		slog.Error(fmt.Sprintf("%s: store.UpdateGoalCategoryById:", funcStr), "err", err)
 		return nil, responses.ErrInternalServer
@@ -208,21 +247,29 @@ func (gs *goalService) UpdateGoalCategoryById(categoryId uuid.UUID, updates map[
 	return updatedCat, nil
 }
 
-func (gs *goalService) DeleteGoalCategoryById(categoryId, userId uuid.UUID) error {
+func (gs *goalService) DeleteGoalCategoryByID(categoryID, userID uuid.UUID) error {
 	funcStr := gs.traceLogger.GetTrace("service.DeleteGoalCategoryById")
 
-	cat, err := gs.goalCategoryStore.GetGoalCategoryById(categoryId)
+	cat, err := gs.goalCategoryStore.GetGoalCategoryByID(categoryID)
 	if err != nil {
 		slog.Error(fmt.Sprintf("%s: store.GetGoalCategoryById:", funcStr), "err", err)
 		return fmt.Errorf("%w: error fetching goal category", responses.ErrInternalServer)
 	}
 
-	if cat.UserId != userId {
-		slog.Error(fmt.Sprintf("%s: user does not own this category", funcStr), "userId", userId, "categoryId", categoryId, "ownerId", cat.UserId)
+	if cat.UserID != userID {
+		slog.Error(
+			fmt.Sprintf("%s: user does not own this category", funcStr),
+			"userId",
+			userID,
+			"categoryId",
+			categoryID,
+			"ownerId",
+			cat.UserID,
+		)
 		return fmt.Errorf("%w: user does not own this category", responses.ErrUnauthorized)
 	}
 
-	err = gs.goalCategoryStore.DeleteGoalCategoryById(categoryId)
+	err = gs.goalCategoryStore.DeleteGoalCategoryByID(categoryID)
 	if errors.Is(err, sql.ErrNoRows) {
 		return fmt.Errorf("%w: category not found", responses.ErrNotFound)
 	}
@@ -235,56 +282,76 @@ func (gs *goalService) DeleteGoalCategoryById(categoryId, userId uuid.UUID) erro
 	return nil
 }
 
-func (gs *goalService) UpdateGoalById(goalId uuid.UUID, updates map[string]interface{}, userId uuid.UUID) (*entities.Goal, error) {
+func (gs *goalService) checkCategoryForUpdate(catID any, userID uuid.UUID) bool {
+	if catID == nil {
+		return true
+	}
+
+	catIDString, ok := catID.(string)
+	if !ok {
+		slog.Error("service.checkCategoryForUpdate: invalid category id")
+		return false
+	}
+
+	catIDUUID, err := uuid.Parse(catIDString)
+	if err != nil {
+		slog.Error("service.checkCategoryForUpdate: uuid.Parse:", "err", err)
+		return false
+	}
+
+	cat, err := gs.goalCategoryStore.GetGoalCategoryByID(catIDUUID)
+	if err != nil {
+		return false
+	}
+	return cat.UserID.String() == userID.String()
+}
+
+func (gs *goalService) UpdateGoalByID(
+	goalID uuid.UUID,
+	updates map[string]any,
+	userID uuid.UUID,
+) (*entities.Goal, error) {
 	funcStr := gs.traceLogger.GetTrace("service.UpdateGoalById")
 
-	goal, err := gs.goalStore.GetGoalById(goalId)
+	goal, err := gs.goalStore.GetGoalByID(goalID)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, fmt.Errorf("%w: invalid goal id", responses.ErrBadRequest)
 	}
+
 	if err != nil {
 		slog.Error("service.handleUpdateGoalById: store.GetGoalById:", "err", err)
 		return nil, responses.ErrInternalServer
 	}
-	if goal.UserId != userId {
-		slog.Error(fmt.Sprintf("%s: user does not own this goal", funcStr), "userId", userId, "goalId", goalId, "ownerId", goal.UserId)
+
+	if goal.UserID != userID {
+		slog.Error(
+			fmt.Sprintf("%s: user does not own this goal", funcStr),
+			"userID",
+			userID,
+			"goalID",
+			goalID,
+			"ownerID",
+			goal.UserID,
+		)
 		return nil, fmt.Errorf("%w: invalid goal id", responses.ErrBadRequest)
 	}
 
-	categoryId := updates["category_id"]
-	if categoryId != nil {
-		categoryId, ok := categoryId.(string)
-		if !ok {
-			return nil, fmt.Errorf("%w: category_id must be a string", responses.ErrBadRequest)
-		}
-		parsedCategoryId, err := uuid.Parse(categoryId)
-		if err != nil {
-			slog.Error(fmt.Sprintf("%s: uuid.Parse(categoryId):", funcStr), "err", err)
-			return nil, fmt.Errorf("%w: invalid category id", responses.ErrBadRequest)
-		}
-
-		cat, err := gs.goalCategoryStore.GetGoalCategoryById(parsedCategoryId)
-		if err != nil {
-			slog.Error(fmt.Sprintf("%s: store.GetGoalCategoryById:", funcStr), "err", err)
-			return nil, responses.ErrInternalServer
-		}
-
-		if cat.UserId != userId {
-			slog.Error(fmt.Sprintf("%s: user does not own this category", funcStr), "userId", userId, "categoryId", parsedCategoryId, "ownerId", cat.UserId)
-			return nil, fmt.Errorf("%w: invalid category id", responses.ErrBadRequest)
-		}
+	categoryOk := gs.checkCategoryForUpdate(updates["category_id"], userID)
+	if !categoryOk {
+		return nil, fmt.Errorf("%w: invalid category id", responses.ErrBadRequest)
 	}
 
-	updatedGoal, err := gs.goalStore.UpdateGoalById(goalId, updates)
+	updatedGoal, err := gs.goalStore.UpdateGoalByID(goalID, updates)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, fmt.Errorf("%w: invalid goal id", responses.ErrBadRequest)
 	}
+
 	if err != nil {
 		slog.Error(fmt.Sprintf("%s: store.UpdateGoalById:", funcStr), "err", err)
 		return nil, fmt.Errorf("%w: error updating goal", responses.ErrInternalServer)
 	}
 
-	cat, err := gs.goalCategoryStore.GetGoalCategoryById(updatedGoal.CategoryId)
+	cat, err := gs.goalCategoryStore.GetGoalCategoryByID(updatedGoal.CategoryID)
 	skipEvent := false
 
 	// if we can't fetch the goal category we don't know the correct xp per goal
@@ -297,16 +364,16 @@ func (gs *goalService) UpdateGoalById(goalId uuid.UUID, updates map[string]inter
 		eventData := &events.GoalUpdatedData{
 			OldGoal: goal,
 			NewGoal: updatedGoal,
-			Xp:      cat.Xp_per_goal,
+			Xp:      cat.XPPerGoal,
 		}
-		event := events.NewEventWithUserId(events.GOAL_UPDATED, eventData, userId.String())
+		event := events.NewEventWithUserID(events.GoalUpdated, eventData, userID.String())
 		gs.eventPublisher.Publish(event)
 	}
 	return updatedGoal, nil
 }
 
-func (gs *goalService) DeleteGoalById(goalId, userId uuid.UUID) error {
-	goal, err := gs.goalStore.GetGoalById(goalId)
+func (gs *goalService) DeleteGoalByID(goalID, userID uuid.UUID) error {
+	goal, err := gs.goalStore.GetGoalByID(goalID)
 	if errors.Is(err, sql.ErrNoRows) {
 		return fmt.Errorf("%w: invalid goal id", responses.ErrBadRequest)
 	}
@@ -314,11 +381,11 @@ func (gs *goalService) DeleteGoalById(goalId, userId uuid.UUID) error {
 		slog.Error("service.handleDeleteGoalById: store.GetGoalById:", "err", err)
 		return responses.ErrInternalServer
 	}
-	if goal.UserId != userId {
+	if goal.UserID != userID {
 		return fmt.Errorf("%w: invalid goal id", responses.ErrBadRequest)
 	}
 
-	err = gs.goalStore.DeleteGoalById(goalId)
+	err = gs.goalStore.DeleteGoalByID(goalID)
 	if err != nil {
 		slog.Error("service.handleDeleteGoalById: store.DeleteGoalById:", "err", err)
 		return responses.ErrInternalServer

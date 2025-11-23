@@ -1,0 +1,44 @@
+version: "2"
+
+run:
+  timeout: 5m
+
+formatters:
+  enable:
+    - gofmt
+    - gofumpt
+    - goimports
+    - golines
+    - swaggo
+  settings:
+    golines:
+      max-len: 100
+      tab-len: 4
+      shorten-comments: true
+linters:
+  default: standard
+
+  exclusions:
+    rules:
+      - path: '(.+)_test\.go'
+        linters:
+          - errcheck
+
+  settings:
+    staticcheck:
+      checks:
+        - all
+    govet:
+      enable-all: true
+
+    errcheck:
+      check-type-assertions: true
+      check-blank: true
+      exclude-functions:
+        # Common functions where errors can be safely ignored
+        - (*database/sql.DB).Close
+        - (*database/sql.Rows).Close
+        - (io.Closer).Close
+issues:
+  max-same-issues: 0
+  max-issues-per-linter: 0

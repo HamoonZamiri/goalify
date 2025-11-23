@@ -3,7 +3,6 @@ package stores
 import (
 	"context"
 	"goalify/internal/db"
-	sqlcdb "goalify/internal/db/generated"
 	"goalify/internal/testsetup"
 	"log"
 	"os"
@@ -11,6 +10,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
+
+	sqlcdb "goalify/internal/db/generated"
 )
 
 var (

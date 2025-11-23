@@ -12,26 +12,21 @@ import (
 
 // Config holds all configuration values
 type Config struct {
-	// Database configuration
-	DBPassword   string
-	DBUser       string
-	DBName       string
-	DBHost       string
-	DBConnString string
-
-	// Test database configuration
-	TestDBPassword   string
 	TestDBUser       string
-	TestDBName       string
+	JWTSecret        string
+	DBName           string
+	DBHost           string
+	DBConnString     string
+	TestDBPassword   string
+	DBUser           string
 	TestDBHost       string
+	DBPassword       string
 	TestDBConnString string
-
-	// Application configuration
-	JWTSecret      string
-	Port           string
-	AllowedOrigins []string
-	Env            Environment
-	IsCI           bool
+	TestDBName       string
+	Port             string
+	Env              Environment
+	AllowedOrigins   []string
+	IsCI             bool
 }
 
 var (
@@ -111,12 +106,12 @@ func loadFromEnvironment() *Config {
 
 	// Required variables
 	requiredVars := map[ConfigKey]*string{
-		DB_PASSWORD: &config.DBPassword,
-		DB_USER:     &config.DBUser,
-		DB_NAME:     &config.DBName,
-		JWT_SECRET:  &config.JWTSecret,
-		PORT:        &config.Port,
-		ENV:         (*string)(&config.Env),
+		DBPassword: &config.DBPassword,
+		DBUser:     &config.DBUser,
+		DBName:     &config.DBName,
+		JWTSecret:  &config.JWTSecret,
+		Port:       &config.Port,
+		ENV:        (*string)(&config.Env),
 	}
 
 	// Load required variables
@@ -134,17 +129,17 @@ func loadFromEnvironment() *Config {
 	}
 
 	// Load optional variables
-	config.DBHost = os.Getenv(string(DB_HOST))
-	config.DBConnString = os.Getenv(string(DB_CONN_STRING))
-	config.TestDBPassword = os.Getenv(string(TEST_DB_PASSWORD))
-	config.TestDBUser = os.Getenv(string(TEST_DB_USER))
-	config.TestDBName = os.Getenv(string(TEST_DB_NAME))
-	config.TestDBHost = os.Getenv(string(TEST_DB_HOST))
-	config.TestDBConnString = os.Getenv(string(TEST_DB_CONN_STRING))
+	config.DBHost = os.Getenv(string(DBHost))
+	config.DBConnString = os.Getenv(string(DBConnString))
+	config.TestDBPassword = os.Getenv(string(TestDBPassword))
+	config.TestDBUser = os.Getenv(string(TestDBUser))
+	config.TestDBName = os.Getenv(string(TestDBName))
+	config.TestDBHost = os.Getenv(string(TestDBHost))
+	config.TestDBConnString = os.Getenv(string(TestDBConnString))
 	config.IsCI = os.Getenv(string(CI)) == "true"
 
 	// Parse allowed origins (comma-separated list)
-	if originsEnv := os.Getenv(string(ALLOWED_ORIGINS)); originsEnv != "" {
+	if originsEnv := os.Getenv(string(AllowedOrigins)); originsEnv != "" {
 		config.AllowedOrigins = strings.Split(originsEnv, ",")
 		// Trim whitespace from each origin
 		for i := range config.AllowedOrigins {
@@ -211,5 +206,8 @@ func MustGetEnv(key ConfigKey) string {
 
 // SetEnv sets an environment variable (primarily for testing)
 func SetEnv(key ConfigKey, value string) {
-	os.Setenv(string(key), value)
+	err := os.Setenv(string(key), value)
+	if err != nil {
+		panic(err)
+	}
 }
