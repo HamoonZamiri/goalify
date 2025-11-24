@@ -1,3 +1,4 @@
+// Package options helps work with generic option types in Go.
 package options
 
 import "encoding/json"

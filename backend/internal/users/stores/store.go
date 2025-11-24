@@ -1,10 +1,12 @@
+// Package stores is the repository layer package for the users domain
 package stores
 
 import (
 	"context"
-	sqlcdb "goalify/internal/db/generated"
 	"goalify/internal/entities"
 	"time"
+
+	sqlcdb "goalify/internal/db/generated"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -15,27 +17,27 @@ type (
 		CreateUser(email, password string) (*entities.User, error)
 		GetUserByEmail(email string) (*entities.User, error)
 		UpdateRefreshToken(id, refreshToken string) (*entities.User, error)
-		GetUserById(id string) (*entities.User, error)
-		DeleteUserById(id string) error
-		UpdateUserById(id uuid.UUID, updates map[string]any) (*entities.User, error)
+		GetUserByID(id string) (*entities.User, error)
+		DeleteUserByID(id string) error
+		UpdateUserByID(id uuid.UUID, updates map[string]any) (*entities.User, error)
 
-		GetLevelById(id int) (*entities.Level, error)
+		GetLevelByID(id int) (*entities.Level, error)
 	}
 	userStore struct {
 		queries *sqlcdb.Queries
 	}
 )
 
-const DEFAULT_LEVEL = 1
+const DefaultLevel = 1
 
 // Helper functions to convert between sqlc types and entity types
 func pgxUserToEntity(u sqlcdb.User) *entities.User {
 	return &entities.User{
-		Id:                 uuid.UUID(u.ID.Bytes),
+		ID:                 uuid.UUID(u.ID.Bytes),
 		Email:              u.Email,
 		Password:           u.Password,
 		Xp:                 int(u.Xp.Int32),
-		LevelId:            int(u.LevelID.Int32),
+		LevelID:            int(u.LevelID.Int32),
 		CashAvailable:      int(u.CashAvailable.Int32),
 		RefreshToken:       uuid.UUID(u.RefreshToken.Bytes),
 		RefreshTokenExpiry: u.RefreshTokenExpiry.Time,
@@ -46,7 +48,7 @@ func pgxUserToEntity(u sqlcdb.User) *entities.User {
 
 func pgxLevelToEntity(l sqlcdb.Level) *entities.Level {
 	return &entities.Level{
-		Id:         int(l.ID),
+		ID:         int(l.ID),
 		LevelUpXp:  int(l.LevelUpXp),
 		CashReward: int(l.CashReward),
 		CreatedAt:  l.CreatedAt.Time,
@@ -66,7 +68,7 @@ func (s *userStore) CreateUser(email string, password string) (*entities.User, e
 		Email:              email,
 		Password:           password,
 		RefreshTokenExpiry: pgtype.Timestamp{Time: expiry, Valid: true},
-		LevelID:            pgtype.Int4{Int32: DEFAULT_LEVEL, Valid: true},
+		LevelID:            pgtype.Int4{Int32: DefaultLevel, Valid: true},
 	}
 
 	user, err := s.queries.CreateUser(context.Background(), params)
@@ -110,13 +112,16 @@ func (s *userStore) UpdateRefreshToken(id string, refreshToken string) (*entitie
 	return pgxUserToEntity(user), nil
 }
 
-func (s *userStore) GetUserById(id string) (*entities.User, error) {
+func (s *userStore) GetUserByID(id string) (*entities.User, error) {
 	userID, err := uuid.Parse(id)
 	if err != nil {
 		return nil, err
 	}
 
-	user, err := s.queries.GetUserById(context.Background(), pgtype.UUID{Bytes: userID, Valid: true})
+	user, err := s.queries.GetUserById(
+		context.Background(),
+		pgtype.UUID{Bytes: userID, Valid: true},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -124,7 +129,7 @@ func (s *userStore) GetUserById(id string) (*entities.User, error) {
 	return pgxUserToEntity(user), nil
 }
 
-func (s *userStore) DeleteUserById(id string) error {
+func (s *userStore) DeleteUserByID(id string) error {
 	userID, err := uuid.Parse(id)
 	if err != nil {
 		return err
@@ -133,7 +138,7 @@ func (s *userStore) DeleteUserById(id string) error {
 	return s.queries.DeleteUserById(context.Background(), pgtype.UUID{Bytes: userID, Valid: true})
 }
 
-func (s *userStore) UpdateUserById(id uuid.UUID, updates map[string]any) (*entities.User, error) {
+func (s *userStore) UpdateUserByID(id uuid.UUID, updates map[string]any) (*entities.User, error) {
 	params := sqlcdb.UpdateUserByIdParams{
 		ID: pgtype.UUID{Bytes: id, Valid: true},
 	}
@@ -159,8 +164,8 @@ func (s *userStore) UpdateUserById(id uuid.UUID, updates map[string]any) (*entit
 			params.RefreshTokenExpiry = pgtype.Timestamp{Time: expiryTime, Valid: true}
 		}
 	}
-	if levelId, ok := updates["level_id"]; ok {
-		if levelInt, ok := levelId.(int); ok {
+	if levelID, ok := updates["level_id"]; ok {
+		if levelInt, ok := levelID.(int); ok {
 			params.LevelID = pgtype.Int4{Int32: int32(levelInt), Valid: true}
 		}
 	}
@@ -185,7 +190,7 @@ func (s *userStore) UpdateUserById(id uuid.UUID, updates map[string]any) (*entit
 	return pgxUserToEntity(user), nil
 }
 
-func (s *userStore) GetLevelById(id int) (*entities.Level, error) {
+func (s *userStore) GetLevelByID(id int) (*entities.Level, error) {
 	level, err := s.queries.GetLevelById(context.Background(), int32(id))
 	if err != nil {
 		return nil, err

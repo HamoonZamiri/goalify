@@ -1,3 +1,4 @@
+// Package jsonutil is used for pairing decoding json with validation
 package jsonutil
 
 import (
@@ -11,8 +12,9 @@ type Validator interface {
 	Valid() (problems map[string]string)
 }
 
-// credit: https://grafana.com/blog/2024/02/09/how-i-write-http-services-in-go-after-13-years/#handle-decodingencoding-in-one-place
 func Encode[T any](w http.ResponseWriter, _ *http.Request, status int, data T) error {
+	// credit:
+	// https://grafana.com/blog/2024/02/09/how-i-write-http-services-in-go-after-13-years/#handle-decodingencoding-in-one-place
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 
@@ -30,7 +32,11 @@ func Decode[T any](r *http.Request) (T, error) {
 		var syntaxErr *json.SyntaxError
 		switch {
 		case errors.As(err, &typeErr):
-			return v, fmt.Errorf("invalid type for field '%s', expected %s", typeErr.Field, typeErr.Type)
+			return v, fmt.Errorf(
+				"invalid type for field '%s', expected %s",
+				typeErr.Field,
+				typeErr.Type,
+			)
 		case errors.As(err, &syntaxErr):
 			return v, fmt.Errorf("invalid JSON syntax at position %d", syntaxErr.Offset)
 		default:

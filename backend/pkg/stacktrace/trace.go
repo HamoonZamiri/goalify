@@ -1,3 +1,4 @@
+// Package stacktrace is a helper package to track error stack traces based on a default domain.
 package stacktrace
 
 import "fmt"

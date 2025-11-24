@@ -1,19 +1,13 @@
+// Package app is the main entry point for the REST server
 package app
 
 import (
 	"context"
 	"goalify/internal/config"
 	"goalify/internal/db"
-	sqlcdb "goalify/internal/db/generated"
 	"goalify/internal/events"
-	gh "goalify/internal/goals/handler"
-	gSrv "goalify/internal/goals/service"
-	gs "goalify/internal/goals/stores"
 	"goalify/internal/middleware"
 	"goalify/internal/routes"
-	uh "goalify/internal/users/handler"
-	usrSrv "goalify/internal/users/service"
-	us "goalify/internal/users/stores"
 	"goalify/pkg/stacktrace"
 	"log/slog"
 	"net/http"
@@ -24,6 +18,16 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/pressly/goose/v3"
+
+	sqlcdb "goalify/internal/db/generated"
+
+	gh "goalify/internal/goals/handler"
+	gSrv "goalify/internal/goals/service"
+	gs "goalify/internal/goals/stores"
+
+	uh "goalify/internal/users/handler"
+	usrSrv "goalify/internal/users/service"
+	us "goalify/internal/users/stores"
 )
 
 func NewServer(userHandler *uh.UserHandler, goalHandler *gh.GoalHandler,
@@ -104,7 +108,6 @@ func Run() error {
 		Handler: srv,
 	}
 
-	err = nil
 	slog.Info("Listening on " + port)
 
 	if err = httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {

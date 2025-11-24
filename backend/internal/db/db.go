@@ -1,3 +1,4 @@
+// Package db handles database connection and sqlc generated files
 package db
 
 import (
@@ -29,7 +30,12 @@ func NewPgxPoolWithConnString(ctx context.Context, connStr string) (*pgxpool.Poo
 }
 
 func NewPgx(dbname, user, password, host string) (*pgxpool.Pool, error) {
-	connStr := fmt.Sprintf("postgres://%s:%s@%s:5432/%s?sslmode=disable", user, password, host, dbname)
+	connStr := fmt.Sprintf(
+		"postgres://%s:%s@%s:5432/%s?sslmode=disable",
+		user,
+		password,
+		host,
+		dbname,
+	)
 	return NewPgxPoolWithConnString(context.Background(), connStr)
 }
-

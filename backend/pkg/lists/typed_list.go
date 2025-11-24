@@ -1,3 +1,4 @@
+// Package lists is for working with typed lists using Go generics and container/list
 package lists
 
 import (
@@ -28,7 +29,11 @@ func (tl *TypedList[T]) PushFront(value T) {
 }
 
 func (tl *TypedList[T]) Remove(value T) (T, error) {
-	if value == tl.list.Back().Value.(T) {
+	val, ok := tl.list.Back().Value.(T)
+	if !ok {
+		panic("lists: Remove(): type assertion failed")
+	}
+	if value == val {
 		tl.list.Remove(tl.list.Back())
 		return value, nil
 	}
@@ -55,11 +60,15 @@ func (tl *TypedList[T]) Get(i int) (T, error) {
 	}
 
 	if i == tl.list.Len()-1 {
-		return tl.list.Back().Value.(T), nil
+		val, ok := tl.list.Back().Value.(T)
+		if !ok {
+			panic("lists: Get(): type assertion failed")
+		}
+		return val, nil
 	}
 
 	e := tl.list.Front()
-	for j := 0; j < i; j++ {
+	for range i {
 		e = e.Next()
 	}
 	assertedValue, ok := e.Value.(T)

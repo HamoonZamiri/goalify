@@ -16,20 +16,20 @@ type (
 		Password string `json:"password"`
 	}
 	RefreshRequest struct {
-		UserId       string `json:"user_id"`
+		UserID       string `json:"user_id"`
 		RefreshToken string `json:"refresh_token"`
 	}
 	UpdateRequest struct {
 		Xp            options.Option[int] `json:"xp"`
-		LevelId       options.Option[int] `json:"level_id"`
+		LevelID       options.Option[int] `json:"level_id"`
 		CashAvailable options.Option[int] `json:"cash_available"`
 	}
 )
 
 const (
-	PASSWORD_MIN_LEN = 8
-	DIGITS           = "0123456789"
-	SYMBOLS          = "!@#$%^"
+	PasswordMinLength = 8
+	Digits            = "0123456789"
+	Symbols           = "!@#$%^"
 )
 
 func ValidateEmail(problems map[string]string, email string) {
@@ -43,13 +43,13 @@ func ValidateEmail(problems map[string]string, email string) {
 func ValidatePassword(problems map[string]string, password string) {
 	if password == "" {
 		problems["password"] = "password is required"
-	} else if len(password) < PASSWORD_MIN_LEN {
+	} else if len(password) < PasswordMinLength {
 		problems["password"] = "password must be at least 8 characters"
 	} else if strings.Contains(password, " ") {
 		problems["password"] = "password cannot contain spaces"
-	} else if !strings.ContainsAny(password, DIGITS) {
+	} else if !strings.ContainsAny(password, Digits) {
 		problems["password"] = "password must contain at least one digit"
-	} else if !strings.ContainsAny(password, SYMBOLS) {
+	} else if !strings.ContainsAny(password, Symbols) {
 		problems["password"] = "password must contain at least one symbol"
 	}
 }
@@ -77,7 +77,11 @@ func (r LoginRequest) Valid() map[string]string {
 	return problems
 }
 
-func checkNonNegativeIntField(problems map[string]string, fieldName string, val options.Option[int]) {
+func checkNonNegativeIntField(
+	problems map[string]string,
+	fieldName string,
+	val options.Option[int],
+) {
 	if val.IsPresent() && val.ValueOrZero() < 0 {
 		problems[fieldName] = fieldName + " must be non-negative"
 	}
@@ -86,7 +90,7 @@ func checkNonNegativeIntField(problems map[string]string, fieldName string, val 
 func (r UpdateRequest) Valid() map[string]string {
 	problems := make(map[string]string)
 	checkNonNegativeIntField(problems, "xp", r.Xp)
-	checkNonNegativeIntField(problems, "level_id", r.LevelId)
+	checkNonNegativeIntField(problems, "level_id", r.LevelID)
 	checkNonNegativeIntField(problems, "cash_available", r.CashAvailable)
 
 	return problems

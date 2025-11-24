@@ -1,10 +1,11 @@
+// Package handler is the API layer request response handling package for the users domain
 package handler
 
 import (
 	"goalify/internal/middleware"
+	"goalify/internal/responses"
 	"goalify/internal/users/service"
 	"goalify/pkg/jsonutil"
-	"goalify/internal/responses"
 	"net/http"
 	"strconv"
 
@@ -58,7 +59,7 @@ func (h *UserHandler) HandleRefresh(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := h.userService.Refresh(decoded.UserId, decoded.RefreshToken)
+	user, err := h.userService.Refresh(decoded.UserID, decoded.RefreshToken)
 	if err != nil {
 		responses.SendAPIError(w, r, responses.GetErrorCode(err), err.Error(), nil)
 		return
@@ -67,8 +68,8 @@ func (h *UserHandler) HandleRefresh(w http.ResponseWriter, r *http.Request) {
 	responses.SendResponse(w, r, http.StatusOK, user)
 }
 
-func (h *UserHandler) HandleUpdateUserById(w http.ResponseWriter, r *http.Request) {
-	userId, err := middleware.GetIdFromHeader(r)
+func (h *UserHandler) HandleUpdateUserByID(w http.ResponseWriter, r *http.Request) {
+	userID, err := middleware.GetIDFromHeader(r)
 	if err != nil {
 		responses.SendAPIError(w, r, responses.GetErrorCode(err), err.Error(), nil)
 		return
@@ -80,18 +81,18 @@ func (h *UserHandler) HandleUpdateUserById(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	parsedUserId, err := uuid.Parse(userId)
+	parsedUserID, err := uuid.Parse(userID)
 	if err != nil {
 		responses.SendAPIError(w, r, http.StatusBadRequest, "error parsing auth header", nil)
 		return
 	}
 
-	updates := make(map[string]interface{})
+	updates := make(map[string]any)
 	if decoded.Xp.IsPresent() {
 		updates["xp"] = decoded.Xp.ValueOrZero()
 	}
-	if decoded.LevelId.IsPresent() {
-		updates["level_id"] = decoded.LevelId.ValueOrZero()
+	if decoded.LevelID.IsPresent() {
+		updates["level_id"] = decoded.LevelID.ValueOrZero()
 	}
 	if decoded.CashAvailable.IsPresent() {
 		updates["cash_available"] = decoded.CashAvailable.ValueOrZero()
@@ -102,7 +103,7 @@ func (h *UserHandler) HandleUpdateUserById(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	user, err := h.userService.UpdateUserById(parsedUserId, updates)
+	user, err := h.userService.UpdateUserByID(parsedUserID, updates)
 	if err != nil {
 		responses.SendAPIError(w, r, responses.GetErrorCode(err), err.Error(), nil)
 		return
@@ -111,20 +112,20 @@ func (h *UserHandler) HandleUpdateUserById(w http.ResponseWriter, r *http.Reques
 	responses.SendResponse(w, r, http.StatusOK, user)
 }
 
-func (h *UserHandler) GetLevelById(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandler) GetLevelByID(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("levelId")
 	if id == "" {
 		responses.SendAPIError(w, r, http.StatusBadRequest, "url param requires id", nil)
 		return
 	}
 
-	castedId, err := strconv.Atoi(id)
+	castedID, err := strconv.Atoi(id)
 	if err != nil {
 		responses.SendAPIError(w, r, http.StatusBadRequest, "url param id must be an integer", nil)
 		return
 	}
 
-	level, err := h.userService.GetLevelById(castedId)
+	level, err := h.userService.GetLevelByID(castedID)
 	if err != nil {
 		responses.SendAPIError(w, r, responses.GetErrorCode(err), err.Error(), nil)
 		return

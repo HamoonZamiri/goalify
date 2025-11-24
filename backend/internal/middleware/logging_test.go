@@ -389,7 +389,12 @@ func TestLogging_RedactsSensitiveFieldsInRequestBody(t *testing.T) {
 
 	// Verify password is redacted in request body
 	assert.NotContains(t, logOutput, "supersecret456", "Password in request should be redacted")
-	assert.NotContains(t, logOutput, "confirmsecret123", "Confirm Password in request should be redacted")
+	assert.NotContains(
+		t,
+		logOutput,
+		"confirmsecret123",
+		"Confirm Password in request should be redacted",
+	)
 	assert.Contains(t, logOutput, "[REDACTED]", "Redacted placeholder should be present")
 
 	// Verify non-sensitive fields are still logged

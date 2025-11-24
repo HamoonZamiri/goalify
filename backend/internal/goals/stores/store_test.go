@@ -3,9 +3,7 @@ package stores
 import (
 	"context"
 	"goalify/internal/db"
-	sqlcdb "goalify/internal/db/generated"
 	"goalify/internal/testsetup"
-	us "goalify/internal/users/stores"
 	"log"
 	"os"
 	"slices"
@@ -13,6 +11,10 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
+
+	sqlcdb "goalify/internal/db/generated"
+
+	us "goalify/internal/users/stores"
 )
 
 const password = "Password123!"
@@ -66,11 +68,11 @@ func TestCreateCategory(t *testing.T) {
 	t.Parallel()
 	user, err := userStore.CreateUser(t.Name()+"@mail.com", password)
 	assert.NoError(t, err)
-	category, err := gcStore.CreateGoalCategory(t.Name(), 50, user.Id)
+	category, err := gcStore.CreateGoalCategory(t.Name(), 50, user.ID)
 	assert.NoError(t, err)
 	assert.Equal(t, t.Name(), category.Title)
-	assert.Equal(t, 50, category.Xp_per_goal)
-	assert.Equal(t, user.Id, category.UserId)
+	assert.Equal(t, 50, category.XPPerGoal)
+	assert.Equal(t, user.ID, category.UserID)
 }
 
 func TestGetGoalCategoriesByUser(t *testing.T) {
@@ -78,18 +80,23 @@ func TestGetGoalCategoriesByUser(t *testing.T) {
 	user, err := userStore.CreateUser(t.Name()+"@mail.com", password)
 	assert.NoError(t, err)
 
-	category1, _ := gcStore.CreateGoalCategory(t.Name()+"1", 50, user.Id)
-	category2, _ := gcStore.CreateGoalCategory(t.Name()+"2", 50, user.Id)
-	category3, _ := gcStore.CreateGoalCategory(t.Name()+"3", 50, user.Id)
-	category4, _ := gcStore.CreateGoalCategory(t.Name()+"4", 50, user.Id)
+	category1, _ := gcStore.CreateGoalCategory(t.Name()+"1", 50, user.ID)
+	category2, _ := gcStore.CreateGoalCategory(t.Name()+"2", 50, user.ID)
+	category3, _ := gcStore.CreateGoalCategory(t.Name()+"3", 50, user.ID)
+	category4, _ := gcStore.CreateGoalCategory(t.Name()+"4", 50, user.ID)
 
-	ids := []string{category1.Id.String(), category2.Id.String(), category3.Id.String(), category4.Id.String()}
+	ids := []string{
+		category1.ID.String(),
+		category2.ID.String(),
+		category3.ID.String(),
+		category4.ID.String(),
+	}
 	foundIds := 0
 
-	categories, err := gcStore.GetGoalCategoriesByUserId(user.Id)
+	categories, err := gcStore.GetGoalCategoriesByUserID(user.ID)
 
 	for c := range categories {
-		if slices.Contains(ids, categories[c].Id.String()) {
+		if slices.Contains(ids, categories[c].ID.String()) {
 			foundIds++
 		}
 	}
@@ -102,45 +109,45 @@ func TestGetGoalCategoryById(t *testing.T) {
 	t.Parallel()
 	user, err := userStore.CreateUser(t.Name()+"@mail.com", password)
 	assert.NoError(t, err)
-	category, _ := gcStore.CreateGoalCategory(t.Name(), 50, user.Id)
+	category, _ := gcStore.CreateGoalCategory(t.Name(), 50, user.ID)
 
-	foundCategory, err := gcStore.GetGoalCategoryById(category.Id)
+	foundCategory, err := gcStore.GetGoalCategoryByID(category.ID)
 	assert.NoError(t, err)
-	assert.Equal(t, category.Id, foundCategory.Id)
+	assert.Equal(t, category.ID, foundCategory.ID)
 	assert.Equal(t, category.Title, foundCategory.Title)
-	assert.Equal(t, category.Xp_per_goal, foundCategory.Xp_per_goal)
-	assert.Equal(t, category.UserId, foundCategory.UserId)
+	assert.Equal(t, category.XPPerGoal, foundCategory.XPPerGoal)
+	assert.Equal(t, category.UserID, foundCategory.UserID)
 }
 
 func TestUpdateGoalCategoryById(t *testing.T) {
 	t.Parallel()
 	user, err := userStore.CreateUser(t.Name()+"@mail.com", password)
 	assert.NoError(t, err)
-	category, _ := gcStore.CreateGoalCategory(t.Name(), 50, user.Id)
+	category, _ := gcStore.CreateGoalCategory(t.Name(), 50, user.ID)
 
 	updates := map[string]any{
 		"title":       "new title",
 		"xp_per_goal": 100,
 	}
-	updated, err := gcStore.UpdateGoalCategoryById(category.Id, updates)
+	updated, err := gcStore.UpdateGoalCategoryByID(category.ID, updates)
 	assert.NoError(t, err)
 	assert.Equal(t, "new title", updated.Title)
-	assert.Equal(t, 100, updated.Xp_per_goal)
+	assert.Equal(t, 100, updated.XPPerGoal)
 }
 
 func TestDeleteGoalCategoryById(t *testing.T) {
 	t.Parallel()
 	user, err := userStore.CreateUser(t.Name()+"@mail.com", password)
 	assert.NoError(t, err)
-	category, _ := gcStore.CreateGoalCategory(t.Name(), 50, user.Id)
+	category, _ := gcStore.CreateGoalCategory(t.Name(), 50, user.ID)
 
-	_, err = gcStore.GetGoalCategoryById(category.Id)
+	_, err = gcStore.GetGoalCategoryByID(category.ID)
 	assert.NoError(t, err)
 
-	err = gcStore.DeleteGoalCategoryById(category.Id)
+	err = gcStore.DeleteGoalCategoryByID(category.ID)
 	assert.NoError(t, err)
 
-	_, err = gcStore.GetGoalCategoryById(category.Id)
+	_, err = gcStore.GetGoalCategoryByID(category.ID)
 	assert.Error(t, err)
 }
 
@@ -148,14 +155,14 @@ func TestCreateGoal(t *testing.T) {
 	t.Parallel()
 	user, err := userStore.CreateUser(t.Name()+"@mail.com", password)
 	assert.NoError(t, err)
-	category, err := gcStore.CreateGoalCategory(t.Name(), 50, user.Id)
+	category, err := gcStore.CreateGoalCategory(t.Name(), 50, user.ID)
 	assert.NoError(t, err)
 
-	goal, err := gStore.CreateGoal(t.Name(), "desc", user.Id, category.Id)
+	goal, err := gStore.CreateGoal(t.Name(), "desc", user.ID, category.ID)
 	assert.NoError(t, err)
 	assert.Equal(t, t.Name(), goal.Title)
-	assert.Equal(t, category.Id, goal.CategoryId)
-	assert.Equal(t, user.Id, goal.UserId)
+	assert.Equal(t, category.ID, goal.CategoryID)
+	assert.Equal(t, user.ID, goal.UserID)
 	assert.Equal(t, "desc", goal.Description)
 }
 
@@ -163,30 +170,30 @@ func TestGetGoalById(t *testing.T) {
 	t.Parallel()
 	user, err := userStore.CreateUser(t.Name()+"@mail.com", password)
 	assert.NoError(t, err)
-	category, _ := gcStore.CreateGoalCategory(t.Name(), 50, user.Id)
-	goal, _ := gStore.CreateGoal(t.Name(), "desc", user.Id, category.Id)
+	category, _ := gcStore.CreateGoalCategory(t.Name(), 50, user.ID)
+	goal, _ := gStore.CreateGoal(t.Name(), "desc", user.ID, category.ID)
 
-	foundGoal, err := gStore.GetGoalById(goal.Id)
+	foundGoal, err := gStore.GetGoalByID(goal.ID)
 	assert.NoError(t, err)
-	assert.Equal(t, goal.Id, foundGoal.Id)
+	assert.Equal(t, goal.ID, foundGoal.ID)
 	assert.Equal(t, goal.Title, foundGoal.Title)
 	assert.Equal(t, goal.Description, foundGoal.Description)
-	assert.Equal(t, goal.UserId, foundGoal.UserId)
-	assert.Equal(t, goal.CategoryId, foundGoal.CategoryId)
+	assert.Equal(t, goal.UserID, foundGoal.UserID)
+	assert.Equal(t, goal.CategoryID, foundGoal.CategoryID)
 }
 
 func TestUpdateGoalById(t *testing.T) {
 	t.Parallel()
 	user, err := userStore.CreateUser(t.Name()+"@mail.com", password)
 	assert.NoError(t, err)
-	category, _ := gcStore.CreateGoalCategory(t.Name(), 50, user.Id)
-	goal, _ := gStore.CreateGoal(t.Name(), "desc", user.Id, category.Id)
+	category, _ := gcStore.CreateGoalCategory(t.Name(), 50, user.ID)
+	goal, _ := gStore.CreateGoal(t.Name(), "desc", user.ID, category.ID)
 
 	updates := map[string]any{
 		"title":       "new title",
 		"description": "new desc",
 	}
-	updated, err := gStore.UpdateGoalById(goal.Id, updates)
+	updated, err := gStore.UpdateGoalByID(goal.ID, updates)
 	assert.NoError(t, err)
 	assert.Equal(t, "new title", updated.Title)
 	assert.Equal(t, "new desc", updated.Description)
@@ -196,15 +203,15 @@ func TestDeleteGoalById(t *testing.T) {
 	t.Parallel()
 	user, err := userStore.CreateUser(t.Name()+"@mail.com", password)
 	assert.NoError(t, err)
-	category, _ := gcStore.CreateGoalCategory(t.Name(), 50, user.Id)
-	goal, _ := gStore.CreateGoal(t.Name(), "desc", user.Id, category.Id)
+	category, _ := gcStore.CreateGoalCategory(t.Name(), 50, user.ID)
+	goal, _ := gStore.CreateGoal(t.Name(), "desc", user.ID, category.ID)
 
-	_, err = gStore.GetGoalById(goal.Id)
+	_, err = gStore.GetGoalByID(goal.ID)
 	assert.NoError(t, err)
 
-	err = gStore.DeleteGoalById(goal.Id)
+	err = gStore.DeleteGoalByID(goal.ID)
 	assert.NoError(t, err)
 
-	_, err = gStore.GetGoalById(goal.Id)
+	_, err = gStore.GetGoalByID(goal.ID)
 	assert.Error(t, err)
 }

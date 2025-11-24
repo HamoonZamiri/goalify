@@ -40,11 +40,25 @@ func NewAPIError(message string, errors map[string]string) *APIError {
 	}
 }
 
-func SendAPIError(w http.ResponseWriter, r *http.Request, status int, err string, errors map[string]string) {
-	jsonutil.Encode(w, r, status, NewAPIError(err, errors))
+func SendAPIError(
+	w http.ResponseWriter,
+	r *http.Request,
+	status int,
+	err string,
+	errors map[string]string,
+) {
+	error := jsonutil.Encode(w, r, status, NewAPIError(err, errors))
+	if error != nil {
+		slog.Error("SendAPIError: jsonutil.Encode: ", "err", error)
+	}
 }
 
-func HandleDecodeError(w http.ResponseWriter, r *http.Request, problems map[string]string, err error) {
+func HandleDecodeError(
+	w http.ResponseWriter,
+	r *http.Request,
+	problems map[string]string,
+	err error,
+) {
 	// unprocessable entity -> 422
 	var res error
 	if len(problems) > 0 {

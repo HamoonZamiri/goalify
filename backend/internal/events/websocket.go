@@ -9,7 +9,7 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-const EVENT_BUFFER_SIZE = 256
+const EventBufferSize = 256
 
 var allowedOrigins []string = []string{
 	"http://localhost:5173",
@@ -28,14 +28,14 @@ var upgrader websocket.Upgrader = websocket.Upgrader{
 type webSocketConn struct {
 	eventQueue chan Event
 	conn       *websocket.Conn
-	userId     string
+	userID     string
 }
 
-func newWebSocketConn(conn *websocket.Conn, userId string) *webSocketConn {
+func newWebSocketConn(conn *websocket.Conn, userID string) *webSocketConn {
 	return &webSocketConn{
-		eventQueue: make(chan Event, EVENT_BUFFER_SIZE),
+		eventQueue: make(chan Event, EventBufferSize),
 		conn:       conn,
-		userId:     userId,
+		userID:     userID,
 	}
 }
 
@@ -56,8 +56,8 @@ func (em *EventManager) WebSocketHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	userId := r.Header.Get("user_id")
-	if userId == "" {
+	userID := r.Header.Get("user_id")
+	if userID == "" {
 		responses.SendAPIError(
 			w,
 			r,
@@ -67,18 +67,21 @@ func (em *EventManager) WebSocketHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	wsConn := newWebSocketConn(conn, userId)
-	em.SubscribeToUserEvents(userId, wsConn)
+	wsConn := newWebSocketConn(conn, userID)
+	em.SubscribeToUserEvents(userID, wsConn)
 	defer func() {
-		em.UnsubscribeFromUserEvents(userId, wsConn)
-		wsConn.conn.Close()
+		em.UnsubscribeFromUserEvents(userID, wsConn)
+		err := wsConn.conn.Close()
+		if err != nil {
+			slog.Error("WebSocketHandler: wsConn.conn.Close:", "err", err)
+		}
 	}()
 
 	for {
 		select {
 		case event := <-wsConn.eventQueue:
-			userId := event.UserId
-			if userId.ValueOrZero() == wsConn.userId {
+			userID := event.UserID
+			if userID.ValueOrZero() == wsConn.userID {
 				err := conn.WriteJSON(event)
 				if err != nil {
 					slog.Error("WebSocketHandler: conn.WriteJSON:", "err", err)

@@ -1,9 +1,11 @@
+// Package stores is the repository layer for the loot domain
 package stores
 
 import (
 	"context"
-	sqlcdb "goalify/internal/db/generated"
 	"goalify/internal/entities"
+
+	sqlcdb "goalify/internal/db/generated"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -11,10 +13,10 @@ import (
 
 type LootStore interface {
 	CreateChest(chestType, description string, price int) (*entities.Chest, error)
-	GetChestById(chestId uuid.UUID) (*entities.Chest, error)
+	GetChestByID(chestID uuid.UUID) (*entities.Chest, error)
 	GetAllChests() ([]*entities.Chest, error)
-	UpdateChestById(chestId uuid.UUID, updates map[string]any) (*entities.Chest, error)
-	DeleteChestById(chestId uuid.UUID) error
+	UpdateChestByID(chestID uuid.UUID, updates map[string]any) (*entities.Chest, error)
+	DeleteChestByID(chestID uuid.UUID) error
 }
 
 type lootStore struct {
@@ -24,7 +26,7 @@ type lootStore struct {
 // Helper function to convert sqlc Chest to entity Chest
 func pgxChestToEntity(c sqlcdb.Chest) *entities.Chest {
 	return &entities.Chest{
-		Id:          uuid.UUID(c.ID.Bytes),
+		ID:          uuid.UUID(c.ID.Bytes),
 		Type:        string(c.Type),
 		Description: c.Description,
 		Price:       int(c.Price),
@@ -52,8 +54,11 @@ func (s *lootStore) CreateChest(chestType, description string, price int) (*enti
 	return pgxChestToEntity(chest), nil
 }
 
-func (s *lootStore) GetChestById(chestId uuid.UUID) (*entities.Chest, error) {
-	chest, err := s.queries.GetChestById(context.Background(), pgtype.UUID{Bytes: chestId, Valid: true})
+func (s *lootStore) GetChestByID(chestID uuid.UUID) (*entities.Chest, error) {
+	chest, err := s.queries.GetChestById(
+		context.Background(),
+		pgtype.UUID{Bytes: chestID, Valid: true},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -75,9 +80,12 @@ func (s *lootStore) GetAllChests() ([]*entities.Chest, error) {
 	return result, nil
 }
 
-func (s *lootStore) UpdateChestById(chestId uuid.UUID, updates map[string]any) (*entities.Chest, error) {
+func (s *lootStore) UpdateChestByID(
+	chestID uuid.UUID,
+	updates map[string]any,
+) (*entities.Chest, error) {
 	params := sqlcdb.UpdateChestByIdParams{
-		ID: pgtype.UUID{Bytes: chestId, Valid: true},
+		ID: pgtype.UUID{Bytes: chestID, Valid: true},
 	}
 
 	// Convert map updates to typed parameters
@@ -105,7 +113,6 @@ func (s *lootStore) UpdateChestById(chestId uuid.UUID, updates map[string]any) (
 	return pgxChestToEntity(chest), nil
 }
 
-func (s *lootStore) DeleteChestById(chestId uuid.UUID) error {
-	return s.queries.DeleteChestById(context.Background(), pgtype.UUID{Bytes: chestId, Valid: true})
+func (s *lootStore) DeleteChestByID(chestID uuid.UUID) error {
+	return s.queries.DeleteChestById(context.Background(), pgtype.UUID{Bytes: chestID, Valid: true})
 }
-

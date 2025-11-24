@@ -23,16 +23,21 @@ func TestGoalCategoryCreate(t *testing.T) {
 	userDto := createUser(email, "password123!")
 
 	reqBody := map[string]any{"title": "goal cat", "xp_per_goal": 100}
-	res, err := buildAndSendRequest("POST", fmt.Sprintf("%s/api/goals/categories", BASE_URL), reqBody, userDto.AccessToken)
+	res, err := buildAndSendRequest(
+		"POST",
+		fmt.Sprintf("%s/api/goals/categories", BaseURL),
+		reqBody,
+		userDto.AccessToken,
+	)
 	assert.Nil(t, err)
 	assert.Equal(t, http.StatusCreated, res.StatusCode)
 
 	gc, err := unmarshalResponse[entities.GoalCategory](res)
 	assert.Nil(t, err)
 	assert.Equal(t, "goal cat", gc.Title)
-	assert.Equal(t, 100, gc.Xp_per_goal)
+	assert.Equal(t, 100, gc.XPPerGoal)
 	assert.NotNil(t, gc.Goals)
-	assert.Equal(t, userDto.Id.String(), gc.UserId.String())
+	assert.Equal(t, userDto.ID.String(), gc.UserID.String())
 }
 
 func TestGoalCategoryCreateInvalidFields(t *testing.T) {
@@ -41,7 +46,12 @@ func TestGoalCategoryCreateInvalidFields(t *testing.T) {
 	email := t.Name() + "@mail.com"
 	userDto := createUser(email, "password123!")
 	reqBody := map[string]any{"title": "goal cat", "xp_per_goal": -10}
-	res, err := buildAndSendRequest("POST", fmt.Sprintf("%s/api/goals/categories", BASE_URL), reqBody, userDto.AccessToken)
+	res, err := buildAndSendRequest(
+		"POST",
+		fmt.Sprintf("%s/api/goals/categories", BaseURL),
+		reqBody,
+		userDto.AccessToken,
+	)
 	assert.Nil(t, err)
 	assert.Equal(t, http.StatusUnprocessableEntity, res.StatusCode)
 }
@@ -53,10 +63,15 @@ func TestGetGoalCategories(t *testing.T) {
 	userDto := createUser(email, "password123!")
 
 	for i := 0; i < 5; i++ {
-		createTestGoalCategory("create goal category", userDto.Id)
+		createTestGoalCategory("create goal category", userDto.ID)
 		time.Sleep(20 * time.Millisecond)
 	}
-	res, err := buildAndSendRequest("GET", fmt.Sprintf("%s/api/goals/categories", BASE_URL), nil, userDto.AccessToken)
+	res, err := buildAndSendRequest(
+		"GET",
+		fmt.Sprintf("%s/api/goals/categories", BaseURL),
+		nil,
+		userDto.AccessToken,
+	)
 	assert.Nil(t, err)
 
 	assert.Equal(t, http.StatusOK, res.StatusCode)
@@ -72,8 +87,8 @@ func TestGetGoalCategoryById(t *testing.T) {
 
 	email := t.Name() + "@mail.com"
 	userDto := createUser(email, "password123!")
-	gc := createTestGoalCategory("create goal category", userDto.Id)
-	url := fmt.Sprintf("%s/api/goals/categories/%s", BASE_URL, gc.Id)
+	gc := createTestGoalCategory("create goal category", userDto.ID)
+	url := fmt.Sprintf("%s/api/goals/categories/%s", BaseURL, gc.ID)
 
 	res, err := buildAndSendRequest("GET", url, nil, userDto.AccessToken)
 	assert.Nil(t, err)
@@ -81,8 +96,8 @@ func TestGetGoalCategoryById(t *testing.T) {
 
 	resBody, err := unmarshalResponse[entities.GoalCategory](res)
 	assert.Nil(t, err)
-	assert.Equal(t, gc.Id, resBody.Id)
-	assert.Equal(t, gc.UserId, resBody.UserId)
+	assert.Equal(t, gc.ID, resBody.ID)
+	assert.Equal(t, gc.UserID, resBody.UserID)
 }
 
 func TestUpdateGoalCategoryById(t *testing.T) {
@@ -90,9 +105,9 @@ func TestUpdateGoalCategoryById(t *testing.T) {
 
 	email := t.Name() + "@mail.com"
 	userDto := createUser(email, "password123!")
-	gc := createTestGoalCategory("update goal category", userDto.Id)
+	gc := createTestGoalCategory("update goal category", userDto.ID)
 
-	url := fmt.Sprintf("%s/api/goals/categories/%s", BASE_URL, gc.Id)
+	url := fmt.Sprintf("%s/api/goals/categories/%s", BaseURL, gc.ID)
 	reqBody := map[string]any{"title": "updated title", "xp_per_goal": 69}
 	res, err := buildAndSendRequest("PUT", url, reqBody, userDto.AccessToken)
 	assert.Nil(t, err)
@@ -101,7 +116,7 @@ func TestUpdateGoalCategoryById(t *testing.T) {
 	resBody, err := unmarshalResponse[entities.GoalCategory](res)
 	assert.Nil(t, err)
 	assert.Equal(t, "updated title", resBody.Title)
-	assert.Equal(t, 69, resBody.Xp_per_goal)
+	assert.Equal(t, 69, resBody.XPPerGoal)
 }
 
 func TestUpdateGoalCategoryByIdInvalidFields(t *testing.T) {
@@ -109,10 +124,10 @@ func TestUpdateGoalCategoryByIdInvalidFields(t *testing.T) {
 
 	email := t.Name() + "@mail.com"
 	userDto := createUser(email, "password123!")
-	gc := createTestGoalCategory("update goal category", userDto.Id)
+	gc := createTestGoalCategory("update goal category", userDto.ID)
 	reqBody := map[string]any{"title": "updated title", "xp_per_goal": -1}
 
-	url := fmt.Sprintf("%s/api/goals/categories/%s", BASE_URL, gc.Id)
+	url := fmt.Sprintf("%s/api/goals/categories/%s", BaseURL, gc.ID)
 	res, err := buildAndSendRequest("PUT", url, reqBody, userDto.AccessToken)
 	require.Nil(t, err)
 	assert.Equal(t, http.StatusUnprocessableEntity, res.StatusCode)
@@ -123,9 +138,14 @@ func TestDeleteGoalCategoryById(t *testing.T) {
 
 	email := t.Name() + "@mail.com"
 	userDto := createUser(email, "password123!")
-	cat := createTestGoalCategory("delete goal category", userDto.Id)
+	cat := createTestGoalCategory("delete goal category", userDto.ID)
 
-	res, err := buildAndSendRequest("DELETE", fmt.Sprintf("%s/api/goals/categories/%s", BASE_URL, cat.Id), nil, userDto.AccessToken)
+	res, err := buildAndSendRequest(
+		"DELETE",
+		fmt.Sprintf("%s/api/goals/categories/%s", BaseURL, cat.ID),
+		nil,
+		userDto.AccessToken,
+	)
 	assert.Nil(t, err)
 
 	assert.Equal(t, http.StatusOK, res.StatusCode)
@@ -136,9 +156,13 @@ func TestDeleteGoalCategoryByIdNotAuthorized(t *testing.T) {
 
 	email := t.Name() + "@mail.com"
 	userDto := createUser(email, "password123!")
-	userId := userDto.Id
-	gc := createTestGoalCategory("delete goal category", userId)
-	req, err := http.NewRequest("DELETE", fmt.Sprintf("%s/api/goals/categories/%s", BASE_URL, gc.Id), nil)
+	userID := userDto.ID
+	gc := createTestGoalCategory("delete goal category", userID)
+	req, err := http.NewRequest(
+		"DELETE",
+		fmt.Sprintf("%s/api/goals/categories/%s", BaseURL, gc.ID),
+		nil,
+	)
 	require.Nil(t, err)
 	req.Header.Add("Authorization", "Bearer "+userDto.AccessToken+"1")
 	res, err := http.DefaultClient.Do(req)

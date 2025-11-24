@@ -1,10 +1,12 @@
+// Package stores is the repository layer package for goal categories
 package stores
 
 import (
 	"context"
 	"database/sql"
-	sqlcdb "goalify/internal/db/generated"
 	"goalify/internal/entities"
+
+	sqlcdb "goalify/internal/db/generated"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -12,11 +14,18 @@ import (
 
 type (
 	GoalCategoryStore interface {
-		CreateGoalCategory(title string, xpPerGoal int, userId uuid.UUID) (*entities.GoalCategory, error)
-		GetGoalCategoriesByUserId(userId uuid.UUID) ([]*entities.GoalCategory, error)
-		GetGoalCategoryById(categoryId uuid.UUID) (*entities.GoalCategory, error)
-		UpdateGoalCategoryById(categoryId uuid.UUID, updates map[string]any) (*entities.GoalCategory, error)
-		DeleteGoalCategoryById(categoryId uuid.UUID) error
+		CreateGoalCategory(
+			title string,
+			xpPerGoal int,
+			userID uuid.UUID,
+		) (*entities.GoalCategory, error)
+		GetGoalCategoriesByUserID(userID uuid.UUID) ([]*entities.GoalCategory, error)
+		GetGoalCategoryByID(categoryID uuid.UUID) (*entities.GoalCategory, error)
+		UpdateGoalCategoryByID(
+			categoryID uuid.UUID,
+			updates map[string]any,
+		) (*entities.GoalCategory, error)
+		DeleteGoalCategoryByID(categoryID uuid.UUID) error
 	}
 	goalCategoryStore struct {
 		queries *sqlcdb.Queries
@@ -26,52 +35,54 @@ type (
 // Helper function to convert sqlc GoalCategory to entity GoalCategory
 func pgxGoalCategoryToEntity(gc sqlcdb.GoalCategory) *entities.GoalCategory {
 	return &entities.GoalCategory{
-		Id:          uuid.UUID(gc.ID.Bytes),
-		Title:       gc.Title,
-		Xp_per_goal: int(gc.XpPerGoal),
-		UserId:      uuid.UUID(gc.UserID.Bytes),
-		CreatedAt:   gc.CreatedAt.Time,
-		UpdatedAt:   gc.UpdatedAt.Time,
-		Goals:       []*entities.Goal{}, // Initialize empty slice
+		ID:        uuid.UUID(gc.ID.Bytes),
+		Title:     gc.Title,
+		XPPerGoal: int(gc.XpPerGoal),
+		UserID:    uuid.UUID(gc.UserID.Bytes),
+		CreatedAt: gc.CreatedAt.Time,
+		UpdatedAt: gc.UpdatedAt.Time,
+		Goals:     []*entities.Goal{}, // Initialize empty slice
 	}
 }
 
 // Helper to map JOIN query rows to GoalCategories with nested Goals
-func mapGoalCategoryWithGoalsRows(rows []sqlcdb.GetGoalCategoriesWithGoalsByUserIdRow) []*entities.GoalCategory {
+func mapGoalCategoryWithGoalsRows(
+	rows []sqlcdb.GetGoalCategoriesWithGoalsByUserIdRow,
+) []*entities.GoalCategory {
 	categoryMap := make(map[uuid.UUID]*entities.GoalCategory)
 	categorySlice := make([]*entities.GoalCategory, 0)
 
 	for _, row := range rows {
-		categoryId := uuid.UUID(row.ID.Bytes)
+		categoryID := uuid.UUID(row.ID.Bytes)
 
 		// Create category if it doesn't exist in map
-		if _, ok := categoryMap[categoryId]; !ok {
+		if _, ok := categoryMap[categoryID]; !ok {
 			gc := &entities.GoalCategory{
-				Id:          categoryId,
-				Title:       row.Title,
-				Xp_per_goal: int(row.XpPerGoal),
-				UserId:      uuid.UUID(row.UserID.Bytes),
-				CreatedAt:   row.CreatedAt.Time,
-				UpdatedAt:   row.UpdatedAt.Time,
-				Goals:       []*entities.Goal{},
+				ID:        categoryID,
+				Title:     row.Title,
+				XPPerGoal: int(row.XpPerGoal),
+				UserID:    uuid.UUID(row.UserID.Bytes),
+				CreatedAt: row.CreatedAt.Time,
+				UpdatedAt: row.UpdatedAt.Time,
+				Goals:     []*entities.Goal{},
 			}
-			categoryMap[categoryId] = gc
+			categoryMap[categoryID] = gc
 			categorySlice = append(categorySlice, gc)
 		}
 
 		// Add goal if it exists (LEFT JOIN may have null goals)
 		if row.GoalID.Valid {
 			goal := &entities.Goal{
-				Id:          uuid.UUID(row.GoalID.Bytes),
+				ID:          uuid.UUID(row.GoalID.Bytes),
 				Title:       row.GoalTitle.String,
 				Description: row.Description.String,
 				Status:      string(row.Status.GoalStatus),
-				CategoryId:  categoryId,
-				UserId:      uuid.UUID(row.UserID.Bytes),
+				CategoryID:  categoryID,
+				UserID:      uuid.UUID(row.UserID.Bytes),
 				CreatedAt:   row.GoalCreatedAt.Time,
 				UpdatedAt:   row.GoalUpdatedAt.Time,
 			}
-			categoryMap[categoryId].Goals = append(categoryMap[categoryId].Goals, goal)
+			categoryMap[categoryID].Goals = append(categoryMap[categoryID].Goals, goal)
 		}
 	}
 
@@ -79,31 +90,33 @@ func mapGoalCategoryWithGoalsRows(rows []sqlcdb.GetGoalCategoriesWithGoalsByUser
 }
 
 // Helper for single category with goals
-func mapGoalCategoryWithGoalsSingleRow(rows []sqlcdb.GetGoalCategoryWithGoalsByIdRow) (*entities.GoalCategory, error) {
+func mapGoalCategoryWithGoalsSingleRow(
+	rows []sqlcdb.GetGoalCategoryWithGoalsByIdRow,
+) (*entities.GoalCategory, error) {
 	if len(rows) == 0 {
 		return nil, sql.ErrNoRows
 	}
 
 	firstRow := rows[0]
 	gc := &entities.GoalCategory{
-		Id:          uuid.UUID(firstRow.ID.Bytes),
-		Title:       firstRow.Title,
-		Xp_per_goal: int(firstRow.XpPerGoal),
-		UserId:      uuid.UUID(firstRow.UserID.Bytes),
-		CreatedAt:   firstRow.CreatedAt.Time,
-		UpdatedAt:   firstRow.UpdatedAt.Time,
-		Goals:       []*entities.Goal{},
+		ID:        uuid.UUID(firstRow.ID.Bytes),
+		Title:     firstRow.Title,
+		XPPerGoal: int(firstRow.XpPerGoal),
+		UserID:    uuid.UUID(firstRow.UserID.Bytes),
+		CreatedAt: firstRow.CreatedAt.Time,
+		UpdatedAt: firstRow.UpdatedAt.Time,
+		Goals:     []*entities.Goal{},
 	}
 
 	for _, row := range rows {
 		if row.GoalID.Valid {
 			goal := &entities.Goal{
-				Id:          uuid.UUID(row.GoalID.Bytes),
+				ID:          uuid.UUID(row.GoalID.Bytes),
 				Title:       row.GoalTitle.String,
 				Description: row.Description.String,
 				Status:      string(row.Status.GoalStatus),
-				CategoryId:  uuid.UUID(row.ID.Bytes),
-				UserId:      uuid.UUID(row.UserID.Bytes),
+				CategoryID:  uuid.UUID(row.ID.Bytes),
+				UserID:      uuid.UUID(row.UserID.Bytes),
 				CreatedAt:   row.GoalCreatedAt.Time,
 				UpdatedAt:   row.GoalUpdatedAt.Time,
 			}
@@ -120,12 +133,15 @@ func NewGoalCategoryStore(queries *sqlcdb.Queries) GoalCategoryStore {
 	}
 }
 
-
-func (s *goalCategoryStore) CreateGoalCategory(title string, xpPerGoal int, userId uuid.UUID) (*entities.GoalCategory, error) {
+func (s *goalCategoryStore) CreateGoalCategory(
+	title string,
+	xpPerGoal int,
+	userID uuid.UUID,
+) (*entities.GoalCategory, error) {
 	params := sqlcdb.CreateGoalCategoryParams{
 		Title:     title,
 		XpPerGoal: int32(xpPerGoal),
-		UserID:    pgtype.UUID{Bytes: userId, Valid: true},
+		UserID:    pgtype.UUID{Bytes: userID, Valid: true},
 	}
 
 	gc, err := s.queries.CreateGoalCategory(context.Background(), params)
@@ -136,8 +152,13 @@ func (s *goalCategoryStore) CreateGoalCategory(title string, xpPerGoal int, user
 	return pgxGoalCategoryToEntity(gc), nil
 }
 
-func (s *goalCategoryStore) GetGoalCategoriesByUserId(userId uuid.UUID) ([]*entities.GoalCategory, error) {
-	rows, err := s.queries.GetGoalCategoriesWithGoalsByUserId(context.Background(), pgtype.UUID{Bytes: userId, Valid: true})
+func (s *goalCategoryStore) GetGoalCategoriesByUserID(
+	userID uuid.UUID,
+) ([]*entities.GoalCategory, error) {
+	rows, err := s.queries.GetGoalCategoriesWithGoalsByUserId(
+		context.Background(),
+		pgtype.UUID{Bytes: userID, Valid: true},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -145,8 +166,13 @@ func (s *goalCategoryStore) GetGoalCategoriesByUserId(userId uuid.UUID) ([]*enti
 	return mapGoalCategoryWithGoalsRows(rows), nil
 }
 
-func (s *goalCategoryStore) GetGoalCategoryById(categoryId uuid.UUID) (*entities.GoalCategory, error) {
-	rows, err := s.queries.GetGoalCategoryWithGoalsById(context.Background(), pgtype.UUID{Bytes: categoryId, Valid: true})
+func (s *goalCategoryStore) GetGoalCategoryByID(
+	categoryID uuid.UUID,
+) (*entities.GoalCategory, error) {
+	rows, err := s.queries.GetGoalCategoryWithGoalsById(
+		context.Background(),
+		pgtype.UUID{Bytes: categoryID, Valid: true},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -154,9 +180,12 @@ func (s *goalCategoryStore) GetGoalCategoryById(categoryId uuid.UUID) (*entities
 	return mapGoalCategoryWithGoalsSingleRow(rows)
 }
 
-func (s *goalCategoryStore) UpdateGoalCategoryById(categoryId uuid.UUID, updates map[string]any) (*entities.GoalCategory, error) {
+func (s *goalCategoryStore) UpdateGoalCategoryByID(
+	categoryID uuid.UUID,
+	updates map[string]any,
+) (*entities.GoalCategory, error) {
 	params := sqlcdb.UpdateGoalCategoryByIdParams{
-		ID: pgtype.UUID{Bytes: categoryId, Valid: true},
+		ID: pgtype.UUID{Bytes: categoryID, Valid: true},
 	}
 
 	// Convert map updates to typed parameters
@@ -179,7 +208,9 @@ func (s *goalCategoryStore) UpdateGoalCategoryById(categoryId uuid.UUID, updates
 	return pgxGoalCategoryToEntity(gc), nil
 }
 
-func (s *goalCategoryStore) DeleteGoalCategoryById(categoryId uuid.UUID) error {
-	return s.queries.DeleteGoalCategoryById(context.Background(), pgtype.UUID{Bytes: categoryId, Valid: true})
+func (s *goalCategoryStore) DeleteGoalCategoryByID(categoryID uuid.UUID) error {
+	return s.queries.DeleteGoalCategoryById(
+		context.Background(),
+		pgtype.UUID{Bytes: categoryID, Valid: true},
+	)
 }
-

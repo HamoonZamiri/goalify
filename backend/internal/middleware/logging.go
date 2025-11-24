@@ -13,8 +13,8 @@ import (
 
 type statusCodeWriter struct {
 	w          http.ResponseWriter
-	statusCode int
 	body       *bytes.Buffer
+	statusCode int
 }
 
 var redactedKeys = map[string]bool{
@@ -40,7 +40,11 @@ func (scw *statusCodeWriter) Write(b []byte) (int, error) {
 }
 
 func (scw *statusCodeWriter) Flush() {
-	scw.w.(http.Flusher).Flush()
+	flusher, ok := scw.w.(http.Flusher)
+	if !ok {
+		return
+	}
+	flusher.Flush()
 }
 
 func prettifyAndRedactJSON(data []byte, wasTruncated bool) any {
@@ -129,11 +133,15 @@ func Logging(next http.Handler) http.Handler {
 		start := time.Now()
 
 		// Read and log request body for POST/PUT/PATCH methods
-		var requestBody []byte
 		var prettyRequestBody any
-		if r.Method == http.MethodPost || r.Method == http.MethodPut || r.Method == http.MethodPatch {
+		if r.Method == http.MethodPost || r.Method == http.MethodPut ||
+			r.Method == http.MethodPatch {
 			// Read the request body
-			requestBody, _ = io.ReadAll(r.Body)
+			requestBody, err := io.ReadAll(r.Body)
+			if err != nil {
+				slog.Error("Logging: io.ReadAll: ", "err", err)
+				return
+			}
 			r.Body.Close()
 
 			// Create a new reader with the same content for the handler

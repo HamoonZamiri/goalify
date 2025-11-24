@@ -13,7 +13,7 @@ func TestGetIdFromHeader(t *testing.T) {
 	require.Nil(t, err)
 	req.Header.Set("user_id", "123")
 
-	id, err := GetIdFromHeader(req)
+	id, err := GetIDFromHeader(req)
 	require.Nil(t, err)
 	assert.Equal(t, "123", id)
 }

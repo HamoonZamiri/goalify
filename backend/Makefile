@@ -50,11 +50,15 @@ generate:
 # Linting
 lint:
 	@echo "Running linter..."
-	@go tool github.com/golangci/golangci-lint/cmd/golangci-lint run
+	@golangci-lint run
 
 lint-fix:
 	@echo "Running linter with fixes..."
-	@go tool github.com/golangci/golangci-lint/cmd/golangci-lint run --fix
+	@golangci-lint run --fix
+
+format:
+	@echo "Running formatter..."
+	@golangci-lint fmt ./...
 
 # Testing commands
 unit:
@@ -112,6 +116,7 @@ help:
 	@echo "  generate      - Generate code (sqlc)"
 	@echo "  lint          - Run linter"
 	@echo "  lint-fix      - Run linter with auto-fixes"
+	@echo "  gopls-check   - Run gopls static analysis (LSP diagnostics)"
 	@echo "  test          - Run all tests (unit + store + integration)"
 	@echo "  unit          - Run unit tests only"
 	@echo "  store         - Run store/repository tests only"
@@ -123,4 +128,4 @@ help:
 	@echo "  help          - Show this help"
 	@echo "  list-tools    - List installed go tools
 
-.PHONY: build run dev jqdev migrate-up migrate-down migrate-status migrate-create generate lint lint-fix unit store inte test testall up down start clean help
+.PHONY: build run dev jqdev migrate-up migrate-down migrate-status migrate-create generate lint lint-fix gopls-check unit store inte test testall up down start clean help
