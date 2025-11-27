@@ -7,17 +7,17 @@ RETURNING *;
 SELECT * FROM goal_categories WHERE user_id = $1 ORDER BY created_at;
 
 -- name: GetGoalCategoryById :one
-SELECT * FROM goal_categories WHERE id = $1 LIMIT 1;
+SELECT * FROM goal_categories WHERE id = $1 AND user_id = $2 LIMIT 1;
 
 -- name: UpdateGoalCategoryById :one
 UPDATE goal_categories
 SET title = coalesce(sqlc.narg('title'), title),
     xp_per_goal = coalesce(sqlc.narg('xp_per_goal'), xp_per_goal)
-WHERE id = sqlc.arg('id')
+WHERE id = sqlc.arg('id') AND user_id = sqlc.arg('user_id')
 RETURNING *;
 
--- name: DeleteGoalCategoryById :exec
-DELETE FROM goal_categories WHERE id = $1;
+-- name: DeleteGoalCategoryById :execrows
+DELETE FROM goal_categories WHERE id = $1 AND user_id = $2;
 
 -- name: GetGoalCategoriesWithGoalsByUserId :many
 SELECT
@@ -36,5 +36,5 @@ SELECT
     g.created_at as goal_created_at, g.updated_at as goal_updated_at
 FROM goal_categories gc
 LEFT JOIN goals g ON gc.id = g.category_id
-WHERE gc.id = $1
+WHERE gc.id = $1 AND gc.user_id = $2
 ORDER BY g.created_at DESC;

@@ -170,3 +170,61 @@ func TestDeleteGoalCategoryByIdNotAuthorized(t *testing.T) {
 	require.Nil(t, err)
 	assert.Equal(t, http.StatusUnauthorized, res.StatusCode)
 }
+
+// When trying to manipulate another users resources we should always be returning not found
+func TestCategoryNotFoundOnForbiddenAccess(t *testing.T) {
+	t.Parallel()
+
+	ownerUser := createUser(t.Name()+"@mail.com", "password123!")
+
+	attackerUser := createUser(t.Name()+"1@mail.com", "password123!")
+
+	cat := createTestGoalCategory("create goal category", ownerUser.ID)
+
+	tests := []struct {
+		body       map[string]any
+		name       string
+		method     string
+		url        string
+		wantStatus int
+	}{
+		{
+			name:       "GET",
+			method:     "GET",
+			url:        fmt.Sprintf("%s/api/goals/categories/%s", BaseURL, cat.ID),
+			body:       nil,
+			wantStatus: http.StatusNotFound,
+		},
+		{
+			name:       "PUT",
+			method:     "PUT",
+			url:        fmt.Sprintf("%s/api/goals/%s", BaseURL, cat.ID),
+			body:       map[string]any{"title": "some new title"},
+			wantStatus: http.StatusNotFound,
+		},
+		{
+			name:       "DELETE",
+			method:     "DELETE",
+			url:        fmt.Sprintf("%s/api/goals/categories/%s", BaseURL, cat.ID),
+			body:       nil,
+			wantStatus: http.StatusNotFound,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Make request as attackerUser (not the owner)
+			res, err := buildAndSendRequest(
+				tt.method,
+				tt.url,
+				tt.body,
+				attackerUser.AccessToken, // Using attacker's token!
+			)
+
+			assert.Nil(t, err)
+			assert.Equal(t, tt.wantStatus, res.StatusCode,
+				"Expected %d for %s %s, got %d",
+				tt.wantStatus, tt.method, tt.url, res.StatusCode)
+		})
+	}
+}

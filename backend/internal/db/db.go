@@ -5,7 +5,9 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -38,4 +40,8 @@ func NewPgx(dbname, user, password, host string) (*pgxpool.Pool, error) {
 		dbname,
 	)
 	return NewPgxPoolWithConnString(context.Background(), connStr)
+}
+
+func ToPgxUUID(uuid uuid.UUID) pgtype.UUID {
+	return pgtype.UUID{Bytes: uuid, Valid: true}
 }

@@ -37,13 +37,21 @@ func (q *Queries) CreateGoalCategory(ctx context.Context, arg CreateGoalCategory
 	return i, err
 }
 
-const deleteGoalCategoryById = `-- name: DeleteGoalCategoryById :exec
-DELETE FROM goal_categories WHERE id = $1
+const deleteGoalCategoryById = `-- name: DeleteGoalCategoryById :execrows
+DELETE FROM goal_categories WHERE id = $1 AND user_id = $2
 `
 
-func (q *Queries) DeleteGoalCategoryById(ctx context.Context, id pgtype.UUID) error {
-	_, err := q.db.Exec(ctx, deleteGoalCategoryById, id)
-	return err
+type DeleteGoalCategoryByIdParams struct {
+	ID     pgtype.UUID
+	UserID pgtype.UUID
+}
+
+func (q *Queries) DeleteGoalCategoryById(ctx context.Context, arg DeleteGoalCategoryByIdParams) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteGoalCategoryById, arg.ID, arg.UserID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
 const getGoalCategoriesByUserId = `-- name: GetGoalCategoriesByUserId :many
@@ -137,11 +145,16 @@ func (q *Queries) GetGoalCategoriesWithGoalsByUserId(ctx context.Context, userID
 }
 
 const getGoalCategoryById = `-- name: GetGoalCategoryById :one
-SELECT id, title, xp_per_goal, user_id, created_at, updated_at FROM goal_categories WHERE id = $1 LIMIT 1
+SELECT id, title, xp_per_goal, user_id, created_at, updated_at FROM goal_categories WHERE id = $1 AND user_id = $2 LIMIT 1
 `
 
-func (q *Queries) GetGoalCategoryById(ctx context.Context, id pgtype.UUID) (GoalCategory, error) {
-	row := q.db.QueryRow(ctx, getGoalCategoryById, id)
+type GetGoalCategoryByIdParams struct {
+	ID     pgtype.UUID
+	UserID pgtype.UUID
+}
+
+func (q *Queries) GetGoalCategoryById(ctx context.Context, arg GetGoalCategoryByIdParams) (GoalCategory, error) {
+	row := q.db.QueryRow(ctx, getGoalCategoryById, arg.ID, arg.UserID)
 	var i GoalCategory
 	err := row.Scan(
 		&i.ID,
@@ -161,9 +174,14 @@ SELECT
     g.created_at as goal_created_at, g.updated_at as goal_updated_at
 FROM goal_categories gc
 LEFT JOIN goals g ON gc.id = g.category_id
-WHERE gc.id = $1
+WHERE gc.id = $1 AND gc.user_id = $2
 ORDER BY g.created_at DESC
 `
+
+type GetGoalCategoryWithGoalsByIdParams struct {
+	ID     pgtype.UUID
+	UserID pgtype.UUID
+}
 
 type GetGoalCategoryWithGoalsByIdRow struct {
 	ID            pgtype.UUID
@@ -180,8 +198,8 @@ type GetGoalCategoryWithGoalsByIdRow struct {
 	GoalUpdatedAt pgtype.Timestamp
 }
 
-func (q *Queries) GetGoalCategoryWithGoalsById(ctx context.Context, id pgtype.UUID) ([]GetGoalCategoryWithGoalsByIdRow, error) {
-	rows, err := q.db.Query(ctx, getGoalCategoryWithGoalsById, id)
+func (q *Queries) GetGoalCategoryWithGoalsById(ctx context.Context, arg GetGoalCategoryWithGoalsByIdParams) ([]GetGoalCategoryWithGoalsByIdRow, error) {
+	rows, err := q.db.Query(ctx, getGoalCategoryWithGoalsById, arg.ID, arg.UserID)
 	if err != nil {
 		return nil, err
 	}
@@ -217,7 +235,7 @@ const updateGoalCategoryById = `-- name: UpdateGoalCategoryById :one
 UPDATE goal_categories
 SET title = coalesce($1, title),
     xp_per_goal = coalesce($2, xp_per_goal)
-WHERE id = $3
+WHERE id = $3 AND user_id = $4
 RETURNING id, title, xp_per_goal, user_id, created_at, updated_at
 `
 
@@ -225,10 +243,16 @@ type UpdateGoalCategoryByIdParams struct {
 	Title     pgtype.Text
 	XpPerGoal pgtype.Int4
 	ID        pgtype.UUID
+	UserID    pgtype.UUID
 }
 
 func (q *Queries) UpdateGoalCategoryById(ctx context.Context, arg UpdateGoalCategoryByIdParams) (GoalCategory, error) {
-	row := q.db.QueryRow(ctx, updateGoalCategoryById, arg.Title, arg.XpPerGoal, arg.ID)
+	row := q.db.QueryRow(ctx, updateGoalCategoryById,
+		arg.Title,
+		arg.XpPerGoal,
+		arg.ID,
+		arg.UserID,
+	)
 	var i GoalCategory
 	err := row.Scan(
 		&i.ID,
