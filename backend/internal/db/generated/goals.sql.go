@@ -45,21 +45,34 @@ func (q *Queries) CreateGoal(ctx context.Context, arg CreateGoalParams) (Goal, e
 	return i, err
 }
 
-const deleteGoalById = `-- name: DeleteGoalById :exec
-DELETE FROM goals WHERE id = $1
+const deleteGoalById = `-- name: DeleteGoalById :execrows
+DELETE FROM goals WHERE id = $1 AND user_id = $2
 `
 
-func (q *Queries) DeleteGoalById(ctx context.Context, id pgtype.UUID) error {
-	_, err := q.db.Exec(ctx, deleteGoalById, id)
-	return err
+type DeleteGoalByIdParams struct {
+	ID     pgtype.UUID
+	UserID pgtype.UUID
+}
+
+func (q *Queries) DeleteGoalById(ctx context.Context, arg DeleteGoalByIdParams) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteGoalById, arg.ID, arg.UserID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
 const getGoalById = `-- name: GetGoalById :one
-SELECT id, title, description, user_id, category_id, status, created_at, updated_at FROM goals WHERE id = $1 LIMIT 1
+SELECT id, title, description, user_id, category_id, status, created_at, updated_at FROM goals WHERE id = $1 AND user_id = $2 LIMIT 1
 `
 
-func (q *Queries) GetGoalById(ctx context.Context, id pgtype.UUID) (Goal, error) {
-	row := q.db.QueryRow(ctx, getGoalById, id)
+type GetGoalByIdParams struct {
+	ID     pgtype.UUID
+	UserID pgtype.UUID
+}
+
+func (q *Queries) GetGoalById(ctx context.Context, arg GetGoalByIdParams) (Goal, error) {
+	row := q.db.QueryRow(ctx, getGoalById, arg.ID, arg.UserID)
 	var i Goal
 	err := row.Scan(
 		&i.ID,
@@ -113,7 +126,7 @@ SET title = coalesce($1, title),
     description = coalesce($2, description),
     status = coalesce($3, status),
     category_id = coalesce($4, category_id)
-WHERE id = $5
+WHERE id = $5 AND user_id = $6
 RETURNING id, title, description, user_id, category_id, status, created_at, updated_at
 `
 
@@ -123,6 +136,7 @@ type UpdateGoalByIdParams struct {
 	Status      NullGoalStatus
 	CategoryID  pgtype.UUID
 	ID          pgtype.UUID
+	UserID      pgtype.UUID
 }
 
 func (q *Queries) UpdateGoalById(ctx context.Context, arg UpdateGoalByIdParams) (Goal, error) {
@@ -132,6 +146,7 @@ func (q *Queries) UpdateGoalById(ctx context.Context, arg UpdateGoalByIdParams) 
 		arg.Status,
 		arg.CategoryID,
 		arg.ID,
+		arg.UserID,
 	)
 	var i Goal
 	err := row.Scan(
@@ -150,17 +165,18 @@ func (q *Queries) UpdateGoalById(ctx context.Context, arg UpdateGoalByIdParams) 
 const updateGoalStatus = `-- name: UpdateGoalStatus :one
 UPDATE goals
 SET status = $1
-WHERE id = $2
+WHERE id = $2 AND user_id = $3
 RETURNING id, title, description, user_id, category_id, status, created_at, updated_at
 `
 
 type UpdateGoalStatusParams struct {
 	Status NullGoalStatus
 	ID     pgtype.UUID
+	UserID pgtype.UUID
 }
 
 func (q *Queries) UpdateGoalStatus(ctx context.Context, arg UpdateGoalStatusParams) (Goal, error) {
-	row := q.db.QueryRow(ctx, updateGoalStatus, arg.Status, arg.ID)
+	row := q.db.QueryRow(ctx, updateGoalStatus, arg.Status, arg.ID, arg.UserID)
 	var i Goal
 	err := row.Scan(
 		&i.ID,

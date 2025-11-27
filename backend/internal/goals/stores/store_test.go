@@ -111,7 +111,7 @@ func TestGetGoalCategoryById(t *testing.T) {
 	assert.NoError(t, err)
 	category, _ := gcStore.CreateGoalCategory(t.Name(), 50, user.ID)
 
-	foundCategory, err := gcStore.GetGoalCategoryByID(category.ID)
+	foundCategory, err := gcStore.GetGoalCategoryByID(category.ID, user.ID)
 	assert.NoError(t, err)
 	assert.Equal(t, category.ID, foundCategory.ID)
 	assert.Equal(t, category.Title, foundCategory.Title)
@@ -129,7 +129,7 @@ func TestUpdateGoalCategoryById(t *testing.T) {
 		"title":       "new title",
 		"xp_per_goal": 100,
 	}
-	updated, err := gcStore.UpdateGoalCategoryByID(category.ID, updates)
+	updated, err := gcStore.UpdateGoalCategoryByID(category.ID, user.ID, updates)
 	assert.NoError(t, err)
 	assert.Equal(t, "new title", updated.Title)
 	assert.Equal(t, 100, updated.XPPerGoal)
@@ -141,13 +141,13 @@ func TestDeleteGoalCategoryById(t *testing.T) {
 	assert.NoError(t, err)
 	category, _ := gcStore.CreateGoalCategory(t.Name(), 50, user.ID)
 
-	_, err = gcStore.GetGoalCategoryByID(category.ID)
+	_, err = gcStore.GetGoalCategoryByID(category.ID, user.ID)
 	assert.NoError(t, err)
 
-	err = gcStore.DeleteGoalCategoryByID(category.ID)
+	err = gcStore.DeleteGoalCategoryByID(category.ID, user.ID)
 	assert.NoError(t, err)
 
-	_, err = gcStore.GetGoalCategoryByID(category.ID)
+	_, err = gcStore.GetGoalCategoryByID(category.ID, user.ID)
 	assert.Error(t, err)
 }
 
@@ -173,7 +173,7 @@ func TestGetGoalById(t *testing.T) {
 	category, _ := gcStore.CreateGoalCategory(t.Name(), 50, user.ID)
 	goal, _ := gStore.CreateGoal(t.Name(), "desc", user.ID, category.ID)
 
-	foundGoal, err := gStore.GetGoalByID(goal.ID)
+	foundGoal, err := gStore.GetGoalByID(goal.ID, user.ID)
 	assert.NoError(t, err)
 	assert.Equal(t, goal.ID, foundGoal.ID)
 	assert.Equal(t, goal.Title, foundGoal.Title)
@@ -193,7 +193,7 @@ func TestUpdateGoalById(t *testing.T) {
 		"title":       "new title",
 		"description": "new desc",
 	}
-	updated, err := gStore.UpdateGoalByID(goal.ID, updates)
+	updated, err := gStore.UpdateGoalByID(goal.ID, user.ID, updates)
 	assert.NoError(t, err)
 	assert.Equal(t, "new title", updated.Title)
 	assert.Equal(t, "new desc", updated.Description)
@@ -206,12 +206,12 @@ func TestDeleteGoalById(t *testing.T) {
 	category, _ := gcStore.CreateGoalCategory(t.Name(), 50, user.ID)
 	goal, _ := gStore.CreateGoal(t.Name(), "desc", user.ID, category.ID)
 
-	_, err = gStore.GetGoalByID(goal.ID)
+	_, err = gStore.GetGoalByID(goal.ID, user.ID)
 	assert.NoError(t, err)
 
-	err = gStore.DeleteGoalByID(goal.ID)
+	err = gStore.DeleteGoalByID(goal.ID, user.ID)
 	assert.NoError(t, err)
 
-	_, err = gStore.GetGoalByID(goal.ID)
+	_, err = gStore.GetGoalByID(goal.ID, user.ID)
 	assert.Error(t, err)
 }

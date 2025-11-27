@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"goalify/internal/entities"
 
+	db "goalify/internal/db"
 	sqlcdb "goalify/internal/db/generated"
 
 	"github.com/google/uuid"
@@ -20,12 +21,12 @@ type (
 			userID uuid.UUID,
 		) (*entities.GoalCategory, error)
 		GetGoalCategoriesByUserID(userID uuid.UUID) ([]*entities.GoalCategory, error)
-		GetGoalCategoryByID(categoryID uuid.UUID) (*entities.GoalCategory, error)
+		GetGoalCategoryByID(categoryID, userID uuid.UUID) (*entities.GoalCategory, error)
 		UpdateGoalCategoryByID(
-			categoryID uuid.UUID,
+			categoryID, userID uuid.UUID,
 			updates map[string]any,
 		) (*entities.GoalCategory, error)
-		DeleteGoalCategoryByID(categoryID uuid.UUID) error
+		DeleteGoalCategoryByID(categoryID, userID uuid.UUID) error
 	}
 	goalCategoryStore struct {
 		queries *sqlcdb.Queries
@@ -167,12 +168,14 @@ func (s *goalCategoryStore) GetGoalCategoriesByUserID(
 }
 
 func (s *goalCategoryStore) GetGoalCategoryByID(
-	categoryID uuid.UUID,
+	categoryID, userID uuid.UUID,
 ) (*entities.GoalCategory, error) {
 	rows, err := s.queries.GetGoalCategoryWithGoalsById(
 		context.Background(),
-		pgtype.UUID{Bytes: categoryID, Valid: true},
-	)
+		sqlcdb.GetGoalCategoryWithGoalsByIdParams{
+			ID:     db.ToPgxUUID(categoryID),
+			UserID: db.ToPgxUUID(userID),
+		})
 	if err != nil {
 		return nil, err
 	}
@@ -181,11 +184,12 @@ func (s *goalCategoryStore) GetGoalCategoryByID(
 }
 
 func (s *goalCategoryStore) UpdateGoalCategoryByID(
-	categoryID uuid.UUID,
+	categoryID, userID uuid.UUID,
 	updates map[string]any,
 ) (*entities.GoalCategory, error) {
 	params := sqlcdb.UpdateGoalCategoryByIdParams{
-		ID: pgtype.UUID{Bytes: categoryID, Valid: true},
+		ID:     db.ToPgxUUID(categoryID),
+		UserID: db.ToPgxUUID(userID),
 	}
 
 	// Convert map updates to typed parameters
@@ -208,9 +212,19 @@ func (s *goalCategoryStore) UpdateGoalCategoryByID(
 	return pgxGoalCategoryToEntity(gc), nil
 }
 
-func (s *goalCategoryStore) DeleteGoalCategoryByID(categoryID uuid.UUID) error {
-	return s.queries.DeleteGoalCategoryById(
+func (s *goalCategoryStore) DeleteGoalCategoryByID(categoryID, userID uuid.UUID) error {
+	rows, err := s.queries.DeleteGoalCategoryById(
 		context.Background(),
-		pgtype.UUID{Bytes: categoryID, Valid: true},
-	)
+		sqlcdb.DeleteGoalCategoryByIdParams{
+			ID:     db.ToPgxUUID(categoryID),
+			UserID: db.ToPgxUUID(userID),
+		})
+	if err != nil {
+		return err
+	}
+
+	if rows == 0 {
+		return sql.ErrNoRows
+	}
+	return nil
 }

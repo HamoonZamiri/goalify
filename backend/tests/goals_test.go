@@ -141,7 +141,7 @@ func TestDeleteGoalNotFound(t *testing.T) {
 	deleteURL := fmt.Sprintf("%s/api/goals/%s", BaseURL, uuid.New())
 	res, err := buildAndSendRequest("DELETE", deleteURL, nil, userDto.AccessToken)
 	assert.Nil(t, err)
-	assert.Equal(t, http.StatusBadRequest, res.StatusCode)
+	assert.Equal(t, http.StatusNotFound, res.StatusCode)
 }
 
 /* Event Tests
@@ -236,4 +236,56 @@ func TestGoalCategoryCreatedEvent(t *testing.T) {
 		time.Sleep(200 * time.Millisecond)
 	}
 	assert.Equal(t, 1, len(serverResponse.Goals))
+}
+
+// When trying to manipulate another users resources we should always be returning not found
+func TestGoalNotFoundOnForbiddenAccess(t *testing.T) {
+	t.Parallel()
+
+	ownerUser := createUser(t.Name()+"@mail.com", "password123!")
+
+	attackerUser := createUser(t.Name()+"1@mail.com", "password123!")
+
+	cat := createTestGoalCategory("create goal category", ownerUser.ID)
+	goal := createTestGoal("create goal", "desc", cat.ID, ownerUser.ID)
+
+	tests := []struct {
+		body       map[string]any
+		name       string
+		method     string
+		url        string
+		wantStatus int
+	}{
+		{
+			name:       "PUT goal by id that does not belong to user",
+			method:     "PUT",
+			url:        fmt.Sprintf("%s/api/goals/%s", BaseURL, goal.ID),
+			body:       map[string]any{"status": "complete"},
+			wantStatus: http.StatusNotFound,
+		},
+		{
+			name:       "DELETE goal by id that does not belong to user",
+			method:     "DELETE",
+			url:        fmt.Sprintf("%s/api/goals/%s", BaseURL, goal.ID),
+			body:       nil,
+			wantStatus: http.StatusNotFound,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Make request as attackerUser (not the owner)
+			res, err := buildAndSendRequest(
+				tt.method,
+				tt.url,
+				tt.body,
+				attackerUser.AccessToken, // Using attacker's token!
+			)
+
+			assert.Nil(t, err)
+			assert.Equal(t, tt.wantStatus, res.StatusCode,
+				"Expected %d for %s %s, got %d",
+				tt.wantStatus, tt.method, tt.url, res.StatusCode)
+		})
+	}
 }
