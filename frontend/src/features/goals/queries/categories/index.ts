@@ -5,4 +5,5 @@
 export * from "./useCreateGoalCategory";
 export * from "./useDeleteGoalCategory";
 export * from "./useGoalCategories";
+export * from "./useResetGoalCategory";
 export * from "./useUpdateGoalCategory";

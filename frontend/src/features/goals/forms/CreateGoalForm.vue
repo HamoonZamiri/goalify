@@ -66,6 +66,7 @@ const form = useForm({
 					bg="primary"
 					text-color="dark"
 					type="text"
+					width="w-full"
 					@input="
             (value: string | number | null) => {
               if (typeof value !== 'string') return;
