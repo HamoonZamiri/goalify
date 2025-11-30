@@ -88,3 +88,8 @@ export const editGoalCategoryFormSchema = z.object({
 export type EditGoalCategoryFormData = z.infer<
 	typeof editGoalCategoryFormSchema
 >;
+
+export const ResetGoalCategoryParams = z.object({
+	category_id: z.string().uuid(),
+});
+export type ResetGoalCategoryParams = z.infer<typeof ResetGoalCategoryParams>;

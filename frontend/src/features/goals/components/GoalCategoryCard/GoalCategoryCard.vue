@@ -4,11 +4,14 @@ import { usePointerSwipe } from "@vueuse/core";
 import { computed, ref } from "vue";
 import { toast } from "vue3-toastify";
 import { CreateGoalButton, CreateGoalForm, GoalCard } from "@/features/goals";
-import { useDeleteGoalCategory } from "@/features/goals/queries";
+import {
+	useDeleteGoalCategory,
+	useResetGoalCategory,
+} from "@/features/goals/queries";
 import type { GoalCategory } from "@/features/goals/schemas/goal.schema";
-import { ChevronUp, Trash } from "@/shared/components/icons";
+import { ChevronUp, Trash, ArrowPath } from "@/shared/components/icons";
 import { ModalForm } from "@/shared/components/modals";
-import { Box, Text } from "@/shared/components/ui";
+import { Box, Text, Button } from "@/shared/components/ui";
 
 const props = defineProps<{
 	goalCategory: GoalCategory;
@@ -25,6 +28,8 @@ const didSwipe = ref(false);
 const DELETE_THRESHOLD = 0.65; // 65% of card width triggers delete
 
 const { mutateAsync: deleteCategory } = useDeleteGoalCategory();
+const { mutateAsync: resetCategory, isPending: isPendingReset } =
+	useResetGoalCategory();
 
 // Calculate how far we've swiped as a percentage
 const swipeRatio = computed(() => {
@@ -73,6 +78,17 @@ function handleDisclosureClick(e: MouseEvent) {
 		e.stopPropagation();
 	}
 }
+
+async function handleResetCategory() {
+	try {
+		await resetCategory({ category_id: props.goalCategory.id });
+	} catch (error) {
+		toast.error(
+			`Failed to reset category: ${error instanceof Error ? error.message : "Unknown error"}`,
+			{ autoClose: 1500 },
+		);
+	}
+}
 </script>
 
 <template>
@@ -115,10 +131,23 @@ function handleDisclosureClick(e: MouseEvent) {
 						<header class="flex justify-between w-full items-center">
 							<Text as="h3" weight="semibold">{{ goalCategory.title }}</Text>
 							<Box class="items-center gap-2" flex-direction="row">
-								<CreateGoalButton
-									class="hover:cursor-pointer"
+								<Button
+									variant="ghost"
+									width="w-auto"
+									class="p-0"
 									@click.stop="isCreateGoalDialogOpen = true"
-								/>
+								>
+									<CreateGoalButton/>
+								</Button>
+								<Button
+									variant="ghost"
+									width="w-auto"
+									class="p-0"
+									:disabled="isPendingReset"
+									@click.stop="handleResetCategory"
+								>
+									<ArrowPath :class="isPendingReset ? 'animate-spin' : ''"/>
+								</Button>
 								<ModalForm v-model="isCreateGoalDialogOpen">
 									<CreateGoalForm
 										:category-id="props.goalCategory.id"

@@ -54,7 +54,7 @@ const emit = defineEmits<{
 
 const baseClass = props.compact
 	? "focus:outline-hidden placeholder-gray-400 rounded-sm border-0 text-center min-w-0"
-	: "focus:outline-hidden placeholder-gray-400 sm:flex-1 rounded-lg border-0";
+	: "focus:outline-hidden placeholder-gray-400 sm:flex-1 rounded-lg border-0 w-full";
 
 const inputRef = ref<HTMLInputElement | HTMLTextAreaElement | null>(null);
 

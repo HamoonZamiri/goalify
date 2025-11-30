@@ -18,6 +18,7 @@ export const http = {
 	StatusBadRequest: 400,
 	StatusNotFound: 404,
 	StatusUnprocessableEntity: 422,
+	StatusNoContent: 204,
 	MethodPatch: "PATCH",
 	MethodPost: "POST",
 	MethodDelete: "DELETE",

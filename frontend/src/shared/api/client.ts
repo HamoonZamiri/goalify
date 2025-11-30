@@ -80,6 +80,12 @@ export async function zodFetch<T>(
 	};
 
 	let res = await fetch(url, fetchOptions);
+
+	// Handle 204 No Content - no body to parse
+	if (res.status === http.StatusNoContent) {
+		return {} as T;
+	}
+
 	let json = await res.json();
 
 	if (res.status === http.StatusUnauthorized) {
@@ -93,6 +99,12 @@ export async function zodFetch<T>(
 				Authorization: `Bearer ${(refreshedUser as { access_token: string }).access_token}`,
 			},
 		});
+
+		// Handle 204 No Content after retry
+		if (res.status === http.StatusNoContent) {
+			return {} as T;
+		}
+
 		json = await res.json();
 	}
 
