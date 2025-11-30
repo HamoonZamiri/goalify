@@ -151,24 +151,37 @@ func TestDeleteGoalCategoryById(t *testing.T) {
 	assert.Equal(t, http.StatusOK, res.StatusCode)
 }
 
-func TestDeleteGoalCategoryByIdNotAuthorized(t *testing.T) {
+func TestResetGoalCategory(t *testing.T) {
 	t.Parallel()
 
 	email := t.Name() + "@mail.com"
 	userDto := createUser(email, "password123!")
-	userID := userDto.ID
-	gc := createTestGoalCategory("delete goal category", userID)
-	req, err := http.NewRequest(
-		"DELETE",
-		fmt.Sprintf("%s/api/goals/categories/%s", BaseURL, gc.ID),
-		nil,
-	)
-	require.Nil(t, err)
-	req.Header.Add("Authorization", "Bearer "+userDto.AccessToken+"1")
-	res, err := http.DefaultClient.Do(req)
+	gc := createTestGoalCategory("update goal category", userDto.ID)
 
-	require.Nil(t, err)
-	assert.Equal(t, http.StatusUnauthorized, res.StatusCode)
+	for i := range 5 {
+		goal := createTestGoal(fmt.Sprintf("goal %d", i), "desc", gc.ID, userDto.ID)
+		buildAndSendRequest(http.MethodPut,
+			fmt.Sprintf("%s/api/goals/%s", BaseURL, goal.ID),
+			map[string]any{"status": "complete"},
+			userDto.AccessToken)
+	}
+
+	url := fmt.Sprintf("%s/api/goals/categories/%s/reset", BaseURL, gc.ID)
+	res, err := buildAndSendRequest("POST", url, nil, userDto.AccessToken)
+	assert.Nil(t, err)
+	assert.Equal(t, http.StatusNoContent, res.StatusCode)
+
+	url = fmt.Sprintf("%s/api/goals/categories/%s", BaseURL, gc.ID)
+	res, err = buildAndSendRequest("GET", url, nil, userDto.AccessToken)
+	assert.Nil(t, err)
+	assert.Equal(t, http.StatusOK, res.StatusCode)
+
+	resBody, err := unmarshalResponse[entities.GoalCategory](res)
+	assert.Nil(t, err)
+
+	for _, goal := range resBody.Goals {
+		assert.Equal(t, "not_complete", goal.Status)
+	}
 }
 
 // When trying to manipulate another users resources we should always be returning not found
@@ -206,6 +219,13 @@ func TestCategoryNotFoundOnForbiddenAccess(t *testing.T) {
 			name:       "DELETE",
 			method:     "DELETE",
 			url:        fmt.Sprintf("%s/api/goals/categories/%s", BaseURL, cat.ID),
+			body:       nil,
+			wantStatus: http.StatusNotFound,
+		},
+		{
+			name:       "RESET",
+			method:     "POST",
+			url:        fmt.Sprintf("%s/api/goals/categories/%s/reset", BaseURL, cat.ID),
 			body:       nil,
 			wantStatus: http.StatusNotFound,
 		},

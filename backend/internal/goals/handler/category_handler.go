@@ -197,3 +197,34 @@ func (h *GoalHandler) HandleDeleteGoalCategoryByID(w http.ResponseWriter, r *htt
 	res := map[string]any{"id": categoryID, "deleted": true}
 	responses.SendResponse(w, r, http.StatusOK, res)
 }
+
+func (h *GoalHandler) HandleResetGoalsByCategoryID(w http.ResponseWriter, r *http.Request) {
+	userID, err := middleware.GetIDFromHeader(r)
+	if err != nil {
+		slog.Error("HandleResetGoalsByCategoryID: middleware.GetIdFromHeader: ", "err", err)
+		responses.SendInternalServerError(w, r)
+		return
+	}
+	userUUID, err := uuid.Parse(userID)
+	if err != nil {
+		slog.Error("HandleResetGoalsByCategoryID: uuid.Parse:", "err", err)
+		responses.SendInternalServerError(w, r)
+		return
+	}
+
+	categoryID := r.PathValue("categoryID")
+	parsedCategoryID, err := uuid.Parse(categoryID)
+	if err != nil {
+		slog.Error("HandleResetGoalsByCategoryID: uuid.Parse:", "err", err)
+		responses.SendAPIError(w, r, http.StatusBadRequest, "bad request: invalid category id", nil)
+		return
+	}
+
+	err = h.goalService.ResetGoalsByCategoryID(parsedCategoryID, userUUID)
+	if err != nil {
+		responses.SendAPIError(w, r, responses.GetErrorCode(err), err.Error(), nil)
+		return
+	}
+
+	responses.SendResponse(w, r, http.StatusNoContent, map[string]any{})
+}

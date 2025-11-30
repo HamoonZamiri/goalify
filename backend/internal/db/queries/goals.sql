@@ -26,3 +26,8 @@ RETURNING *;
 
 -- name: DeleteGoalById :execrows
 DELETE FROM goals WHERE id = $1 AND user_id = $2;
+
+-- name: ResetGoalsByCategory :exec
+UPDATE goals
+SET status = 'not_complete'
+WHERE category_id = $1 AND user_id = $2;

@@ -2,7 +2,9 @@ package stores
 
 import (
 	"context"
+	"fmt"
 	"goalify/internal/db"
+	"goalify/internal/entities"
 	"goalify/internal/testsetup"
 	"log"
 	"os"
@@ -214,4 +216,85 @@ func TestDeleteGoalById(t *testing.T) {
 
 	_, err = gStore.GetGoalByID(goal.ID, user.ID)
 	assert.Error(t, err)
+}
+
+func TestResetGoalsByCategoryID(t *testing.T) {
+	t.Parallel()
+
+	user, err := userStore.CreateUser(t.Name()+"@mail.com", password)
+	assert.NoError(t, err)
+
+	category, err := gcStore.CreateGoalCategory(t.Name(), 50, user.ID)
+	assert.NoError(t, err)
+
+	// Create multiple goals for this category
+	numGoals := 5
+	goals := make([]*entities.Goal, numGoals)
+	for i := range numGoals {
+		var goal *entities.Goal
+		goal, err = gStore.CreateGoal(
+			fmt.Sprintf("%s-goal-%d", t.Name(), i),
+			"desc",
+			user.ID,
+			category.ID,
+		)
+		assert.NoError(t, err)
+		goals[i] = goal
+	}
+
+	// Mark all goals as complete
+	for i, goal := range goals {
+		var updatedGoal *entities.Goal
+		updatedGoal, err = gStore.UpdateGoalByID(
+			goal.ID,
+			user.ID,
+			map[string]any{"status": "complete"},
+		)
+		assert.NoError(t, err)
+		assert.Equal(t, "complete", updatedGoal.Status)
+		goals[i] = updatedGoal // Update slice with latest state
+	}
+
+	// Reset all goals in the category
+	err = gStore.ResetGoalsByCategoryID(category.ID, user.ID)
+	assert.NoError(t, err)
+
+	// Verify all goals are now not_complete
+	for _, goal := range goals {
+		var fetchedGoal *entities.Goal
+		fetchedGoal, err = gStore.GetGoalByID(goal.ID, user.ID)
+		assert.NoError(t, err)
+		assert.Equal(t, "not_complete", fetchedGoal.Status,
+			"Goal %s should be not_complete after reset", goal.ID)
+	}
+
+	// === Test ownership validation ===
+	// Mark all goals complete again
+	for i, goal := range goals {
+		var updatedGoal *entities.Goal
+		updatedGoal, err = gStore.UpdateGoalByID(
+			goal.ID,
+			user.ID,
+			map[string]any{"status": "complete"},
+		)
+		assert.NoError(t, err)
+		assert.Equal(t, "complete", updatedGoal.Status)
+		goals[i] = updatedGoal
+	}
+
+	// Create another user who doesn't own this category
+	user2, err := userStore.CreateUser(t.Name()+"1@mail.com", password)
+	assert.NoError(t, err)
+
+	// Attempt reset as unauthorized user (should not affect goals)
+	err = gStore.ResetGoalsByCategoryID(category.ID, user2.ID)
+	assert.NoError(t, err) // No error, but should be no-op
+
+	// Verify all goals are STILL complete (not reset by unauthorized user)
+	for _, goal := range goals {
+		fetchedGoal, err := gStore.GetGoalByID(goal.ID, user.ID)
+		assert.NoError(t, err)
+		assert.Equal(t, "complete", fetchedGoal.Status,
+			"Goal %s should still be complete (unauthorized reset attempt)", goal.ID)
+	}
 }

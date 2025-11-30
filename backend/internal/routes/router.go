@@ -94,6 +94,14 @@ func AddRoutes(
 		mw.AuthChain,
 	)
 
+	addRoute(
+		mux,
+		http.MethodPost,
+		"/api/goals/categories/{categoryID}/reset",
+		goalHandler.HandleResetGoalsByCategoryID,
+		mw.AuthChain,
+	)
+
 	// need options method available on all endpoints for CORS
 	mux.Handle(
 		"OPTIONS /api/",

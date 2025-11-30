@@ -120,6 +120,22 @@ func (q *Queries) GetGoalsByUserId(ctx context.Context, userID pgtype.UUID) ([]G
 	return items, nil
 }
 
+const resetGoalsByCategory = `-- name: ResetGoalsByCategory :exec
+UPDATE goals
+SET status = 'not_complete'
+WHERE category_id = $1 AND user_id = $2
+`
+
+type ResetGoalsByCategoryParams struct {
+	CategoryID pgtype.UUID
+	UserID     pgtype.UUID
+}
+
+func (q *Queries) ResetGoalsByCategory(ctx context.Context, arg ResetGoalsByCategoryParams) error {
+	_, err := q.db.Exec(ctx, resetGoalsByCategory, arg.CategoryID, arg.UserID)
+	return err
+}
+
 const updateGoalById = `-- name: UpdateGoalById :one
 UPDATE goals
 SET title = coalesce($1, title),

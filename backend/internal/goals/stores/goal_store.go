@@ -19,6 +19,7 @@ type GoalStore interface {
 	GetGoalByID(goalID, userID uuid.UUID) (*entities.Goal, error)
 	UpdateGoalByID(goalID, userID uuid.UUID, updates map[string]any) (*entities.Goal, error)
 	DeleteGoalByID(goalID, userID uuid.UUID) error
+	ResetGoalsByCategoryID(categoryID, userID uuid.UUID) error
 }
 
 type goalStore struct {
@@ -178,4 +179,12 @@ func (s *goalStore) DeleteGoalByID(goalID, userID uuid.UUID) error {
 	}
 
 	return nil
+}
+
+func (s *goalStore) ResetGoalsByCategoryID(categoryID, userID uuid.UUID) error {
+	return s.queries.ResetGoalsByCategory(context.Background(),
+		sqlcdb.ResetGoalsByCategoryParams{
+			CategoryID: db.ToPgxUUID(categoryID),
+			UserID:     db.ToPgxUUID(userID),
+		})
 }

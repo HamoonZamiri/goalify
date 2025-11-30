@@ -49,6 +49,7 @@ type GoalService interface {
 		userID uuid.UUID,
 	) (*entities.GoalCategory, error)
 	DeleteGoalCategoryByID(categoryID, userID uuid.UUID) error
+	ResetGoalsByCategoryID(categoryID, userID uuid.UUID) error
 }
 
 type goalService struct {
@@ -295,6 +296,26 @@ func (gs *goalService) DeleteGoalByID(goalID, userID uuid.UUID) error {
 	}
 	if err != nil {
 		slog.Error("service.handleDeleteGoalById: store.DeleteGoalById:", "err", err)
+		return responses.ErrInternalServer
+	}
+	return nil
+}
+
+func (gs *goalService) ResetGoalsByCategoryID(categoryID, userID uuid.UUID) error {
+	// check ownership first
+	_, err := gs.goalCategoryStore.GetGoalCategoryByID(categoryID, userID)
+	if errors.Is(err, sql.ErrNoRows) {
+		return fmt.Errorf("%w: category not found", responses.ErrNotFound)
+	}
+
+	if err != nil {
+		slog.Error("service.handleResetGoalsByCategory: store.GetGoalCategoryById:", "err", err)
+		return responses.ErrInternalServer
+	}
+
+	err = gs.goalStore.ResetGoalsByCategoryID(categoryID, userID)
+	if err != nil {
+		slog.Error("service.handleResetGoalsByCategory: store.ResetGoalsByCategory:", "err", err)
 		return responses.ErrInternalServer
 	}
 	return nil
