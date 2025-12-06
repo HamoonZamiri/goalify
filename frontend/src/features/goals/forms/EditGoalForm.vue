@@ -1,20 +1,20 @@
 <script setup lang="ts">
+import {
+	Listbox,
+	ListboxButton,
+	ListboxOption,
+	ListboxOptions,
+} from "@headlessui/vue";
 import { useForm } from "@tanstack/vue-form";
 import { watchDebounced } from "@vueuse/core";
 import { ref } from "vue";
 import { toast } from "vue3-toastify";
-import {
-	Listbox,
-	ListboxButton,
-	ListboxOptions,
-	ListboxOption,
-} from "@headlessui/vue";
 import { useDeleteGoal, useUpdateGoal } from "@/features/goals/queries";
 import type { Goal } from "@/features/goals/schemas/goal.schema";
 import { editGoalFormSchema } from "@/features/goals/schemas/goal-form.schema";
-import { Box, Text, InputField, Button } from "@/shared/components/ui";
 import { XMark } from "@/shared/components/icons";
 import { DeleteModal } from "@/shared/components/modals";
+import { Box, Button, InputField, Text } from "@/shared/components/ui";
 
 const props = defineProps<{
 	goal: Goal;
@@ -91,7 +91,6 @@ async function handleDeleteGoal(e: MouseEvent) {
 	e.preventDefault();
 	try {
 		await deleteGoalMutation(props.goal.id);
-		toast.success("Successfully deleted goal");
 		emit("close");
 	} catch (error) {
 		toast.error(

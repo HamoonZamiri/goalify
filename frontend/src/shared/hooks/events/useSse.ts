@@ -1,11 +1,9 @@
+import { useQueryClient } from "@tanstack/vue-query";
 import { readonly, ref } from "vue";
 import { toast } from "vue3-toastify";
 import { z } from "zod";
-import { useQueryClient } from "@tanstack/vue-query";
 import { categoryKeys } from "@/features/goals/queries";
-import { GoalSchema } from "@/features/goals/schemas";
 import { API_BASE, events } from "@/utils/constants";
-import type { User } from "@/features/auth/schemas";
 import useAuth from "../auth/useAuth";
 
 const xpUpdateSchema = z.object({
@@ -52,20 +50,17 @@ export function useSSE() {
 			toast.error("Failed to connect to the server. Please refresh the page.");
 		};
 
-		es.addEventListener(events.DEFAULT_GOAL_CREATED, (event) => {
-			const json = JSON.parse(event.data);
-			const parsedData = GoalSchema.parse(json);
-			toast.success(
-				"Goal Category was created! We created a default example goal for you. You can delete it later!",
-			);
+		es.addEventListener(events.DEFAULT_GOAL_CREATED, () => {
 			queryClient.invalidateQueries({ queryKey: categoryKeys.all });
 		});
 
 		es.addEventListener(events.XP_UPDATED, (event) => {
 			const json = JSON.parse(event.data);
 			const parsedData = xpUpdateSchema.parse(json);
-			const user = getUser() as User;
-			setUser({ ...user, ...parsedData });
+			const user = getUser();
+			if (user) {
+				setUser({ ...user, ...parsedData });
+			}
 		});
 	};
 

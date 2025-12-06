@@ -52,7 +52,6 @@ const { distanceX, isSwiping } = usePointerSwipe(swipeTarget, {
 		if (swipeRatio.value >= DELETE_THRESHOLD) {
 			try {
 				await deleteCategory(props.goalCategory.id);
-				toast.success(`Deleted category: ${props.goalCategory.title}`);
 			} catch (error) {
 				toast.error(
 					`Failed to delete category: ${error instanceof Error ? error.message : "Unknown error"}`,

@@ -20,7 +20,6 @@ const { mutateAsync: createGoal, isPending } = useCreateGoal();
 async function handleSubmit(data: CreateGoalFormData) {
 	try {
 		const result = await createGoal(data);
-		toast.success(`Successfully created goal: ${result.title}`);
 		emit("submit", result);
 		emit("close");
 	} catch (error) {
