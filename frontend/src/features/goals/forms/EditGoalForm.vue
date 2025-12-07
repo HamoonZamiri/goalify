@@ -1,14 +1,9 @@
 <script setup lang="ts">
-import {
-	Listbox,
-	ListboxButton,
-	ListboxOption,
-	ListboxOptions,
-} from "@headlessui/vue";
 import { useForm } from "@tanstack/vue-form";
 import { watchDebounced } from "@vueuse/core";
 import { ref } from "vue";
 import { toast } from "vue3-toastify";
+import GoalStatusTabs from "@/features/goals/components/GoalStatusTabs.vue";
 import { useDeleteGoal, useUpdateGoal } from "@/features/goals/queries";
 import type { Goal } from "@/features/goals/schemas/goal.schema";
 import { editGoalFormSchema } from "@/features/goals/schemas/goal-form.schema";
@@ -103,16 +98,6 @@ function handleClose() {
 	emit("close");
 }
 
-const statuses = [
-	{ id: 1, name: "Not Complete", value: "not_complete" },
-	{ id: 2, name: "Complete", value: "complete" },
-];
-
-const statusMap = {
-	not_complete: "Not Complete",
-	complete: "Complete",
-} as const;
-
 defineExpose({ saveIfDirty });
 </script>
 
@@ -159,39 +144,10 @@ defineExpose({ saveIfDirty });
 			<Text size="xl" as="p">Status</Text>
 			<form.Field name="status">
 				<template v-slot="{ field }">
-					<Box flex-direction="col" gap="gap-2">
-						<Listbox
-							as="div"
-							class="relative"
-							:value="field.state.value"
-							@update:model-value="field.handleChange"
-							:model-value="field.state.value"
-						>
-							<ListboxButton
-								:class="{
-                  'w-56 h-8 text-center rounded-lg text-gray-600': true,
-                  'bg-green-400': field.state.value === 'complete',
-                  'bg-orange-400': field.state.value !== 'complete',
-                }"
-							>
-								<Text color="dark">{{ statusMap[field.state.value] }}</Text>
-							</ListboxButton>
-							<ListboxOptions class="absolute z-10 mt-1 flex flex-col gap-1">
-								<ListboxOption
-									v-for="status in statuses"
-									:key="status.id"
-									:value="status.value"
-									:disabled="status.value === field.state.value"
-									:class="{
-                    'w-56 hover:cursor-pointer h-8 bg-gray-300 text-gray-600 text-center hover:bg-gray-400 rounded-lg inline-flex items-center justify-center': true,
-                    hidden: field.state.value === status.value,
-                  }"
-								>
-									<Text color="dark">{{ status.name }}</Text>
-								</ListboxOption>
-							</ListboxOptions>
-						</Listbox>
-					</Box>
+					<GoalStatusTabs
+						:status="field.state.value"
+						@update:status="field.handleChange"
+					/>
 				</template>
 			</form.Field>
 		</Box>
