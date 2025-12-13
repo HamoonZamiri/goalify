@@ -10,7 +10,6 @@ import (
 	sqlcdb "goalify/internal/db/generated"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type (
@@ -142,7 +141,7 @@ func (s *goalCategoryStore) CreateGoalCategory(
 	params := sqlcdb.CreateGoalCategoryParams{
 		Title:     title,
 		XpPerGoal: int32(xpPerGoal),
-		UserID:    pgtype.UUID{Bytes: userID, Valid: true},
+		UserID:    db.UUIDToPgxUUID(userID),
 	}
 
 	gc, err := s.queries.CreateGoalCategory(context.Background(), params)
@@ -158,7 +157,7 @@ func (s *goalCategoryStore) GetGoalCategoriesByUserID(
 ) ([]*entities.GoalCategory, error) {
 	rows, err := s.queries.GetGoalCategoriesWithGoalsByUserId(
 		context.Background(),
-		pgtype.UUID{Bytes: userID, Valid: true},
+		db.UUIDToPgxUUID(userID),
 	)
 	if err != nil {
 		return nil, err
@@ -173,8 +172,8 @@ func (s *goalCategoryStore) GetGoalCategoryByID(
 	rows, err := s.queries.GetGoalCategoryWithGoalsById(
 		context.Background(),
 		sqlcdb.GetGoalCategoryWithGoalsByIdParams{
-			ID:     db.ToPgxUUID(categoryID),
-			UserID: db.ToPgxUUID(userID),
+			ID:     db.UUIDToPgxUUID(categoryID),
+			UserID: db.UUIDToPgxUUID(userID),
 		})
 	if err != nil {
 		return nil, err
@@ -188,20 +187,21 @@ func (s *goalCategoryStore) UpdateGoalCategoryByID(
 	updates map[string]any,
 ) (*entities.GoalCategory, error) {
 	params := sqlcdb.UpdateGoalCategoryByIdParams{
-		ID:     db.ToPgxUUID(categoryID),
-		UserID: db.ToPgxUUID(userID),
+		ID:     db.UUIDToPgxUUID(categoryID),
+		UserID: db.UUIDToPgxUUID(userID),
 	}
 
 	// Convert map updates to typed parameters
-	if title, ok := updates["title"]; ok {
-		if titleStr, ok := title.(string); ok {
-			params.Title = pgtype.Text{String: titleStr, Valid: true}
-		}
+	if title, ok := db.AnyToString(updates["title"]); ok {
+		params.Title = db.StringToPgxText(title)
 	}
-	if xpPerGoal, ok := updates["xp_per_goal"]; ok {
-		if xpInt, ok := xpPerGoal.(int); ok {
-			params.XpPerGoal = pgtype.Int4{Int32: int32(xpInt), Valid: true}
+
+	if xpPerGoal, ok := db.AnyToInt(updates["xp_per_goal"]); ok {
+		xpInt4, err := db.IntToPgxInt4(xpPerGoal)
+		if err != nil {
+			return nil, err
 		}
+		params.XpPerGoal = xpInt4
 	}
 
 	gc, err := s.queries.UpdateGoalCategoryById(context.Background(), params)
@@ -216,8 +216,8 @@ func (s *goalCategoryStore) DeleteGoalCategoryByID(categoryID, userID uuid.UUID)
 	rows, err := s.queries.DeleteGoalCategoryById(
 		context.Background(),
 		sqlcdb.DeleteGoalCategoryByIdParams{
-			ID:     db.ToPgxUUID(categoryID),
-			UserID: db.ToPgxUUID(userID),
+			ID:     db.UUIDToPgxUUID(categoryID),
+			UserID: db.UUIDToPgxUUID(userID),
 		})
 	if err != nil {
 		return err
