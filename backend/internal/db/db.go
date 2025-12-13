@@ -4,6 +4,9 @@ package db
 import (
 	"context"
 	"fmt"
+	"math"
+
+	sqlcdb "goalify/internal/db/generated"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -42,6 +45,44 @@ func NewPgx(dbname, user, password, host string) (*pgxpool.Pool, error) {
 	return NewPgxPoolWithConnString(context.Background(), connStr)
 }
 
-func ToPgxUUID(uuid uuid.UUID) pgtype.UUID {
+func UUIDToPgxUUID(uuid uuid.UUID) pgtype.UUID {
 	return pgtype.UUID{Bytes: uuid, Valid: true}
+}
+
+func StringToPgxText(str string) pgtype.Text {
+	return pgtype.Text{String: str, Valid: true}
+}
+
+func AnyToString(v any) (str string, ok bool) {
+	if v == nil {
+		return "", false
+	}
+	str, ok = v.(string)
+	return str, ok
+}
+
+func AnyToInt(v any) (i int, ok bool) {
+	if v == nil {
+		return 0, false
+	}
+	i, ok = v.(int)
+	return i, ok
+}
+
+func IntToPgxInt4(i int) (pgtype.Int4, error) {
+	if i > math.MaxInt32 || i < math.MinInt32 {
+		return pgtype.Int4{Valid: false}, fmt.Errorf("integer overflow: %d exceeds int32 range", i)
+	}
+	return pgtype.Int4{Int32: int32(i), Valid: true}, nil
+}
+
+func StringToGoalStatus(status string) (sqlcdb.NullGoalStatus, error) {
+	goalStatus := sqlcdb.GoalStatus(status)
+	if goalStatus != sqlcdb.GoalStatusComplete && goalStatus != sqlcdb.GoalStatusNotComplete {
+		return sqlcdb.NullGoalStatus{Valid: false}, fmt.Errorf("invalid goal status: %s", status)
+	}
+	return sqlcdb.NullGoalStatus{
+		GoalStatus: goalStatus,
+		Valid:      true,
+	}, nil
 }

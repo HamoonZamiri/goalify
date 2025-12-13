@@ -71,8 +71,8 @@ func (s *goalStore) UpdateGoalStatus(
 ) (*entities.Goal, error) {
 	params := sqlcdb.UpdateGoalStatusParams{
 		Status: sqlcdb.NullGoalStatus{GoalStatus: sqlcdb.GoalStatus(status), Valid: true},
-		ID:     db.ToPgxUUID(goalID),
-		UserID: db.ToPgxUUID(userID),
+		ID:     db.UUIDToPgxUUID(goalID),
+		UserID: db.UUIDToPgxUUID(userID),
 	}
 
 	goal, err := s.queries.UpdateGoalStatus(context.Background(), params)
@@ -104,8 +104,8 @@ func (s *goalStore) GetGoalByID(goalID, userID uuid.UUID) (*entities.Goal, error
 	goal, err := s.queries.GetGoalById(
 		context.Background(),
 		sqlcdb.GetGoalByIdParams{
-			ID:     db.ToPgxUUID(goalID),
-			UserID: db.ToPgxUUID(userID),
+			ID:     db.UUIDToPgxUUID(goalID),
+			UserID: db.UUIDToPgxUUID(userID),
 		},
 	)
 	if err != nil {
@@ -129,8 +129,8 @@ func (s *goalStore) UpdateGoalByID(
 	updates map[string]any,
 ) (*entities.Goal, error) {
 	params := sqlcdb.UpdateGoalByIdParams{
-		ID:     db.ToPgxUUID(goalID),
-		UserID: db.ToPgxUUID(userID),
+		ID:     db.UUIDToPgxUUID(goalID),
+		UserID: db.UUIDToPgxUUID(userID),
 	}
 
 	// Convert map updates to typed parameters
@@ -153,7 +153,7 @@ func (s *goalStore) UpdateGoalByID(
 	}
 	if categoryID, ok := updates["category_id"]; ok {
 		if catUUID, ok := categoryID.(uuid.UUID); ok {
-			params.CategoryID = db.ToPgxUUID(catUUID)
+			params.CategoryID = db.UUIDToPgxUUID(catUUID)
 		}
 	}
 
@@ -167,8 +167,8 @@ func (s *goalStore) UpdateGoalByID(
 
 func (s *goalStore) DeleteGoalByID(goalID, userID uuid.UUID) error {
 	rows, err := s.queries.DeleteGoalById(context.Background(), sqlcdb.DeleteGoalByIdParams{
-		ID:     db.ToPgxUUID(goalID),
-		UserID: db.ToPgxUUID(userID),
+		ID:     db.UUIDToPgxUUID(goalID),
+		UserID: db.UUIDToPgxUUID(userID),
 	})
 	if err != nil {
 		return err
@@ -184,7 +184,7 @@ func (s *goalStore) DeleteGoalByID(goalID, userID uuid.UUID) error {
 func (s *goalStore) ResetGoalsByCategoryID(categoryID, userID uuid.UUID) error {
 	return s.queries.ResetGoalsByCategory(context.Background(),
 		sqlcdb.ResetGoalsByCategoryParams{
-			CategoryID: db.ToPgxUUID(categoryID),
-			UserID:     db.ToPgxUUID(userID),
+			CategoryID: db.UUIDToPgxUUID(categoryID),
+			UserID:     db.UUIDToPgxUUID(userID),
 		})
 }
