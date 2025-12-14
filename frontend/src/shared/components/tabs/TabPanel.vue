@@ -7,7 +7,10 @@ defineOptions({
 </script>
 
 <template>
-	<HeadlessTabPanel v-slot="{ selected }" :class="['tab-content', $attrs.class]">
-		<slot :selected="selected" />
+	<HeadlessTabPanel
+		v-slot="{ selected }"
+		:class="['tab-content', $attrs.class]"
+	>
+		<slot :selected="selected"/>
 	</HeadlessTabPanel>
 </template>

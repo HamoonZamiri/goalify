@@ -17,6 +17,6 @@ withDefaults(
 
 <template>
 	<HeadlessTab :as="as" v-slot="{ selected }">
-		<slot :selected="selected" />
+		<slot :selected="selected"/>
 	</HeadlessTab>
 </template>
