@@ -1,0 +1,53 @@
+#!/bin/bash
+set -e # Exit on first failure
+
+echo "Running pre-commit checks..."
+
+# Track overall status
+FAILED=0
+
+# Frontend checks
+echo ""
+echo "Frontend checks..."
+cd frontend
+
+echo "  |- Formatting..."
+pnpm format:fix || FAILED=1
+
+echo "  |- Linting..."
+pnpm lint:fix || FAILED=1
+
+echo "  |- Type checking..."
+pnpm type-check || FAILED=1
+
+echo "  |- Tests..."
+pnpm test || FAILED=1
+
+cd ..
+
+# Backend checks
+echo ""
+echo "Backend checks..."
+cd backend
+
+echo "  |- Formatting..."
+make format || FAILED=1
+
+echo "  |- Linting..."
+make lint || FAILED=1
+
+echo "  |- Tests (unit tests only)..."
+make unit || FAILED=1
+
+cd ..
+
+# Final status
+if [ $FAILED -eq 1 ]; then
+  echo ""
+  echo "Pre-commit checks failed!"
+  exit 1
+fi
+
+echo ""
+echo "All pre-commit checks passed!"
+exit 0

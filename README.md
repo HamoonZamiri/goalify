@@ -60,6 +60,33 @@ There are two potential avenues that can be pursued with respect to the architec
 - Object storage of chest images, item images
 
 ![](assets/gamified_goals.png)
+## Developer Setup
+
+### Prerequisites
+
+Install golangci-lint for backend linting:
+
+```bash
+brew install golangci-lint
+```
+
+### Git Hooks
+
+After cloning the repository, configure git hooks to run automated checks before commits:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+This enables pre-commit hooks that automatically:
+- Format and lint code (frontend and backend)
+- Run type checking (frontend)
+- Run all tests (frontend and backend)
+
+**Note**: Backend tests require Docker running for integration tests.
+
+See `.githooks/README.md` for more details.
+
 ## Deployment
 - Backend docker container deployed to any free hosting service, render, railway
 - PostgreSQL deployed to managed database service with free tier, Supabase
