@@ -7,7 +7,7 @@ import GoalStatusTabs from "@/features/goals/components/GoalStatusTabs.vue";
 import { useDeleteGoal, useUpdateGoal } from "@/features/goals/queries";
 import type { Goal } from "@/features/goals/schemas/goal.schema";
 import { editGoalFormSchema } from "@/features/goals/schemas/goal-form.schema";
-import { XMark } from "@/shared/components/icons";
+import { IconButton } from "@/shared/components/icons";
 import { DeleteModal } from "@/shared/components/modals";
 import { Box, Button, InputField, Text } from "@/shared/components/ui";
 
@@ -130,9 +130,11 @@ defineExpose({ saveIfDirty });
 					@blur="field.handleBlur"
 				>
 					<template #right>
-						<XMark
-							:onclick="handleClose"
-							class="sm:ml-auto hover:cursor-pointer"
+						<IconButton
+							icon="x-mark"
+							ariaLabel="Close form"
+							class="sm:ml-auto"
+							@click="handleClose"
 						/>
 					</template>
 				</InputField>

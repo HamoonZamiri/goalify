@@ -4,7 +4,6 @@ import { CreateCategoryButton, GoalCategoryCard } from "@/features/goals";
 import { CreateGoalCategoryForm } from "@/features/goals/forms";
 import { useGoalCategories } from "@/features/goals/queries";
 import { ProgressBar } from "@/features/levels";
-import { ArrowPath } from "@/shared/components/icons";
 import { ModalForm } from "@/shared/components/modals";
 import { Box, Text, Button } from "@/shared/components/ui";
 import useAuth from "@/shared/hooks/auth/useAuth";

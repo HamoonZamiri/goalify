@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import useAuth from "@/shared/hooks/auth/useAuth";
 import router from "@/router/index";
-import { Box } from "@/shared/components/ui";
 import { Navbar, Sidebar } from "@/shared/components/navigation";
+import { Box } from "@/shared/components/ui";
+import useAuth from "@/shared/hooks/auth/useAuth";
 
 const { isLoggedIn } = useAuth();
 if (!isLoggedIn()) {

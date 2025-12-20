@@ -6,7 +6,7 @@ import EditGoalForm from "@/features/goals/forms/EditGoalForm.vue";
 import type { Goal } from "@/features/goals/schemas/goal.schema";
 import { useUpdateGoal } from "@/features/goals/queries";
 import { Text, Box } from "@/shared/components/ui";
-import { CheckOutline } from "@/shared/components/icons";
+import { IconButton } from "@/shared/components/icons";
 
 const props = defineProps<{
 	goal: Goal;
@@ -68,10 +68,11 @@ watch(
 		class="hover:cursor-pointer hover:bg-gray-700 items-center justify-between p-1 rounded-xl"
 	>
 		<Box flex-direction="row" class="gap-x-2 items-center" bg="inherit">
-			<CheckOutline
-				:onclick="handleCheckClick"
-				class="hover:cursor-pointer"
-				:fill="currentStatus === 'complete' ? 'green' : 'none'"
+			<IconButton
+				icon="check-outline"
+				ariaLabel="Toggle goal completion"
+				:icon-fill="currentStatus === 'complete' ? 'green' : 'none'"
+				@click.stop="handleCheckClick"
 			/>
 			<Text
 				as="span"

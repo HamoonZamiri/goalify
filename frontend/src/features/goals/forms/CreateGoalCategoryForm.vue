@@ -7,7 +7,6 @@ import {
 	createGoalCategoryFormSchema,
 } from "@/features/goals/schemas/goal-form.schema";
 import { Text, InputField, Button } from "@/shared/components/ui";
-import { ArrowPath } from "@/shared/components/icons";
 
 const emit = defineEmits(["submit", "close"]);
 
@@ -120,9 +119,9 @@ const form = useForm({
 				<Button
 					type="submit"
 					:disabled="!canSubmit || isPending || isSubmitting"
+					:loading="isSubmitting"
 				>
-					<ArrowPath class="animate-spin" v-if="isSubmitting"/>
-					<Text v-else>Add Category </Text>
+					<Text>Add Category </Text>
 				</Button>
 			</template>
 		</form.Subscribe>

@@ -44,7 +44,8 @@ export type Height =
 	| "h-1/2"
 	| "h-1/3"
 	| "h-1/4"
-	| "h-4/5";
+	| "h-4/5"
+	| "h-auto";
 
 export type Width =
 	| "w-0"
@@ -70,3 +71,30 @@ export const textColorMap: Record<TextColor, string> = {
 	dark: "text-gray-900",
 	error: "text-red-500",
 };
+
+export type IconName =
+	| "arrow-path"
+	| "check-outline"
+	| "chevron-up"
+	| "gear"
+	| "gift"
+	| "home"
+	| "signout"
+	| "trash"
+	| "x-mark";
+
+export type IconSize = "sm" | "md" | "lg";
+
+export const iconSizeClasses: Record<IconSize, string> = {
+	sm: "size-5",
+	md: "size-6",
+	lg: "size-8",
+};
+
+export type IconFill =
+	| "none"
+	| "currentColor"
+	| "green"
+	| "red"
+	| "blue"
+	| "yellow";
