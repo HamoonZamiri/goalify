@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { useLogin } from "@/features/auth/queries";
 import { loginFormSchema } from "@/features/auth/schemas";
-import { ArrowPath } from "@/shared/components/icons";
 import { Box, Button, InputField, Text } from "@/shared/components/ui";
 import useAuth from "@/shared/hooks/auth/useAuth";
 import { useForm } from "@tanstack/vue-form";
@@ -123,9 +122,9 @@ const form = useForm({
 						height="h-10"
 						width="w-full"
 						:disabled="!canSubmit || isPending || isSubmitting"
+						:loading="isSubmitting || isPending"
 					>
-						<ArrowPath class="animate-spin" v-if="isSubmitting || isPending"/>
-						<Text v-else>Login</Text>
+						<Text>Login</Text>
 					</Button>
 				</template>
 			</form.Subscribe>

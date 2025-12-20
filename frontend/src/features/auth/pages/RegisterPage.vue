@@ -8,7 +8,6 @@ import {
 	type RegisterFormData,
 } from "@/features/auth/schemas";
 import { Box, Button, InputField, Text } from "@/shared/components/ui";
-import { ArrowPath } from "@/shared/components/icons";
 
 const router = useRouter();
 const { setUser } = useAuth();
@@ -152,9 +151,9 @@ const form = useForm({
 						height="h-10"
 						width="w-full"
 						:disabled="!canSubmit || isPending || isSubmitting"
+						:loading="isSubmitting || isPending"
 					>
-						<ArrowPath class="animate-spin" v-if="isSubmitting || isPending"/>
-						<Text v-else>Register</Text>
+						<Text>Register</Text>
 					</Button>
 				</template>
 			</form.Subscribe>

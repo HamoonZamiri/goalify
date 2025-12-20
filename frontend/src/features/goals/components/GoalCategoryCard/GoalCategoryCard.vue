@@ -9,7 +9,7 @@ import {
 	useResetGoalCategory,
 } from "@/features/goals/queries";
 import type { GoalCategory } from "@/features/goals/schemas/goal.schema";
-import { ChevronUp, Trash, ArrowPath } from "@/shared/components/icons";
+import { Icon, IconButton } from "@/shared/components/icons";
 import { ModalForm } from "@/shared/components/modals";
 import { Box, Text, Button } from "@/shared/components/ui";
 
@@ -100,7 +100,7 @@ async function handleResetCategory() {
 				class="absolute inset-0 bg-red-600 flex items-center pr-8"
 				:class="swipeRatio >= DELETE_THRESHOLD ? 'justify-start' : 'justify-end'"
 			>
-				<Trash/>
+				<Icon name="trash"/>
 			</div>
 
 			<!-- Draggable card layer -->
@@ -138,22 +138,23 @@ async function handleResetCategory() {
 								>
 									<CreateGoalButton/>
 								</Button>
-								<Button
-									variant="ghost"
-									width="w-auto"
-									class="p-0"
+								<IconButton
+									icon="arrow-path"
+									ariaLabel="Reset category"
 									:disabled="isPendingReset"
+									:class="isPendingReset ? 'animate-spin' : ''"
 									@click.stop="handleResetCategory"
-								>
-									<ArrowPath :class="isPendingReset ? 'animate-spin' : ''"/>
-								</Button>
+								/>
 								<ModalForm v-model="isCreateGoalDialogOpen">
 									<CreateGoalForm
 										:category-id="props.goalCategory.id"
 										@close="isCreateGoalDialogOpen = false"
 									/>
 								</ModalForm>
-								<ChevronUp :class="open ? 'rotate-180 transform' : ''"/>
+								<Icon
+									name="chevron-up"
+									:class="open ? 'rotate-180 transform' : ''"
+								/>
 							</Box>
 						</header>
 					</DisclosureButton>

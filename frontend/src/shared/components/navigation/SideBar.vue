@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import router from "@/router";
-import { Gear, Gift, Home, Signout } from "@/shared/components/icons";
-import { Box, Text } from "@/shared/components/ui";
+import { Icon } from "@/shared/components/icons";
+import { Box, Text, Button } from "@/shared/components/ui";
 import { useAuth } from "@/shared/hooks";
 
 const { logout } = useAuth();
@@ -15,33 +15,35 @@ function handleLogout(e: MouseEvent) {
 <template>
 	<Box flex-direction="col" bg="darkest" gap="gap-2" padding="p-2">
 		<RouterLink
-			class="hover:bg-gray-500 rounded-md flex flex-row items-center gap-2"
+			class="hover:bg-gray-800 rounded-md flex flex-row items-center gap-2 p-0.5"
 			to="/"
 		>
-			<Home/>
+			<Icon name="home"/>
 			<Text size="lg">Dashboard</Text>
 		</RouterLink>
 		<RouterLink
-			class="hover:bg-gray-500 rounded-md flex flex-row items-center gap-2"
+			class="hover:bg-gray-800 rounded-md flex flex-row items-center gap-2 p-0.5"
 			to="/"
 		>
-			<Gift/>
+			<Icon name="gift"/>
 			<Text size="lg">Rewards (Coming Soon)</Text>
 		</RouterLink>
 		<RouterLink
-			class="hover:bg-gray-500 rounded-md flex flex-row items-center gap-2"
+			class="hover:bg-gray-800 rounded-md flex flex-row items-center gap-2 p-0.5"
 			to="/"
 		>
-			<Gear/>
+			<Icon name="gear"/>
 			<Text size="lg">Settings (Coming Soon)</Text>
 		</RouterLink>
-		<RouterLink
-			class="hover:bg-gray-500 rounded-md flex flex-row items-center gap-2"
-			to="/"
-			:onclick="handleLogout"
+		<Button
+			variant="ghost"
+			height="h-auto"
+			width="w-auto"
+			class="justify-start gap-2 rounded-md hover:bg-gray-500 p-0.5"
+			@click="handleLogout"
 		>
-			<Signout :onclick="handleLogout"/>
+			<Icon name="signout" size="sm"/>
 			<Text size="lg">Sign out</Text>
-		</RouterLink>
+		</Button>
 	</Box>
 </template>

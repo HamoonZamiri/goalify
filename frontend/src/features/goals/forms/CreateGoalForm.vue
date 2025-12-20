@@ -7,7 +7,6 @@ import {
 	createGoalFormSchema,
 } from "@/features/goals/schemas/goal-form.schema";
 import { Text, InputField, Button } from "@/shared/components/ui";
-import { ArrowPath } from "@/shared/components/icons";
 
 const props = defineProps<{
 	categoryId: string;
@@ -127,9 +126,9 @@ const form = useForm({
 				<Button
 					type="submit"
 					:disabled="!canSubmit || isPending || isSubmitting"
+					:loading="isSubmitting"
 				>
-					<ArrowPath class="animate-spin" v-if="isSubmitting"/>
-					<Text v-else>Add Goal </Text>
+					<Text>Add Goal </Text>
 				</Button>
 			</template>
 		</form.Subscribe>

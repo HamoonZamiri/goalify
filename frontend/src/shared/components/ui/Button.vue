@@ -5,19 +5,24 @@ import {
 	buttonVariantClasses,
 	type Height,
 	type Width,
+	type Padding,
 } from "@/utils/tailwind";
+import { Icon } from "@/shared/components/icons";
 
 const props = withDefaults(
 	defineProps<{
 		variant?: ButtonVariant;
 		height?: Height;
 		width?: Width;
+		padding?: Padding;
 		class?: string;
+		loading?: boolean;
 	}>(),
 	{
 		variant: "primary",
 		height: "h-10",
 		width: "w-full",
+		loading: false,
 	},
 );
 
@@ -26,14 +31,20 @@ const classes = computed(() => [
 	buttonVariantClasses[props.variant] ?? "",
 	props.height,
 	props.width,
+	props.padding,
 	props.class ?? "",
 ]);
 </script>
 
 <template>
 	<button :class="classes">
-		<slot name="left"/>
-		<slot/>
-		<slot name="right"/>
+		<template v-if="loading">
+			<Icon name="arrow-path" class="animate-spin"/>
+		</template>
+		<template v-else>
+			<slot name="left"/>
+			<slot/>
+			<slot name="right"/>
+		</template>
 	</button>
 </template>
