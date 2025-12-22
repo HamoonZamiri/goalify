@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref } from "vue";
-import { CreateCategoryButton, GoalCategoryCard } from "@/features/goals";
-import { CreateGoalCategoryForm } from "@/features/goals/forms";
+import { GoalCategoryCard } from "@/features/goals";
+import CreateGoalCategoryDialog from "@/features/goals/components/CreateGoalCategoryDialog.vue";
 import { useGoalCategories } from "@/features/goals/queries";
 import { ProgressBar } from "@/features/levels";
-import { ModalForm } from "@/shared/components/modals";
 import { Box, Text, Button } from "@/shared/components/ui";
 import useAuth from "@/shared/hooks/auth/useAuth";
 import { useSSE } from "@/shared/hooks/events/useSse";
@@ -60,15 +59,8 @@ onUnmounted(() => {
 					<Button @click="isCreateCategoryDialogOpen = true" variant="primary">
 						<Text>Add Goal Category</Text>
 					</Button>
-					<ModalForm
-						v-model="isCreateCategoryDialogOpen"
-						@close="isCreateCategoryDialogOpen = false"
-					>
-						<CreateGoalCategoryForm
-							@close="isCreateCategoryDialogOpen = false"
-						/>
-					</ModalForm>
 				</Box>
+				<CreateGoalCategoryDialog v-model="isCreateCategoryDialogOpen"/>
 			</Box>
 		</Box>
 	</Box>

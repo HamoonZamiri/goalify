@@ -98,3 +98,22 @@ export type IconFill =
 	| "red"
 	| "blue"
 	| "yellow";
+
+export const dialogPatterns = {
+	base: "fixed inset-0 z-50 flex",
+	backdrop: "fixed inset-0 bg-black/50",
+	centered: "items-center justify-center",
+	sideDrawer: "items-stretch justify-end",
+	sizes: {
+		sm: "w-[90vw] max-w-md",
+		md: "w-[90vw] max-w-lg",
+		lg: "w-[90vw] max-w-2xl",
+		drawer: "w-full sm:w-1/2 max-w-2xl",
+	},
+} as const;
+
+export type DialogSize = keyof typeof dialogPatterns.sizes;
+export type DialogPattern = Exclude<
+	keyof typeof dialogPatterns,
+	"base" | "backdrop" | "sizes"
+>;

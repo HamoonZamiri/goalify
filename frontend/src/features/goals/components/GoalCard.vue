@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { ref, watch } from "vue";
-import { TransitionRoot, Dialog, DialogPanel } from "@headlessui/vue";
 import { toast } from "vue3-toastify";
-import EditGoalForm from "@/features/goals/forms/EditGoalForm.vue";
+import EditGoalDialog from "@/features/goals/components/EditGoalDialog.vue";
 import type { Goal } from "@/features/goals/schemas/goal.schema";
 import { useUpdateGoal } from "@/features/goals/queries";
 import { Text, Box } from "@/shared/components/ui";
@@ -16,20 +15,6 @@ const props = defineProps<{
 const { mutateAsync: updateGoal } = useUpdateGoal();
 
 const isEditing = ref(false);
-const editFormRef = ref<InstanceType<typeof EditGoalForm>>();
-
-function setIsEditing(value: boolean) {
-	isEditing.value = value;
-}
-
-function openEditingDialog() {
-	setIsEditing(true);
-}
-
-async function handleClose() {
-	await editFormRef.value?.saveIfDirty();
-	setIsEditing(false);
-}
 
 async function handleCheckClick() {
 	const newStatus =
@@ -64,7 +49,7 @@ watch(
 		data-testid="goal-card"
 		flex-direction="row"
 		gap="gap-4"
-		@click.stop="() => openEditingDialog()"
+		@click.stop="isEditing = true"
 		class="hover:cursor-pointer hover:bg-gray-700 items-center justify-between p-1 rounded-xl"
 	>
 		<Box flex-direction="row" class="gap-x-2 items-center" bg="inherit">
@@ -85,24 +70,5 @@ watch(
 		</Box>
 		<Text as="span" size="sm" weight="normal">{{`${props.xpPerGoal} XP`}}</Text>
 	</Box>
-	<section>
-		<TransitionRoot
-			:show="isEditing"
-			appear
-			enter="transition-all ease-in-out duration-500 transform"
-		>
-			<Dialog
-				class="absolute inset-0 h-screen flex justify-end hover:cursor-pointer z-10 w-screen bg-inherit/50 rounded-lg"
-				@close="handleClose"
-			>
-				<DialogPanel class="w-full sm:w-1/2">
-					<EditGoalForm
-						ref="editFormRef"
-						:goal="props.goal"
-						@close="handleClose"
-					/>
-				</DialogPanel>
-			</Dialog>
-		</TransitionRoot>
-	</section>
+	<EditGoalDialog v-model="isEditing" :goal="props.goal"/>
 </template>

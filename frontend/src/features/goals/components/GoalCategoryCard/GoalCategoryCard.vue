@@ -3,14 +3,14 @@ import { Disclosure, DisclosureButton, DisclosurePanel } from "@headlessui/vue";
 import { usePointerSwipe } from "@vueuse/core";
 import { computed, ref } from "vue";
 import { toast } from "vue3-toastify";
-import { CreateGoalButton, CreateGoalForm, GoalCard } from "@/features/goals";
+import { CreateGoalButton, GoalCard } from "@/features/goals";
+import CreateGoalDialog from "@/features/goals/components/CreateGoalDialog.vue";
 import {
 	useDeleteGoalCategory,
 	useResetGoalCategory,
 } from "@/features/goals/queries";
 import type { GoalCategory } from "@/features/goals/schemas/goal.schema";
 import { Icon, IconButton } from "@/shared/components/icons";
-import { ModalForm } from "@/shared/components/modals";
 import { Box, Text, Button } from "@/shared/components/ui";
 
 const props = defineProps<{
@@ -145,12 +145,6 @@ async function handleResetCategory() {
 									:class="isPendingReset ? 'animate-spin' : ''"
 									@click.stop="handleResetCategory"
 								/>
-								<ModalForm v-model="isCreateGoalDialogOpen">
-									<CreateGoalForm
-										:category-id="props.goalCategory.id"
-										@close="isCreateGoalDialogOpen = false"
-									/>
-								</ModalForm>
 								<Icon
 									name="chevron-up"
 									:class="open ? 'rotate-180 transform' : ''"
@@ -167,4 +161,8 @@ async function handleResetCategory() {
 			</div>
 		</div>
 	</Disclosure>
+	<CreateGoalDialog
+		v-model="isCreateGoalDialogOpen"
+		:category-id="props.goalCategory.id"
+	/>
 </template>
