@@ -8,8 +8,13 @@ import { useDeleteGoal, useUpdateGoal } from "@/features/goals/queries";
 import type { Goal } from "@/features/goals/schemas/goal.schema";
 import { editGoalFormSchema } from "@/features/goals/schemas/goal-form.schema";
 import { IconButton } from "@/shared/components/icons";
-import { DeleteModal } from "@/shared/components/modals";
-import { Box, Button, InputField, Text } from "@/shared/components/ui";
+import {
+	Box,
+	Button,
+	InlineDeleteConfirmation,
+	InputField,
+	Text,
+} from "@/shared/components/ui";
 
 const props = defineProps<{
 	goal: Goal;
@@ -20,7 +25,7 @@ const emit = defineEmits<{
 	update: [goal: Goal];
 }>();
 
-const isDeleting = ref(false);
+const showDeleteConfirmation = ref(false);
 
 const { mutateAsync: updateGoal } = useUpdateGoal();
 const { mutateAsync: deleteGoalMutation } = useDeleteGoal();
@@ -82,8 +87,7 @@ async function saveIfDirty() {
 	}
 }
 
-async function handleDeleteGoal(e: MouseEvent) {
-	e.preventDefault();
+async function handleDeleteGoal() {
 	try {
 		await deleteGoalMutation(props.goal.id);
 		emit("close");
@@ -175,20 +179,24 @@ defineExpose({ saveIfDirty });
 			</form.Field>
 		</Box>
 
-		<!-- Delete Button -->
-		<Button
-			variant="secondary"
-			class="hover:bg-red-600 h-10"
-			@click="isDeleting = true"
-		>
-			<Text weight="semibold" size="base">Delete This Goal</Text>
-		</Button>
+		<!-- Delete Button or Confirmation -->
+		<Box v-if="!showDeleteConfirmation" flex-direction="col">
+			<Button
+				variant="secondary"
+				class="hover:bg-red-600 h-10"
+				@click="showDeleteConfirmation = true"
+			>
+				<Text weight="semibold" size="base">Delete This Goal</Text>
+			</Button>
+		</Box>
 
-		<DeleteModal
-			:is-open="isDeleting"
-			:set-opener="(val: boolean) => (isDeleting = val)"
-			delete-message="Are you sure you want to delete this goal?"
-			:delete-function="handleDeleteGoal"
+		<!-- Inline Delete Confirmation -->
+		<InlineDeleteConfirmation
+			v-else
+			title="Are you sure you want to delete this goal?"
+			message="This action cannot be undone. All data associated with this goal will be permanently removed."
+			@cancel="showDeleteConfirmation = false"
+			@confirm="handleDeleteGoal"
 		/>
 	</Box>
 </template>
