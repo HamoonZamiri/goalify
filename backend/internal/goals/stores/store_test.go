@@ -6,6 +6,7 @@ import (
 	"goalify/internal/db"
 	"goalify/internal/entities"
 	"goalify/internal/testsetup"
+	"goalify/pkg/options"
 	"log"
 	"os"
 	"slices"
@@ -56,13 +57,13 @@ func TestMain(m *testing.M) {
 	ctx := context.Background()
 
 	setup(ctx)
-	defer func() {
-		if err := pgContainer.Terminate(ctx); err != nil {
-			log.Fatalf("Failed to terminate container: %s", err)
-		}
-	}()
 
 	code := m.Run()
+
+	if err := pgContainer.Terminate(ctx); err != nil {
+		log.Fatalf("Failed to terminate container: %s", err)
+	}
+
 	os.Exit(code)
 }
 
@@ -127,11 +128,11 @@ func TestUpdateGoalCategoryById(t *testing.T) {
 	assert.NoError(t, err)
 	category, _ := gcStore.CreateGoalCategory(t.Name(), 50, user.ID)
 
-	updates := map[string]any{
-		"title":       "new title",
-		"xp_per_goal": 100,
+	params := UpdateGoalCategoryParams{
+		Title:     options.Some("new title"),
+		XpPerGoal: options.Some(100),
 	}
-	updated, err := gcStore.UpdateGoalCategoryByID(category.ID, user.ID, updates)
+	updated, err := gcStore.UpdateGoalCategoryByID(category.ID, user.ID, params)
 	assert.NoError(t, err)
 	assert.Equal(t, "new title", updated.Title)
 	assert.Equal(t, 100, updated.XPPerGoal)
@@ -191,11 +192,11 @@ func TestUpdateGoalById(t *testing.T) {
 	category, _ := gcStore.CreateGoalCategory(t.Name(), 50, user.ID)
 	goal, _ := gStore.CreateGoal(t.Name(), "desc", user.ID, category.ID)
 
-	updates := map[string]any{
-		"title":       "new title",
-		"description": "new desc",
+	params := UpdateGoalParams{
+		Title:       options.Some("new title"),
+		Description: options.Some("new desc"),
 	}
-	updated, err := gStore.UpdateGoalByID(goal.ID, user.ID, updates)
+	updated, err := gStore.UpdateGoalByID(goal.ID, user.ID, params)
 	assert.NoError(t, err)
 	assert.Equal(t, "new title", updated.Title)
 	assert.Equal(t, "new desc", updated.Description)
@@ -248,7 +249,7 @@ func TestResetGoalsByCategoryID(t *testing.T) {
 		updatedGoal, err = gStore.UpdateGoalByID(
 			goal.ID,
 			user.ID,
-			map[string]any{"status": "complete"},
+			UpdateGoalParams{Status: options.Some("complete")},
 		)
 		assert.NoError(t, err)
 		assert.Equal(t, "complete", updatedGoal.Status)
@@ -275,7 +276,7 @@ func TestResetGoalsByCategoryID(t *testing.T) {
 		updatedGoal, err = gStore.UpdateGoalByID(
 			goal.ID,
 			user.ID,
-			map[string]any{"status": "complete"},
+			UpdateGoalParams{Status: options.Some("complete")},
 		)
 		assert.NoError(t, err)
 		assert.Equal(t, "complete", updatedGoal.Status)

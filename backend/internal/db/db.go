@@ -4,6 +4,7 @@ package db
 import (
 	"context"
 	"fmt"
+	"goalify/pkg/options"
 	"math"
 
 	sqlcdb "goalify/internal/db/generated"
@@ -85,4 +86,25 @@ func StringToGoalStatus(status string) (sqlcdb.NullGoalStatus, error) {
 		GoalStatus: goalStatus,
 		Valid:      true,
 	}, nil
+}
+
+func OptionStringToPgxText(opt options.Option[string]) pgtype.Text {
+	if opt.IsPresent() {
+		return StringToPgxText(opt.ValueOrZero())
+	}
+	return pgtype.Text{}
+}
+
+func OptionUUIDToPgxUUID(opt options.Option[uuid.UUID]) pgtype.UUID {
+	if opt.IsPresent() {
+		return UUIDToPgxUUID(opt.ValueOrZero())
+	}
+	return pgtype.UUID{}
+}
+
+func OptionIntToPgxInt4(opt options.Option[int]) (pgtype.Int4, error) {
+	if opt.IsPresent() {
+		return IntToPgxInt4(opt.ValueOrZero())
+	}
+	return pgtype.Int4{}, nil
 }

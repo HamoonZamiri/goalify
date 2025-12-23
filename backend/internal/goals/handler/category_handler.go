@@ -4,6 +4,7 @@ package handler
 import (
 	"fmt"
 	"goalify/internal/entities"
+	"goalify/internal/goals/stores"
 	"goalify/internal/middleware"
 	"goalify/internal/responses"
 	"goalify/pkg/jsonutil"
@@ -133,22 +134,18 @@ func (h *GoalHandler) HandleUpdateGoalCategoryByID(w http.ResponseWriter, r *htt
 		return
 	}
 
-	updates := make(map[string]any)
-	if body.Title.IsPresent() {
-		updates["title"] = body.Title.ValueOrZero()
+	params := stores.UpdateGoalCategoryParams{
+		Title:     body.Title,
+		XpPerGoal: body.XpPerGoal,
 	}
 
-	if body.XpPerGoal.IsPresent() {
-		updates["xp_per_goal"] = body.XpPerGoal.ValueOrZero()
-	}
-
-	if len(updates) == 0 {
+	if !params.Title.IsPresent() && !params.XpPerGoal.IsPresent() {
 		noUpdatesError := fmt.Errorf("%w: no fields given to update", responses.ErrBadRequest)
 		responses.SendAPIError(w, r, http.StatusBadRequest, noUpdatesError.Error(), nil)
 		return
 	}
 
-	cat, err := h.goalService.UpdateGoalCategoryByID(parsedCategoryID, updates, parsedUUID)
+	cat, err := h.goalService.UpdateGoalCategoryByID(parsedCategoryID, params, parsedUUID)
 	if err != nil {
 		responses.SendAPIError(w, r, responses.GetErrorCode(err), err.Error(), nil)
 		return

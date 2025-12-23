@@ -2,9 +2,11 @@ package handler
 
 import (
 	"fmt"
+	"goalify/internal/goals/stores"
 	"goalify/internal/middleware"
 	"goalify/internal/responses"
 	"goalify/pkg/jsonutil"
+	"goalify/pkg/options"
 	"log/slog"
 	"net/http"
 
@@ -81,25 +83,28 @@ func (h *GoalHandler) HandleUpdateGoalByID(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	updates := make(map[string]any)
-	if body.Title.IsPresent() {
-		updates["title"] = body.Title.ValueOrZero()
-	}
-	if body.Description.IsPresent() {
-		updates["description"] = body.Description.ValueOrZero()
-	}
+	var params stores.UpdateGoalParams
+	params.Title = body.Title
+	params.Description = body.Description
+	params.Status = body.Status
+
 	if body.CategoryID.IsPresent() {
-		updates["category_id"] = body.CategoryID.ValueOrZero
+		var parsedCategoryID uuid.UUID
+		parsedCategoryID, err = uuid.Parse(body.CategoryID.ValueOrZero())
+		if err != nil {
+			responses.SendAPIError(w, r, http.StatusBadRequest, "invalid category id", nil)
+			return
+		}
+		params.CategoryID = options.Some(parsedCategoryID)
 	}
-	if body.Status.IsPresent() {
-		updates["status"] = body.Status.ValueOrZero()
-	}
-	if len(updates) == 0 {
+
+	if !params.Title.IsPresent() && !params.Description.IsPresent() &&
+		!params.CategoryID.IsPresent() && !params.Status.IsPresent() {
 		responses.SendAPIError(w, r, http.StatusBadRequest, "no updates provided", nil)
 		return
 	}
 
-	updatedGoal, err := h.goalService.UpdateGoalByID(parsedGoalID, updates, parsedUserID)
+	updatedGoal, err := h.goalService.UpdateGoalByID(parsedGoalID, params, parsedUserID)
 	if err != nil {
 		responses.SendAPIError(w, r, responses.GetErrorCode(err), err.Error(), nil)
 		return
