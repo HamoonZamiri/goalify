@@ -45,13 +45,13 @@ func TestMain(m *testing.M) {
 	ctx := context.Background()
 
 	setup(ctx)
-	defer func() {
-		if err := pgContainer.Terminate(ctx); err != nil {
-			log.Fatalf("Failed to terminate container: %s", err)
-		}
-	}()
 
 	code := m.Run()
+
+	if err := pgContainer.Terminate(ctx); err != nil {
+		log.Fatalf("Failed to terminate container: %s", err)
+	}
+
 	os.Exit(code)
 }
 

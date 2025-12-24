@@ -3,6 +3,7 @@ package app
 
 import (
 	"context"
+	"fmt"
 	"goalify/internal/config"
 	"goalify/internal/db"
 	"goalify/internal/events"
@@ -12,8 +13,11 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"runtime"
+	"sync"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jackc/pgx/v5/stdlib"
@@ -39,7 +43,11 @@ func NewServer(userHandler *uh.UserHandler, goalHandler *gh.GoalHandler,
 	return mux
 }
 
-func Run() error {
+func Run(ctx context.Context) error {
+	// Setup signal handling
+	ctx, cancel := signal.NotifyContext(ctx, os.Interrupt)
+	defer cancel()
+
 	// global slog default logger
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	slog.SetDefault(logger)
@@ -56,12 +64,12 @@ func Run() error {
 	} else {
 		connStr = configService.GetDBConnectionString()
 	}
-	pgxPool, err = db.NewPgxPoolWithConnString(context.Background(), connStr)
+	pgxPool, err = db.NewPgxPoolWithConnString(ctx, connStr)
 	if err != nil {
-		panic(err)
+		return fmt.Errorf("failed to create pgx pool: %w", err)
 	}
 	if pgxPool == nil {
-		panic("pgx pool is nil")
+		return fmt.Errorf("pgx pool is nil")
 	}
 
 	// using goose run migrations from db/migrations
@@ -69,14 +77,10 @@ func Run() error {
 		_, b, _, _ := runtime.Caller(0)
 		basepath := filepath.Dir(b)
 		migrationDir := filepath.Join(basepath, "../../internal/db/migrations")
-		err = goose.UpContext(context.Background(), stdlib.OpenDBFromPool(pgxPool), migrationDir)
+		err = goose.UpContext(ctx, stdlib.OpenDBFromPool(pgxPool), migrationDir)
 		if err != nil {
-			panic(err)
+			return fmt.Errorf("failed to run migrations: %w", err)
 		}
-	}
-
-	if err != nil {
-		panic(err)
 	}
 
 	// logs for stack trace implementing stacktrace.TraceLogger
@@ -108,11 +112,31 @@ func Run() error {
 		Handler: srv,
 	}
 
-	slog.Info("Listening on " + port)
+	// Start server in goroutine
+	go func() {
+		slog.Info("Listening on " + port)
+		if err := httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			fmt.Fprintf(os.Stderr, "error listening and serving: %s\n", err)
+		}
+	}()
 
-	if err = httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-		slog.Error("ListenAndServe: ", "err", err)
-	}
+	// Wait for interrupt signal and gracefully shutdown
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		<-ctx.Done()
 
-	return err
+		slog.Info("Shutdown signal received, gracefully shutting down...")
+
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		if err := httpServer.Shutdown(shutdownCtx); err != nil {
+			fmt.Fprintf(os.Stderr, "error shutting down http server: %s\n", err)
+		}
+	}()
+
+	wg.Wait()
+	return nil
 }
