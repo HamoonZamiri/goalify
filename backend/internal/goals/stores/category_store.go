@@ -5,12 +5,18 @@ import (
 	"context"
 	"database/sql"
 	"goalify/internal/entities"
+	"goalify/pkg/options"
 
 	db "goalify/internal/db"
 	sqlcdb "goalify/internal/db/generated"
 
 	"github.com/google/uuid"
 )
+
+type UpdateGoalCategoryParams struct {
+	Title     options.Option[string]
+	XpPerGoal options.Option[int]
+}
 
 type (
 	GoalCategoryStore interface {
@@ -23,7 +29,7 @@ type (
 		GetGoalCategoryByID(categoryID, userID uuid.UUID) (*entities.GoalCategory, error)
 		UpdateGoalCategoryByID(
 			categoryID, userID uuid.UUID,
-			updates map[string]any,
+			params UpdateGoalCategoryParams,
 		) (*entities.GoalCategory, error)
 		DeleteGoalCategoryByID(categoryID, userID uuid.UUID) error
 	}
@@ -184,27 +190,22 @@ func (s *goalCategoryStore) GetGoalCategoryByID(
 
 func (s *goalCategoryStore) UpdateGoalCategoryByID(
 	categoryID, userID uuid.UUID,
-	updates map[string]any,
+	params UpdateGoalCategoryParams,
 ) (*entities.GoalCategory, error) {
-	params := sqlcdb.UpdateGoalCategoryByIdParams{
+	sqlcParams := sqlcdb.UpdateGoalCategoryByIdParams{
 		ID:     db.UUIDToPgxUUID(categoryID),
 		UserID: db.UUIDToPgxUUID(userID),
 	}
 
-	// Convert map updates to typed parameters
-	if title, ok := db.AnyToString(updates["title"]); ok {
-		params.Title = db.StringToPgxText(title)
-	}
+	sqlcParams.Title = db.OptionStringToPgxText(params.Title)
 
-	if xpPerGoal, ok := db.AnyToInt(updates["xp_per_goal"]); ok {
-		xpInt4, err := db.IntToPgxInt4(xpPerGoal)
-		if err != nil {
-			return nil, err
-		}
-		params.XpPerGoal = xpInt4
+	xpInt4, err := db.OptionIntToPgxInt4(params.XpPerGoal)
+	if err != nil {
+		return nil, err
 	}
+	sqlcParams.XpPerGoal = xpInt4
 
-	gc, err := s.queries.UpdateGoalCategoryById(context.Background(), params)
+	gc, err := s.queries.UpdateGoalCategoryById(context.Background(), sqlcParams)
 	if err != nil {
 		return nil, err
 	}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"goalify/internal/entities"
+	"goalify/pkg/options"
 
 	db "goalify/internal/db"
 	sqlcdb "goalify/internal/db/generated"
@@ -12,12 +13,22 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type UpdateGoalParams struct {
+	Title       options.Option[string]
+	Description options.Option[string]
+	Status      options.Option[string]
+	CategoryID  options.Option[uuid.UUID]
+}
+
 type GoalStore interface {
 	CreateGoal(title, description string, userID, categoryID uuid.UUID) (*entities.Goal, error)
 	UpdateGoalStatus(goalID, userID uuid.UUID, status string) (*entities.Goal, error)
 	GetGoalsByUserID(userID uuid.UUID) ([]*entities.Goal, error)
 	GetGoalByID(goalID, userID uuid.UUID) (*entities.Goal, error)
-	UpdateGoalByID(goalID, userID uuid.UUID, updates map[string]any) (*entities.Goal, error)
+	UpdateGoalByID(
+		goalID, userID uuid.UUID,
+		params UpdateGoalParams,
+	) (*entities.Goal, error)
 	DeleteGoalByID(goalID, userID uuid.UUID) error
 	ResetGoalsByCategoryID(categoryID, userID uuid.UUID) error
 }
@@ -115,49 +126,28 @@ func (s *goalStore) GetGoalByID(goalID, userID uuid.UUID) (*entities.Goal, error
 	return pgxGoalToEntity(goal), nil
 }
 
-func anyToString(v any) (str string, ok bool) {
-	if v == nil {
-		return "", false
-	}
-	str, ok = v.(string)
-	return str, ok
-}
-
 func (s *goalStore) UpdateGoalByID(
 	goalID uuid.UUID,
 	userID uuid.UUID,
-	updates map[string]any,
+	params UpdateGoalParams,
 ) (*entities.Goal, error) {
-	params := sqlcdb.UpdateGoalByIdParams{
+	sqlcParams := sqlcdb.UpdateGoalByIdParams{
 		ID:     db.UUIDToPgxUUID(goalID),
 		UserID: db.UUIDToPgxUUID(userID),
 	}
 
-	// Convert map updates to typed parameters
-	if title, ok := anyToString(updates["title"]); ok {
-		params.Title = pgtype.Text{String: title, Valid: true}
-	}
+	sqlcParams.Title = db.OptionStringToPgxText(params.Title)
+	sqlcParams.Description = db.OptionStringToPgxText(params.Description)
+	sqlcParams.CategoryID = db.OptionUUIDToPgxUUID(params.CategoryID)
 
-	if description, ok := updates["description"]; ok {
-		if descStr, ok := description.(string); ok {
-			params.Description = pgtype.Text{String: descStr, Valid: true}
-		}
-	}
-	if status, ok := updates["status"]; ok {
-		if statusStr, ok := status.(string); ok {
-			params.Status = sqlcdb.NullGoalStatus{
-				GoalStatus: sqlcdb.GoalStatus(statusStr),
-				Valid:      true,
-			}
-		}
-	}
-	if categoryID, ok := updates["category_id"]; ok {
-		if catUUID, ok := categoryID.(uuid.UUID); ok {
-			params.CategoryID = db.UUIDToPgxUUID(catUUID)
+	if params.Status.IsPresent() {
+		sqlcParams.Status = sqlcdb.NullGoalStatus{
+			GoalStatus: sqlcdb.GoalStatus(params.Status.ValueOrZero()),
+			Valid:      true,
 		}
 	}
 
-	goal, err := s.queries.UpdateGoalById(context.Background(), params)
+	goal, err := s.queries.UpdateGoalById(context.Background(), sqlcParams)
 	if err != nil {
 		return nil, err
 	}

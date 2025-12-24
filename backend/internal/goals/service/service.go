@@ -30,7 +30,7 @@ type GoalService interface {
 	GetGoalByID(goalID, userID uuid.UUID) (*entities.Goal, error)
 	UpdateGoalByID(
 		goalID uuid.UUID,
-		updates map[string]any,
+		params stores.UpdateGoalParams,
 		userID uuid.UUID,
 	) (*entities.Goal, error)
 	DeleteGoalByID(goalID, userID uuid.UUID) error
@@ -45,7 +45,7 @@ type GoalService interface {
 	GetGoalCategoryByID(categoryID, userID uuid.UUID) (*entities.GoalCategory, error)
 	UpdateGoalCategoryByID(
 		categoryID uuid.UUID,
-		updates map[string]any,
+		params stores.UpdateGoalCategoryParams,
 		userID uuid.UUID,
 	) (*entities.GoalCategory, error)
 	DeleteGoalCategoryByID(categoryID, userID uuid.UUID) error
@@ -194,11 +194,11 @@ func (gs *goalService) GetGoalCategoryByID(
 
 func (gs *goalService) UpdateGoalCategoryByID(
 	categoryID uuid.UUID,
-	updates map[string]any,
+	params stores.UpdateGoalCategoryParams,
 	userID uuid.UUID,
 ) (*entities.GoalCategory, error) {
 	funcStr := gs.traceLogger.GetTrace("service.UpdateGoalCategoryById")
-	updatedCat, err := gs.goalCategoryStore.UpdateGoalCategoryByID(categoryID, userID, updates)
+	updatedCat, err := gs.goalCategoryStore.UpdateGoalCategoryByID(categoryID, userID, params)
 
 	if errors.Is(err, sql.ErrNoRows) {
 		slog.Error(fmt.Sprintf("%s: store.UpdateGoalCategoryById:", funcStr), "err", err)
@@ -230,7 +230,7 @@ func (gs *goalService) DeleteGoalCategoryByID(categoryID, userID uuid.UUID) erro
 
 func (gs *goalService) UpdateGoalByID(
 	goalID uuid.UUID,
-	updates map[string]any,
+	params stores.UpdateGoalParams,
 	userID uuid.UUID,
 ) (*entities.Goal, error) {
 	funcStr := gs.traceLogger.GetTrace("service.UpdateGoalById")
@@ -244,9 +244,9 @@ func (gs *goalService) UpdateGoalByID(
 		slog.Error(fmt.Sprintf("%s: store.GetGoalById:", funcStr), "err", err)
 		return nil, fmt.Errorf("%w: error getting goal", responses.ErrInternalServer)
 	}
-	categoryID, ok := updates["category_id"].(uuid.UUID)
-	if ok {
-		_, err = gs.goalCategoryStore.GetGoalCategoryByID(categoryID, userID)
+
+	if params.CategoryID.IsPresent() {
+		_, err = gs.goalCategoryStore.GetGoalCategoryByID(params.CategoryID.ValueOrZero(), userID)
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf("%w: category not found", responses.ErrNotFound)
 		}
@@ -256,7 +256,7 @@ func (gs *goalService) UpdateGoalByID(
 		}
 	}
 
-	updatedGoal, err := gs.goalStore.UpdateGoalByID(goalID, userID, updates)
+	updatedGoal, err := gs.goalStore.UpdateGoalByID(goalID, userID, params)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, fmt.Errorf("%w: invalid goal id", responses.ErrNotFound)
 	}
