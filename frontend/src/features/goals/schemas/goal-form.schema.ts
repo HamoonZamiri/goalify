@@ -12,7 +12,7 @@ export const createGoalFormSchema = z.object({
 		.string()
 		.min(1, "Description is required")
 		.max(255, "Description must be 255 characters or less"),
-	category_id: z.string().uuid("Invalid category ID"),
+	category_id: z.uuid("Invalid category ID"),
 });
 export type CreateGoalFormData = z.infer<typeof createGoalFormSchema>;
 
@@ -24,8 +24,8 @@ export const createGoalCategoryFormSchema = z.object({
 		.string()
 		.min(1, "Title is required")
 		.max(255, "Title must be 255 characters or less"),
-	xp_per_goal: z.coerce
-		.number({ invalid_type_error: "XP must be a number" })
+	xp_per_goal: z
+		.number({ error: "XP must be a number" })
 		.positive("XP must be positive")
 		.min(1, "XP must be at least 1")
 		.max(100, "XP must be 100 or less"),
@@ -80,7 +80,7 @@ export const editGoalCategoryFormSchema = z.object({
 		.min(1, "Title is required")
 		.max(255, "Title must be 255 characters or less"),
 	xp_per_goal: z
-		.number({ invalid_type_error: "XP must be a number" })
+		.number({ error: "XP must be a number" })
 		.positive("XP must be positive")
 		.min(1, "XP must be at least 1")
 		.max(100, "XP must be 100 or less"),

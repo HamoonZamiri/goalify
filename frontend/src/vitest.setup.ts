@@ -8,7 +8,7 @@ import { goal, goalCategory, levelOne } from "@/__mocks__/mocks";
  */
 
 // Mock ResizeObserver for HeadlessUI Dialog components
-global.ResizeObserver = class ResizeObserver {
+globalThis.ResizeObserver = class ResizeObserver {
 	observe() {}
 	unobserve() {}
 	disconnect() {}

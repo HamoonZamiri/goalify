@@ -50,7 +50,7 @@ describe("CreateGoalCategoryForm", () => {
 		await wrapper.find("form").trigger("submit");
 		await flushPromises();
 
-		expect(wrapper.emitted("submit")?.[0][0]).toMatchObject({
+		expect(wrapper.emitted("submit")?.[0]?.[0]).toMatchObject({
 			title: "Test Title",
 			xp_per_goal: 50,
 		});

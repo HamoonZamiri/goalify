@@ -26,40 +26,44 @@ function getUrlFromInput(input: RequestInfo | URL): string {
  * Sets up fetch spies for testing API calls without MSW
  */
 export function setupFetchSpies(configs: FetchMockConfig[]) {
-	const fetchSpy = vi.spyOn(global, "fetch");
+	const fetchSpy = vi.spyOn(globalThis, "fetch");
 
-	fetchSpy.mockImplementation(async (input, init) => {
-		const url = getUrlFromInput(input);
-		const method = init?.method?.toUpperCase() || "GET";
+	fetchSpy.mockImplementation(
+		async (input: RequestInfo | URL, init?: RequestInit) => {
+			const url = getUrlFromInput(input);
+			const method = init?.method?.toUpperCase() || "GET";
 
-		const config = configs.find((c) => {
-			const urlMatches =
-				typeof c.url === "string" ? url.includes(c.url) : c.url.test(url);
-			const methodMatches = !c.method || c.method.toUpperCase() === method;
-			return urlMatches && methodMatches;
-		});
+			const config = configs.find((c) => {
+				const urlMatches =
+					typeof c.url === "string" ? url.includes(c.url) : c.url.test(url);
+				const methodMatches = !c.method || c.method.toUpperCase() === method;
+				return urlMatches && methodMatches;
+			});
 
-		if (!config) {
-			throw new Error(`No mock found for ${method} ${url}`);
-		}
+			if (!config) {
+				throw new Error(`No mock found for ${method} ${url}`);
+			}
 
-		const data = config.responseFn
-			? config.responseFn(url, init)
-			: config.response;
+			const data = config.responseFn
+				? config.responseFn(url, init)
+				: config.response;
 
-		return new Response(JSON.stringify(data), {
-			status: config.status ?? 200,
-			headers: { "Content-Type": "application/json" },
-		});
-	});
+			return new Response(JSON.stringify(data), {
+				status: config.status ?? 200,
+				headers: { "Content-Type": "application/json" },
+			});
+		},
+	);
 
 	return {
 		spy: fetchSpy,
 		getRequestBody: (url: string) => {
-			const call = fetchSpy.mock.calls.find(([callUrl]) => {
-				const callUrlStr = getUrlFromInput(callUrl);
-				return callUrlStr.includes(url);
-			});
+			const call = fetchSpy.mock.calls.find(
+				([callUrl]: [RequestInfo | URL, RequestInit?]) => {
+					const callUrlStr = getUrlFromInput(callUrl);
+					return callUrlStr.includes(url);
+				},
+			);
 			return call?.[1]?.body ? JSON.parse(call[1].body as string) : null;
 		},
 	};
