@@ -14,14 +14,10 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"path/filepath"
-	"runtime"
 	"sync"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/jackc/pgx/v5/stdlib"
-	"github.com/pressly/goose/v3"
 
 	sqlcdb "goalify/internal/db/generated"
 
@@ -56,7 +52,6 @@ func Run(ctx context.Context) error {
 	var err error
 	var pgxPool *pgxpool.Pool
 	configService := config.GetConfig()
-	currEnv := configService.Env
 
 	var connStr string
 	if configService.Env == config.LocalTest {
@@ -72,15 +67,9 @@ func Run(ctx context.Context) error {
 		return fmt.Errorf("pgx pool is nil")
 	}
 
-	// using goose run migrations from db/migrations
-	if currEnv == config.LocalTest {
-		_, b, _, _ := runtime.Caller(0)
-		basepath := filepath.Dir(b)
-		migrationDir := filepath.Join(basepath, "../../internal/db/migrations")
-		err = goose.UpContext(ctx, stdlib.OpenDBFromPool(pgxPool), migrationDir)
-		if err != nil {
-			return fmt.Errorf("failed to run migrations: %w", err)
-		}
+	// Run database migrations on startup
+	if err = db.RunMigrations(ctx, pgxPool); err != nil {
+		return fmt.Errorf("failed to run migrations: %w", err)
 	}
 
 	// logs for stack trace implementing stacktrace.TraceLogger
