@@ -54,7 +54,9 @@ describe("CreateGoalForm", () => {
 		await wrapper.find("form").trigger("submit");
 		await flushPromises();
 
-		expect(wrapper.emitted("submit")?.[0][0]).toMatchObject({
+		const submitEvents = wrapper.emitted("submit");
+		if (!submitEvents?.[0]?.[0]) throw new Error("Submit event not emitted");
+		expect(submitEvents[0][0]).toMatchObject({
 			title: "Test Title",
 			description: "Test Description",
 			category_id: "123e4567-e89b-12d3-a456-426614174003",
