@@ -92,6 +92,23 @@ start: up
 	@sleep 2
 	@make run
 
+# Dependency updates
+update-deps:
+	@echo "Updating all Go dependencies to latest versions..."
+	@go get -u ./...
+	@go mod tidy
+	@echo "Dependencies updated"
+
+update-go:
+	@echo "Updating Go toolchain to latest version..."
+	@go get go@latest toolchain@latest
+	@go mod tidy
+	@echo "Go toolchain updated"
+
+update-all: update-go update-deps
+	@echo "All dependencies and Go toolchain updated"
+	@echo "Run 'make test' to verify everything still works"
+
 # Clean up
 clean:
 	@echo "Cleaning build artifacts..."
@@ -124,8 +141,11 @@ help:
 	@echo "  testall       - Run all tests including edge cases"
 	@echo "  up            - Start Docker services"
 	@echo "  down          - Stop Docker services"
+	@echo "  update-deps   - Update all Go dependencies to latest"
+	@echo "  update-go     - Update Go toolchain to latest"
+	@echo "  update-all    - Update Go toolchain + all dependencies"
 	@echo "  clean         - Clean build artifacts"
 	@echo "  help          - Show this help"
 	@echo "  list-tools    - List installed go tools
 
-.PHONY: build run dev jqdev migrate-up migrate-down migrate-status migrate-create generate lint lint-fix gopls-check unit store inte test testall up down start clean help
+.PHONY: build run dev jqdev migrate-up migrate-down migrate-status migrate-create generate lint lint-fix gopls-check unit store inte test testall up down start update-deps update-go update-all clean help
