@@ -1,13 +1,27 @@
 import type { VueWrapper } from "@vue/test-utils";
-import { afterEach, describe, expect, it } from "vitest";
-import { mountWithPlugins } from "@/shared/test-utils";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { levelOne } from "@/__mocks__/mocks";
+import { mountWithPlugins, setupFetchSpies } from "@/shared/test-utils";
 import useAuth from "@/shared/hooks/auth/useAuth";
+import { API_BASE } from "@/utils/constants";
 import App from "./App.vue";
 
 describe("App", () => {
 	let wrapper: VueWrapper;
 
+	beforeEach(() => {
+		// Mock GET /api/levels/1 called by Navbar component
+		setupFetchSpies([
+			{
+				url: `${API_BASE}/levels/1`,
+				method: "GET",
+				response: levelOne,
+			},
+		]);
+	});
+
 	afterEach(() => {
+		vi.restoreAllMocks();
 		wrapper?.unmount();
 	});
 

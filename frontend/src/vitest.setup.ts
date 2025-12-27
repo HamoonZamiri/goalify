@@ -1,7 +1,4 @@
-import { HttpResponse, http } from "msw";
-import { setupServer } from "msw/node";
-import { afterAll, afterEach, beforeAll, vi } from "vitest";
-import { goal, goalCategory, levelOne } from "@/__mocks__/mocks";
+import { vi } from "vitest";
 
 /**
  * Global mocks for all tests
@@ -22,6 +19,7 @@ vi.mock("@/shared/hooks/auth/useAuth", async () => {
 		email: "test@example.com",
 		access_token: "test-token",
 		refresh_token: "test-refresh-token",
+		level_id: 1,
 	};
 	const authState = ref<typeof mockUser | undefined>(mockUser);
 
@@ -49,28 +47,3 @@ vi.mock("vue3-toastify", () => ({
 		info: vi.fn(),
 	},
 }));
-
-const API_BASE = "http://localhost:8080/api" as const;
-
-export const restHandlers = [
-	http.post(`${API_BASE}/goals`, () => {
-		return HttpResponse.json(goal);
-	}),
-	http.post(`${API_BASE}/goals/categories`, () => {
-		return HttpResponse.json(goalCategory);
-	}),
-	http.get(`${API_BASE}/levels/1`, () => {
-		return HttpResponse.json(levelOne);
-	}),
-] as const;
-
-export const server = setupServer(...restHandlers);
-
-// Start server before all tests
-beforeAll(() => server.listen({ onUnhandledRequest: "error" }));
-
-// Close server after all tests
-afterAll(() => server.close());
-
-// Reset handlers after each test for test isolation
-afterEach(() => server.resetHandlers());
