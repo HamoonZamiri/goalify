@@ -30,6 +30,6 @@ async function handleClose() {
 		title="Edit Goal"
 		description="Update goal details and status"
 	>
-		<EditGoalForm ref="editFormRef" :goal="props.goal" @close="handleClose"/>
+		<EditGoalForm ref="editFormRef" :goal="props.goal" @close="handleClose" />
 	</Dialog>
 </template>

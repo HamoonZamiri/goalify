@@ -26,11 +26,7 @@ const progressBar = computed(() => {
 			</RouterLink>
 		</div>
 		<div v-else class="flex gap-2 items-center">
-			<span class="text-sm text-gray-300"
-				>{{
-          user?.email.split("@")[0]
-        }}</span
-			>
+			<span class="text-sm text-gray-300">{{ user?.email.split("@")[0] }}</span>
 		</div>
 	</nav>
 </template>

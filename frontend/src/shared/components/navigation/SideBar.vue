@@ -18,21 +18,21 @@ function handleLogout(e: MouseEvent) {
 			class="hover:bg-gray-800 rounded-md flex flex-row items-center gap-2 p-0.5"
 			to="/"
 		>
-			<Icon name="home"/>
+			<Icon name="home" />
 			<Text size="lg">Dashboard</Text>
 		</RouterLink>
 		<RouterLink
 			class="hover:bg-gray-800 rounded-md flex flex-row items-center gap-2 p-0.5"
 			to="/"
 		>
-			<Icon name="gift"/>
+			<Icon name="gift" />
 			<Text size="lg">Rewards (Coming Soon)</Text>
 		</RouterLink>
 		<RouterLink
 			class="hover:bg-gray-800 rounded-md flex flex-row items-center gap-2 p-0.5"
 			to="/"
 		>
-			<Icon name="gear"/>
+			<Icon name="gear" />
 			<Text size="lg">Settings (Coming Soon)</Text>
 		</RouterLink>
 		<Button
@@ -42,7 +42,7 @@ function handleLogout(e: MouseEvent) {
 			class="justify-start gap-2 rounded-md hover:bg-gray-500 p-0.5"
 			@click="handleLogout"
 		>
-			<Icon name="signout" size="sm"/>
+			<Icon name="signout" size="sm" />
 			<Text size="lg">Sign out</Text>
 		</Button>
 	</Box>

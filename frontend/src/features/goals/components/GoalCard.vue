@@ -68,7 +68,9 @@ watch(
 				{{ props.goal.title }}
 			</Text>
 		</Box>
-		<Text as="span" size="sm" weight="normal">{{`${props.xpPerGoal} XP`}}</Text>
+		<Text as="span" size="sm" weight="normal">
+			{{ `${props.xpPerGoal} XP` }}
+		</Text>
 	</Box>
-	<EditGoalDialog v-model="isEditing" :goal="props.goal"/>
+	<EditGoalDialog v-model="isEditing" :goal="props.goal" />
 </template>

@@ -32,11 +32,11 @@ const tabListClasses = computed(() => [
 		@change="(index: number) => emit('update:modelValue', index)"
 	>
 		<TabList role="tablist" :class="tabListClasses">
-			<slot name="tabs"/>
+			<slot name="tabs" />
 		</TabList>
 
 		<TabPanels v-if="$slots.panels">
-			<slot name="panels"/>
+			<slot name="panels" />
 		</TabPanels>
 	</TabGroup>
 </template>

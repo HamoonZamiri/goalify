@@ -11,6 +11,6 @@ defineOptions({
 		v-slot="{ selected }"
 		:class="['tab-content', $attrs.class]"
 	>
-		<slot :selected="selected"/>
+		<slot :selected="selected" />
 	</HeadlessTabPanel>
 </template>

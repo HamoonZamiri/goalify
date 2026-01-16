@@ -26,8 +26,8 @@ const progressPercent = computed(() => {
 			width="w-full"
 			bg="darkest"
 		>
-			<Text size="base">Level {{level?.id}}</Text>
-			<Text size="sm">{{progressPercent}}%</Text>
+			<Text size="base">Level {{ level?.id }}</Text>
+			<Text size="sm">{{ progressPercent }}%</Text>
 		</Box>
 		<Box bg="darkest" width="w-full">
 			<progress
@@ -37,7 +37,9 @@ const progressPercent = computed(() => {
 			/>
 		</Box>
 		<Box flex-direction="row" width="w-full" bg="darkest">
-			<Text size="base">{{`${authState?.xp} / ${level?.level_up_xp} XP`}}</Text>
+			<Text size="base">
+				{{ `${authState?.xp} / ${level?.level_up_xp} XP` }}
+			</Text>
 		</Box>
 	</Box>
 </template>

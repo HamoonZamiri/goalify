@@ -49,6 +49,6 @@ const weightClasses = {
       colorClasses[color],
     ]"
 	>
-		<slot/>
+		<slot />
 	</component>
 </template>
