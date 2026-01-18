@@ -39,12 +39,12 @@ const classes = computed(() => [
 <template>
 	<button :class="classes">
 		<template v-if="loading">
-			<Icon name="arrow-path" class="animate-spin"/>
+			<Icon name="arrow-path" class="animate-spin" />
 		</template>
 		<template v-else>
-			<slot name="left"/>
-			<slot/>
-			<slot name="right"/>
+			<slot name="left" />
+			<slot />
+			<slot name="right" />
 		</template>
 	</button>
 </template>

@@ -39,6 +39,6 @@ defineEmits<{
 		:aria-label="ariaLabel"
 		@click="$emit('click', $event)"
 	>
-		<Icon :name="icon" :size="size" :class="props.class" :fill="iconFill"/>
+		<Icon :name="icon" :size="size" :class="props.class" :fill="iconFill" />
 	</Button>
 </template>

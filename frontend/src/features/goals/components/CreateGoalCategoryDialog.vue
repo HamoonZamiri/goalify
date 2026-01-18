@@ -24,6 +24,6 @@ function handleClose() {
 		title="Create Goal Category"
 		description="Add a new category to organize your goals"
 	>
-		<CreateGoalCategoryForm @close="handleClose"/>
+		<CreateGoalCategoryForm @close="handleClose" />
 	</Dialog>
 </template>

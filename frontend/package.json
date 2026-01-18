@@ -20,34 +20,34 @@
 	},
 	"dependencies": {
 		"@headlessui/vue": "^1.7.23",
-		"@tanstack/vue-form": "^1.27.6",
-		"@tanstack/vue-query": "^5.92.1",
+		"@tanstack/vue-form": "^1.27.7",
+		"@tanstack/vue-query": "^5.92.6",
 		"@vueuse/core": "^14.1.0",
 		"js-cookie": "^3.0.5",
 		"vue": "^3.5.26",
 		"vue-router": "^4.6.4",
 		"vue3-toastify": "^0.2.8",
-		"zod": "^4.2.1"
+		"zod": "^4.3.5"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "2.3.10",
+		"@biomejs/biome": "2.3.11",
 		"@tailwindcss/postcss": "^4.1.18",
 		"@tailwindcss/vite": "^4.1.18",
 		"@tsconfig/node20": "^20.1.8",
 		"@types/js-cookie": "^3.0.6",
-		"@types/node": "^25.0.3",
+		"@types/node": "^25.0.9",
 		"@vitejs/plugin-vue": "^6.0.3",
-		"@vitest/coverage-v8": "4.0.16",
+		"@vitest/coverage-v8": "4.0.17",
 		"@vue/test-utils": "^2.4.6",
 		"@vue/tsconfig": "^0.8.1",
 		"daisyui": "^5.5.14",
-		"jsdom": "^27.3.0",
+		"jsdom": "^27.4.0",
 		"npm-run-all2": "^8.0.4",
 		"postcss": "^8.5.6",
 		"tailwindcss": "^4.1.18",
 		"typescript": "~5.9.3",
-		"vite": "^7.3.0",
-		"vitest": "^4.0.16",
-		"vue-tsc": "^3.2.1"
+		"vite": "^7.3.1",
+		"vitest": "^4.0.17",
+		"vue-tsc": "^3.2.2"
 	}
 }

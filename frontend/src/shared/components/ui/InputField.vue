@@ -111,9 +111,9 @@ const sharedClasses = [
 
 <template>
 	<Box class="bg-inherit" flex-direction="col" :width="props.containerWidth">
-		<slot name="label"/>
+		<slot name="label" />
 		<Box flex-direction="row" class="gap-1">
-			<slot name="left"/>
+			<slot name="left" />
 			<input
 				v-if="props.as === 'input'"
 				ref="inputRef"
@@ -144,10 +144,10 @@ const sharedClasses = [
 				@input="handleInput"
 				@blur="handleBlur"
 			/>
-			<slot name="right"/>
+			<slot name="right" />
 		</Box>
 		<Box v-if="props.errorslot" class="min-h-6 bg-inherit">
-			<slot name="error"/>
+			<slot name="error" />
 		</Box>
 	</Box>
 </template>

@@ -67,9 +67,7 @@ const form = useForm({
               "
 						>
 							<Text color="error">
-								{{
-                field.state.meta.errors[0]?.message
-              }}
+								{{ field.state.meta.errors[0]?.message }}
 							</Text>
 						</template>
 					</InputField>
@@ -104,9 +102,7 @@ const form = useForm({
               "
 						>
 							<Text color="error">
-								{{
-                field.state.meta.errors[0]?.message
-              }}
+								{{ field.state.meta.errors[0]?.message }}
 							</Text>
 						</template>
 					</InputField>

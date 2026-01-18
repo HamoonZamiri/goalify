@@ -53,7 +53,7 @@ function closeDialog() {
 			class="relative z-50"
 		>
 			<!-- Backdrop -->
-			<div :class="dialogPatterns.backdrop" aria-hidden="true"/>
+			<div :class="dialogPatterns.backdrop" aria-hidden="true" />
 
 			<!-- Container with positioning -->
 			<div :class="`${dialogPatterns.base} ${dialogPatterns[position]}`">
@@ -69,7 +69,7 @@ function closeDialog() {
 					</DialogDescription>
 
 					<!-- Content slot -->
-					<slot/>
+					<slot />
 				</DialogPanel>
 			</div>
 		</HeadlessDialog>

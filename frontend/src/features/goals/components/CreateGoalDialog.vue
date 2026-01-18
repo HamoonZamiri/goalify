@@ -25,6 +25,6 @@ function handleClose() {
 		title="Create Goal"
 		description="Add a new goal to this category"
 	>
-		<CreateGoalForm :category-id="categoryId" @close="handleClose"/>
+		<CreateGoalForm :category-id="categoryId" @close="handleClose" />
 	</Dialog>
 </template>

@@ -61,6 +61,6 @@ const props = withDefaults(
     ]"
 		v-bind="$attrs"
 	>
-		<slot/>
+		<slot />
 	</div>
 </template>

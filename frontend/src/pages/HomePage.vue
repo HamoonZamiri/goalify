@@ -26,7 +26,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-	<div class="skeleton h-full w-full rounded-full" v-if="isLoading"/>
+	<div class="skeleton h-full w-full rounded-full" v-if="isLoading" />
 	<Box
 		v-else-if="error"
 		height="h-full"
@@ -45,7 +45,7 @@ onUnmounted(() => {
 			<Box gap="gap-4" bg="darkest" flex-direction="col" width="w-full">
 				<Text as="h1" size="3xl" weight="bold">Dashboard</Text>
 				<Text as="h2" size="xl" weight="semibold">My Goals </Text>
-				<ProgressBar/>
+				<ProgressBar />
 				<Box
 					width="w-full"
 					bg="darkest"
@@ -53,14 +53,14 @@ onUnmounted(() => {
 					v-for="cat in categories"
 					:key="cat.id"
 				>
-					<GoalCategoryCard :goalCategory="cat"/>
+					<GoalCategoryCard :goalCategory="cat" />
 				</Box>
 				<Box bg="darkest" flex-direction="row">
 					<Button @click="isCreateCategoryDialogOpen = true" variant="primary">
 						<Text>Add Goal Category</Text>
 					</Button>
 				</Box>
-				<CreateGoalCategoryDialog v-model="isCreateCategoryDialogOpen"/>
+				<CreateGoalCategoryDialog v-model="isCreateCategoryDialogOpen" />
 			</Box>
 		</Box>
 	</Box>

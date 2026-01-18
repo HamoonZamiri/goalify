@@ -17,12 +17,12 @@ if (!isLoggedIn()) {
 				<RouterLink to="/">
 					<h1 class="font-semibold text-3xl hover:text-gray-300">Goalify</h1>
 				</RouterLink>
-				<Navbar/>
+				<Navbar />
 			</Box>
 		</header>
 		<Box flex-direction="row" class="w-full h-full">
-			<Sidebar v-if="isLoggedIn()" class="rounded-none text-nowrap"/>
-			<RouterView class="rounded-none w-full h-full"/>
+			<Sidebar v-if="isLoggedIn()" class="rounded-none text-nowrap" />
+			<RouterView class="rounded-none w-full h-full" />
 		</Box>
 	</Box>
 </template>

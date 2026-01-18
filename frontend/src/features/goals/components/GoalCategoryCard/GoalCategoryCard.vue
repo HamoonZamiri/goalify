@@ -100,7 +100,7 @@ async function handleResetCategory() {
 				class="absolute inset-0 bg-red-600 flex items-center pr-8"
 				:class="swipeRatio >= DELETE_THRESHOLD ? 'justify-start' : 'justify-end'"
 			>
-				<Icon name="trash"/>
+				<Icon name="trash" />
 			</div>
 
 			<!-- Draggable card layer -->
@@ -136,7 +136,7 @@ async function handleResetCategory() {
 									class="p-0"
 									@click.stop="isCreateGoalDialogOpen = true"
 								>
-									<CreateGoalButton/>
+									<CreateGoalButton />
 								</Button>
 								<IconButton
 									icon="arrow-path"
@@ -154,7 +154,7 @@ async function handleResetCategory() {
 					</DisclosureButton>
 					<DisclosurePanel class="transition w-full mt-4">
 						<Box flex-direction="col" v-for="goal in goalCategory.goals">
-							<GoalCard :goal="goal" :xp-per-goal="goalCategory.xp_per_goal"/>
+							<GoalCard :goal="goal" :xp-per-goal="goalCategory.xp_per_goal" />
 						</Box>
 					</DisclosurePanel>
 				</Box>
