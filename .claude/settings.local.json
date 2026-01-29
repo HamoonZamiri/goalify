@@ -3,7 +3,12 @@
     "allow": [
       "Bash(pnpm test:*)",
       "Bash(cat:*)",
-      "Bash(pnpm build:*)"
+      "Bash(pnpm build:*)",
+      "Bash(pnpm --dir frontend build:*)",
+      "Bash(xargs cat:*)",
+      "Bash(tree:*)",
+      "Bash(make generate:*)",
+      "mcp__linear__list_issues"
     ],
     "deny": [],
     "ask": []
