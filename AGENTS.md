@@ -2,6 +2,91 @@
 
 Goalify is a full-stack productivity web application that tracks goals and goal categories, giving users XP when they complete tasks. TypeScript Vue 3 Composition API frontend with Golang standard library backend.
 
+## Design Doc Workflow
+
+**Before any feature work:**
+1. Check `docs/designs/active/` for existing work
+2. If continuing: read the design doc, especially Decisions Log and Session Log
+3. If new:
+   - Pull context from Linear ticket if available (use Linear MCP)
+   - Copy `docs/designs/_TEMPLATE.md` to `docs/designs/active/MAI-XX.md` (matching ticket ID)
+   - Pre-fill Goal, Context, and any details from the Linear ticket
+   - Set Status to `draft`
+4. Fill out the doc collaboratively — do NOT start implementation until I approve and Status is `approved`
+
+**During work:**
+- Update Tasks as you complete them
+- Append to Decisions Log when we make key choices
+- Append to Session Log before any natural pause or when significant progress is made
+- Keep Status as `in-progress`
+
+**On completion:**
+- Set Status to `review`
+- Verify all Acceptance Criteria are met
+- Run the app locally, confirm it works
+- Perform self-review (see below)
+- After PR merged: set Status to `done`, move doc to `docs/designs/completed/MAI-XX.md`
+
+## Context Recovery
+
+If starting fresh, after compaction, or resuming work:
+1. Read the active design doc first
+2. Focus on Decisions Log and Session Log for context
+3. Ask me if anything is unclear before proceeding
+
+## Git Workflow
+
+**Branching:**
+- Use Linear's suggested branch name (Cmd+Shift+. in Linear)
+- If creating a branch, fetch the branch name from Linear via MCP
+- ONE Linear ticket = ONE design doc = ONE branch = ONE PR = ONE squashed commit
+
+**Commits:**
+- Format: `<type>: <description in lowercase>`
+- Types: feat, fix, docs, style, refactor, test, chore
+- Example: `feat: implement user authentication`
+
+## Pre-PR Self-Review
+
+Before presenting a PR, review your own diff as a senior engineer. Use the design doc for context.
+
+**Focus only on:**
+- Bugs or potential runtime errors
+- Edge cases not handled
+- Security concerns
+- Performance issues
+- Code that doesn't match the stated approach
+- Acceptance criteria not fully met
+
+**Do NOT mention:**
+- What was done well
+- General praise
+- Minor style preferences already handled by linters
+
+**Output format:**
+```
+## Review: MAI-XX
+
+### Issues
+- [ ] <file>:<line> — <issue description>
+
+### Suggestions
+- <file> — <improvement idea>
+
+### Verdict
+Ready | Needs changes
+```
+
+If issues found, fix them before presenting the PR to me.
+
+## Improving This Workflow
+
+If you have ideas to improve the design doc template or this workflow, propose them to me first. Do not modify `_TEMPLATE.md` or these guidelines without approval.
+
+## Code Style
+
+- [Add your Go/sqlc/Vue conventions here]
+
 ## Project Structure
 - `frontend/` - Vue 3 + TypeScript + Tailwind CSS frontend
 - `backend/` - Golang HTTP server with PostgreSQL
