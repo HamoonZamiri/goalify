@@ -138,6 +138,33 @@ If you have ideas to improve the design doc template or this workflow, propose t
 - PostgreSQL with Goose migrations
 - Standard Go package structure
 
+**pgx Transaction Handling:**
+
+Always handle `tx.Rollback()` errors in defer to avoid lint warnings and catch genuine rollback failures:
+
+```go
+tx, err := pool.Begin(ctx)
+if err != nil {
+	return fmt.Errorf("begin transaction: %w", err)
+}
+defer func() {
+	if err := tx.Rollback(ctx); err != nil && !errors.Is(err, pgx.ErrTxClosed) {
+		slog.Error("failed to rollback transaction", "error", err)
+	}
+}()
+
+// ... transaction operations ...
+
+if err := tx.Commit(ctx); err != nil {
+	return fmt.Errorf("commit transaction: %w", err)
+}
+```
+
+**Why this pattern:**
+- If `tx.Commit()` succeeds, the transaction is closed, so `tx.Rollback()` returns `pgx.ErrTxClosed` (not an actual error)
+- If commit fails or we return early due to an error, rollback actually executes and we should log failures
+- Filtering out `ErrTxClosed` avoids noisy logs while catching real rollback errors
+
 ### Frontend
 - Vue 3 Composition API with TypeScript
 - TanStack Query for data fetching & caching
