@@ -8,7 +8,9 @@
       "Bash(xargs cat:*)",
       "Bash(tree:*)",
       "Bash(make generate:*)",
-      "mcp__linear__list_issues"
+      "mcp__linear__list_issues",
+      "Bash(make:*)",
+      "Bash(psql:*)"
     ],
     "deny": [],
     "ask": []

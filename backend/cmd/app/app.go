@@ -10,6 +10,7 @@ import (
 	"goalify/internal/middleware"
 	"goalify/internal/routes"
 	"goalify/pkg/stacktrace"
+	"goalify/seeds"
 	"log/slog"
 	"net/http"
 	"os"
@@ -70,6 +71,11 @@ func Run(ctx context.Context) error {
 	// Run database migrations on startup
 	if err = db.RunMigrations(ctx, pgxPool); err != nil {
 		return fmt.Errorf("failed to run migrations: %w", err)
+	}
+
+	// Run database seeds after migrations
+	if err = seeds.Run(ctx, pgxPool); err != nil {
+		return fmt.Errorf("failed to seed database: %w", err)
 	}
 
 	// logs for stack trace implementing stacktrace.TraceLogger
