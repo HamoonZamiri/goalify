@@ -4,18 +4,25 @@ Goalify is a full-stack productivity web application that tracks goals and goal 
 
 ## Design Doc Workflow
 
+Each Linear ticket gets its own folder under `docs/design/MAI-XX/` containing at minimum two documents: `research.md` and `design.md`. Research is completed and validated before implementation planning begins; implementation does not start until I approve `design.md`.
+
+Status is tracked via the `Status:` field inside `design.md`.
+
 **Before any feature work:**
-1. Check `docs/designs/active/` for existing work
-2. If continuing: read the design doc, especially Decisions Log and Session Log
+1. Check `docs/design/` for an existing folder matching the ticket ID
+2. If continuing: read `research.md` and `design.md`, especially Decisions Log and Session Log
 3. If new:
-   - Pull context from Linear ticket if available (use Linear MCP)
-   - Copy `docs/designs/_TEMPLATE.md` to `docs/designs/active/MAI-XX.md` (matching ticket ID)
-   - Pre-fill Goal, Context, and any details from the Linear ticket
+   - Pull context from Linear ticket (use Linear MCP)
+   - Create folder `docs/design/MAI-XX/`
+   - Create `docs/design/MAI-XX/research.md` using `docs/designs/research_doc_template.md` — explore the codebase thoroughly and document findings; include summarized external research if needed
+   - Present research findings to me for validation before moving on
+4. Once research is validated, create `docs/design/MAI-XX/design.md` using `docs/designs/design_doc_template.md`
+   - Pre-fill Goal, Context, and Acceptance Criteria from the Linear ticket
    - Set Status to `draft`
-4. Fill out the doc collaboratively — do NOT start implementation until I approve and Status is `approved`
+5. Present `design.md` to me for approval — do NOT start implementation until Status is `approved`
 
 **During work:**
-- Update Tasks as you complete them
+- Update Tasks in `design.md` as you complete them
 - Append to Decisions Log when we make key choices
 - Append to Session Log before any natural pause or when significant progress is made
 - Keep Status as `in-progress`
@@ -25,12 +32,12 @@ Goalify is a full-stack productivity web application that tracks goals and goal 
 - Verify all Acceptance Criteria are met
 - Run the app locally, confirm it works
 - Perform self-review (see below)
-- After PR merged: set Status to `done`, move doc to `docs/designs/completed/MAI-XX.md`
+- After PR merged: set Status to `done`
 
 ## Context Recovery
 
 If starting fresh, after compaction, or resuming work:
-1. Read the active design doc first
+1. Read `docs/design/MAI-XX/research.md` then `design.md`
 2. Focus on Decisions Log and Session Log for context
 3. Ask me if anything is unclear before proceeding
 
