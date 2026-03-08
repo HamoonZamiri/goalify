@@ -13,7 +13,7 @@ Status definitions:
   - approved: Design approved, ready to start implementation
   - in-progress: Actively being worked on
   - review: Implementation complete, undergoing self-review or awaiting PR review
-  - done: Merged, acceptance criteria met, moved to completed/
+  - done: PR merged, acceptance criteria met
 
 ## Goal
 [One sentence: what does "done" look like?]

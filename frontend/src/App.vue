@@ -1,17 +1,20 @@
 <script setup lang="ts">
-import router from "@/router/index";
+import { useRoute } from "vue-router";
 import { Navbar, Sidebar } from "@/shared/components/navigation";
 import { Box } from "@/shared/components/ui";
 import useAuth from "@/shared/hooks/auth/useAuth";
+import { RouteNames } from "@/router/index";
 
 const { isLoggedIn } = useAuth();
-if (!isLoggedIn()) {
-	router.push({ name: "Login" });
-}
+const route = useRoute();
 </script>
 
 <template>
-	<Box bg="darkest" class="h-screen w-screen">
+	<RouterView
+		v-if="route.name === RouteNames.NOT_FOUND"
+		class="h-screen w-screen"
+	/>
+	<Box v-else bg="darkest" class="h-screen w-screen">
 		<header class="bg-gray-800">
 			<Box flex-direction="row" class="justify-between p-6">
 				<RouterLink to="/">

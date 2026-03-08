@@ -1,8 +1,10 @@
 import type { VueWrapper } from "@vue/test-utils";
+import { createMemoryHistory } from "vue-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { levelOne } from "@/__mocks__/mocks";
 import { mountWithPlugins, setupFetchSpies } from "@/shared/test-utils";
 import useAuth from "@/shared/hooks/auth/useAuth";
+import { createAppRouter } from "@/router/index";
 import { API_BASE } from "@/utils/constants";
 import App from "./App.vue";
 
@@ -30,6 +32,7 @@ describe("App", () => {
 			// Default mock state is logged in
 			wrapper = mountWithPlugins(App, {
 				global: {
+					plugins: [createAppRouter(createMemoryHistory())],
 					stubs: {
 						RouterLink: true,
 						RouterView: true,
@@ -48,6 +51,7 @@ describe("App", () => {
 
 			wrapper = mountWithPlugins(App, {
 				global: {
+					plugins: [createAppRouter(createMemoryHistory())],
 					stubs: {
 						RouterLink: true,
 						RouterView: true,
