@@ -19,11 +19,10 @@ type Goal struct {
 }
 
 type GoalCategory struct {
-	CreatedAt time.Time `db:"created_at"  json:"created_at"`
-	UpdatedAt time.Time `db:"updated_at"  json:"updated_at"`
-	Title     string    `db:"title"       json:"title"`
-	Goals     []*Goal   `                 json:"goals"`
-	XPPerGoal int       `db:"xp_per_goal" json:"xp_per_goal"`
-	ID        uuid.UUID `db:"id"          json:"id"`
-	UserID    uuid.UUID `db:"user_id"     json:"user_id"`
+	CreatedAt time.Time `db:"created_at" json:"created_at"`
+	UpdatedAt time.Time `db:"updated_at" json:"updated_at"`
+	Title     string    `db:"title"      json:"title"`
+	Goals     []*Goal   `                json:"goals"`
+	ID        uuid.UUID `db:"id"         json:"id"`
+	UserID    uuid.UUID `db:"user_id"    json:"user_id"`
 }

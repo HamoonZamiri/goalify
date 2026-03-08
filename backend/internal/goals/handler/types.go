@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"fmt"
 	"goalify/internal/goals/service"
 	"goalify/pkg/options"
 	"goalify/pkg/stacktrace"
@@ -20,12 +19,10 @@ type (
 		CategoryID  string `json:"category_id"`
 	}
 	CreateGoalCategoryRequest struct {
-		Title     string `json:"title"`
-		XpPerGoal int    `json:"xp_per_goal"`
+		Title string `json:"title"`
 	}
 	UpdateGoalCategoryRequest struct {
-		Title     options.Option[string] `json:"title"`
-		XpPerGoal options.Option[int]    `json:"xp_per_goal"`
+		Title options.Option[string] `json:"title"`
 	}
 	UpdateGoalRequest struct {
 		Title       options.Option[string] `json:"title"`
@@ -46,12 +43,11 @@ func NewGoalHandler(
 }
 
 const (
-	TextMaxLen   = 255
-	XPMaxPerGoal = 100
+	TextMaxLen = 255
 )
 
-func NewGoalCategoryRequest(title string, xpPerGoal int) CreateGoalCategoryRequest {
-	return CreateGoalCategoryRequest{title, xpPerGoal}
+func NewGoalCategoryRequest(title string) CreateGoalCategoryRequest {
+	return CreateGoalCategoryRequest{title}
 }
 
 func isValidUUID(id string) bool {
@@ -68,11 +64,6 @@ func (r CreateGoalCategoryRequest) Valid() map[string]string {
 		problems["title"] = "title must be less than 255 characters"
 	}
 
-	if r.XpPerGoal <= 0 {
-		problems["xp_per_goal"] = "xp per goal must be greater than 0"
-	} else if r.XpPerGoal > XPMaxPerGoal {
-		problems["xp_per_goal"] = fmt.Sprintf("xp per goal must be less than %d", XPMaxPerGoal)
-	}
 	return problems
 }
 
@@ -80,14 +71,6 @@ func (r UpdateGoalCategoryRequest) Valid() map[string]string {
 	problems := make(map[string]string)
 	if r.Title.IsPresent() && r.Title.ValueOrZero() == "" {
 		problems["title"] = "title cannot be empty"
-	}
-
-	if r.XpPerGoal.IsPresent() && r.XpPerGoal.ValueOrZero() <= 0 {
-		problems["xp_per_goal"] = "xp per goal must be greater than 0"
-	}
-
-	if r.XpPerGoal.IsPresent() && r.XpPerGoal.ValueOrZero() > XPMaxPerGoal {
-		problems["xp_per_goal"] = fmt.Sprintf("xp per goal must be less than %d", XPMaxPerGoal)
 	}
 
 	return problems

@@ -9,7 +9,6 @@ import { IconButton } from "@/shared/components/icons";
 
 const props = defineProps<{
 	goal: Goal;
-	xpPerGoal: number;
 }>();
 
 const { mutateAsync: updateGoal } = useUpdateGoal();
@@ -68,9 +67,6 @@ watch(
 				{{ props.goal.title }}
 			</Text>
 		</Box>
-		<Text as="span" size="sm" weight="normal">
-			{{ `${props.xpPerGoal} XP` }}
-		</Text>
 	</Box>
 	<EditGoalDialog v-model="isEditing" :goal="props.goal" />
 </template>

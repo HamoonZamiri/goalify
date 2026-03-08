@@ -20,7 +20,6 @@ describe("CreateGoalCategoryForm", () => {
 				response: {
 					id: "123e4567-e89b-12d3-a456-426614174000",
 					title: "Test Title",
-					xp_per_goal: 50,
 					user_id: "123e4567-e89b-12d3-a456-426614174001",
 					goals: [],
 					created_at: new Date().toISOString(),
@@ -43,16 +42,13 @@ describe("CreateGoalCategoryForm", () => {
 
 	it("fills in the fields and creates a new goal category", async () => {
 		const titleInput = wrapper.find("input[name=title]");
-		const xpInput = wrapper.find("input[name=xp_per_goal]");
 
 		await titleInput.setValue("Test Title");
-		await xpInput.setValue("50");
 		await wrapper.find("form").trigger("submit");
 		await flushPromises();
 
 		expect(wrapper.emitted("submit")?.[0]?.[0]).toMatchObject({
 			title: "Test Title",
-			xp_per_goal: 50,
 		});
 	});
 });

@@ -84,8 +84,7 @@ func TestDeleteGoal(t *testing.T) {
 
 	// create category and goal to be deleted
 	body := map[string]any{
-		"title":       "some title",
-		"xp_per_goal": 50,
+		"title": "some title",
 	}
 	url := fmt.Sprintf("%s/api/goals/categories", BaseURL)
 	res, err := buildAndSendRequest("POST", url, body, userDto.AccessToken)
@@ -148,13 +147,13 @@ func TestDeleteGoalNotFound(t *testing.T) {
 * Testing event-driven behavior
  */
 
-func TestUserLevelUpEvent(t *testing.T) {
+func TestCompleteGoalGivesOneXP(t *testing.T) {
 	t.Parallel()
 
 	email := t.Name() + "@mail.com"
 	userDto := createUser(email, "password123!")
-	cat := createTestGoalCategory("create goal category", userDto.ID)
-	goal := createTestGoal("create goal", "desc", cat.ID, userDto.ID)
+	cat := createTestGoalCategory("xp test category", userDto.ID)
+	goal := createTestGoal("xp test goal", "desc", cat.ID, userDto.ID)
 
 	reqBody := map[string]any{"status": "complete"}
 	url := fmt.Sprintf("%s/api/goals/%s", BaseURL, goal.ID)
@@ -163,7 +162,37 @@ func TestUserLevelUpEvent(t *testing.T) {
 	assert.Equal(t, http.StatusOK, res.StatusCode)
 
 	var user *entities.User
-	for i := 0; i < 5; i++ {
+	for range 10 {
+		user, err = getUserByID(userDto.ID.String())
+		require.Nil(t, err)
+		if user.Xp == 1 {
+			break
+		}
+		time.Sleep(50 * time.Millisecond)
+	}
+	assert.Equal(t, 1, user.Xp)
+}
+
+func TestUserLevelUpEvent(t *testing.T) {
+	t.Parallel()
+
+	email := t.Name() + "@mail.com"
+	userDto := createUser(email, "password123!")
+	cat := createTestGoalCategory("create goal category", userDto.ID)
+
+	// Level 1 requires 5 tasks to level up (level_up_xp = 5, each task = 1 XP)
+	for i := range 5 {
+		goal := createTestGoal(fmt.Sprintf("goal-%d", i), "desc", cat.ID, userDto.ID)
+		reqBody := map[string]any{"status": "complete"}
+		url := fmt.Sprintf("%s/api/goals/%s", BaseURL, goal.ID)
+		res, err := buildAndSendRequest("PUT", url, reqBody, userDto.AccessToken)
+		require.Nil(t, err)
+		assert.Equal(t, http.StatusOK, res.StatusCode)
+	}
+
+	var user *entities.User
+	var err error
+	for i := 0; i < 10; i++ {
 		user, err = getUserByID(userDto.ID.String())
 		if err != nil {
 			t.Log(err)
@@ -211,7 +240,7 @@ func TestGoalCategoryCreatedEvent(t *testing.T) {
 	userDto := createUser(email, "password123!")
 
 	// create a goal category
-	body := map[string]any{"title": "testing create category event", "xp_per_goal": 100}
+	body := map[string]any{"title": "testing create category event"}
 	url := fmt.Sprintf("%s/api/goals/categories", BaseURL)
 	res, err := buildAndSendRequest("POST", url, body, userDto.AccessToken)
 	assert.Nil(t, err)

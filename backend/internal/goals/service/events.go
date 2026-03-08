@@ -24,7 +24,7 @@ func (gs *goalService) handleUserCreatedEvent(event events.Event) {
 		return
 	}
 
-	_, err = gs.CreateGoalCategory("Daily", XPPerGoalMax, user.ID)
+	_, err = gs.CreateGoalCategory("Daily", user.ID)
 	if err != nil {
 		slog.Error("service.handleUserCreatedEvent: CreateGoalCategory:", "err", err)
 	}

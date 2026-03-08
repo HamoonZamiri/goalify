@@ -4,3 +4,5 @@ backend/.env
 pgdata
 backend/bin
 backend/tmp
+/.claude/settings.local.json
+/.claude/settings.local.json

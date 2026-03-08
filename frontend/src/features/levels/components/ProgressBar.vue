@@ -38,7 +38,7 @@ const progressPercent = computed(() => {
 		</Box>
 		<Box flex-direction="row" width="w-full" bg="darkest">
 			<Text size="base">
-				{{ `${authState?.xp} / ${level?.level_up_xp} XP` }}
+				{{ `${authState?.xp} / ${level?.level_up_xp} Tasks` }}
 			</Text>
 		</Box>
 	</Box>

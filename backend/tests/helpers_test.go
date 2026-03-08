@@ -90,9 +90,8 @@ func getUserByID(id string) (*entities.User, error) {
 // Goal helpers
 func createTestGoalCategory(title string, userID uuid.UUID) *entities.GoalCategory {
 	params := sqlcdb.CreateGoalCategoryParams{
-		Title:     title,
-		XpPerGoal: 100,
-		UserID:    pgtype.UUID{Bytes: userID, Valid: true},
+		Title:  title,
+		UserID: pgtype.UUID{Bytes: userID, Valid: true},
 	}
 	gc, err := queries.CreateGoalCategory(context.Background(), params)
 	if err != nil {
@@ -101,7 +100,6 @@ func createTestGoalCategory(title string, userID uuid.UUID) *entities.GoalCatego
 	return &entities.GoalCategory{
 		ID:        uuid.UUID(gc.ID.Bytes),
 		Title:     gc.Title,
-		XPPerGoal: int(gc.XpPerGoal),
 		UserID:    uuid.UUID(gc.UserID.Bytes),
 		CreatedAt: gc.CreatedAt.Time,
 		UpdatedAt: gc.UpdatedAt.Time,

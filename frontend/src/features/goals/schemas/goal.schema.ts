@@ -25,7 +25,6 @@ export type Goal = z.infer<typeof GoalSchema>;
 export const GoalCategorySchema = z.object({
 	id: z.string().uuid(),
 	title: z.string(),
-	xp_per_goal: z.number(),
 	user_id: z.string().uuid(),
 	goals: z.array(GoalSchema),
 	created_at: z.string(),
