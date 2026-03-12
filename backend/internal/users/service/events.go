@@ -23,7 +23,6 @@ func (s *userService) handleGoalUpdatedEvent(event events.Event) {
 
 	oldGoal := eventData.OldGoal
 	newGoal := eventData.NewGoal
-	xp := eventData.Xp
 
 	if oldGoal.Status != newGoal.Status && newGoal.Status == "complete" {
 		// we need to update the xp of the user
@@ -37,7 +36,7 @@ func (s *userService) handleGoalUpdatedEvent(event events.Event) {
 			slog.Error("service.handleGoalUpdatedEvent: store.GetLevelById:", "err", err)
 			return
 		}
-		newXp := user.Xp + xp
+		newXp := user.Xp + 1
 		newLevel := user.LevelID
 		if newXp >= level.LevelUpXp {
 			newXp %= level.LevelUpXp

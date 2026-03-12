@@ -35,7 +35,7 @@ func (h *GoalHandler) HandleCreateGoalCategory(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	category, err := h.goalService.CreateGoalCategory(body.Title, body.XpPerGoal, parsedUUID)
+	category, err := h.goalService.CreateGoalCategory(body.Title, parsedUUID)
 	if err != nil {
 		responses.SendAPIError(w, r, responses.GetErrorCode(err), err.Error(), nil)
 		return
@@ -135,11 +135,10 @@ func (h *GoalHandler) HandleUpdateGoalCategoryByID(w http.ResponseWriter, r *htt
 	}
 
 	params := stores.UpdateGoalCategoryParams{
-		Title:     body.Title,
-		XpPerGoal: body.XpPerGoal,
+		Title: body.Title,
 	}
 
-	if !params.Title.IsPresent() && !params.XpPerGoal.IsPresent() {
+	if !params.Title.IsPresent() {
 		noUpdatesError := fmt.Errorf("%w: no fields given to update", responses.ErrBadRequest)
 		responses.SendAPIError(w, r, http.StatusBadRequest, noUpdatesError.Error(), nil)
 		return

@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 /* Goal Category Domain Tests
@@ -22,7 +21,7 @@ func TestGoalCategoryCreate(t *testing.T) {
 	email := t.Name() + "@mail.com"
 	userDto := createUser(email, "password123!")
 
-	reqBody := map[string]any{"title": "goal cat", "xp_per_goal": 100}
+	reqBody := map[string]any{"title": "goal cat"}
 	res, err := buildAndSendRequest(
 		"POST",
 		fmt.Sprintf("%s/api/goals/categories", BaseURL),
@@ -35,7 +34,6 @@ func TestGoalCategoryCreate(t *testing.T) {
 	gc, err := unmarshalResponse[entities.GoalCategory](res)
 	assert.Nil(t, err)
 	assert.Equal(t, "goal cat", gc.Title)
-	assert.Equal(t, 100, gc.XPPerGoal)
 	assert.NotNil(t, gc.Goals)
 	assert.Equal(t, userDto.ID.String(), gc.UserID.String())
 }
@@ -45,7 +43,7 @@ func TestGoalCategoryCreateInvalidFields(t *testing.T) {
 
 	email := t.Name() + "@mail.com"
 	userDto := createUser(email, "password123!")
-	reqBody := map[string]any{"title": "goal cat", "xp_per_goal": -10}
+	reqBody := map[string]any{"title": ""}
 	res, err := buildAndSendRequest(
 		"POST",
 		fmt.Sprintf("%s/api/goals/categories", BaseURL),
@@ -108,7 +106,7 @@ func TestUpdateGoalCategoryById(t *testing.T) {
 	gc := createTestGoalCategory("update goal category", userDto.ID)
 
 	url := fmt.Sprintf("%s/api/goals/categories/%s", BaseURL, gc.ID)
-	reqBody := map[string]any{"title": "updated title", "xp_per_goal": 69}
+	reqBody := map[string]any{"title": "updated title"}
 	res, err := buildAndSendRequest("PUT", url, reqBody, userDto.AccessToken)
 	assert.Nil(t, err)
 	assert.Equal(t, http.StatusOK, res.StatusCode)
@@ -116,21 +114,6 @@ func TestUpdateGoalCategoryById(t *testing.T) {
 	resBody, err := unmarshalResponse[entities.GoalCategory](res)
 	assert.Nil(t, err)
 	assert.Equal(t, "updated title", resBody.Title)
-	assert.Equal(t, 69, resBody.XPPerGoal)
-}
-
-func TestUpdateGoalCategoryByIdInvalidFields(t *testing.T) {
-	t.Parallel()
-
-	email := t.Name() + "@mail.com"
-	userDto := createUser(email, "password123!")
-	gc := createTestGoalCategory("update goal category", userDto.ID)
-	reqBody := map[string]any{"title": "updated title", "xp_per_goal": -1}
-
-	url := fmt.Sprintf("%s/api/goals/categories/%s", BaseURL, gc.ID)
-	res, err := buildAndSendRequest("PUT", url, reqBody, userDto.AccessToken)
-	require.Nil(t, err)
-	assert.Equal(t, http.StatusUnprocessableEntity, res.StatusCode)
 }
 
 func TestDeleteGoalCategoryById(t *testing.T) {

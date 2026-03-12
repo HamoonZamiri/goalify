@@ -16,7 +16,6 @@ export const goal: Goal = {
 export const goalCategory: GoalCategory = {
 	title: "new Category testing events 2",
 	goals: [],
-	xp_per_goal: 50,
 	id: "026a715f-a023-4e6b-973e-4bb0e96562ae",
 	user_id: "1c0736f6-2c67-4e4b-a34c-afe3b78d1ab1",
 	created_at: new Date().toString(),

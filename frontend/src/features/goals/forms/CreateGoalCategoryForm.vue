@@ -27,7 +27,6 @@ async function handleSubmit(data: CreateGoalCategoryFormData) {
 const form = useForm({
 	defaultValues: {
 		title: "",
-		xp_per_goal: 10,
 	},
 	validators: {
 		onChange: createGoalCategoryFormSchema,
@@ -70,38 +69,6 @@ const form = useForm({
 				>
 					<template #label>
 						<Text>Title</Text>
-					</template>
-					<template
-						#error
-						v-if="
-              field.state.meta.isTouched && field.state.meta.errors.length > 0
-            "
-					>
-						<Text color="error">{{ field.state.meta.errors[0]?.message }}</Text>
-					</template>
-				</InputField>
-			</template>
-		</form.Field>
-		<form.Field name="xp_per_goal">
-			<template v-slot="{ field, state }">
-				<InputField
-					:id="field.name"
-					:name="field.name"
-					:value="field.state.value"
-					bg="primary"
-					text-color="dark"
-					type="number"
-					@input="
-            (value: string | number | null) => {
-              if (typeof value !== 'number') return;
-              field.handleChange(value);
-            }
-          "
-					@blur="field.handleBlur"
-					errorslot
-				>
-					<template #label>
-						<Text>XP Per Goal</Text>
 					</template>
 					<template
 						#error

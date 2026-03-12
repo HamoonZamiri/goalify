@@ -24,11 +24,6 @@ export const createGoalCategoryFormSchema = z.object({
 		.string()
 		.min(1, "Title is required")
 		.max(255, "Title must be 255 characters or less"),
-	xp_per_goal: z
-		.number({ error: "XP must be a number" })
-		.positive("XP must be positive")
-		.min(1, "XP must be at least 1")
-		.max(100, "XP must be 100 or less"),
 });
 export type CreateGoalCategoryFormData = z.infer<
 	typeof createGoalCategoryFormSchema
@@ -49,7 +44,6 @@ export type UpdateGoalFormData = z.infer<typeof updateGoalFormSchema>;
  */
 export const updateGoalCategoryFormSchema = z.object({
 	title: z.string().min(1).max(255).optional(),
-	xp_per_goal: z.number().min(1).max(100).optional(),
 });
 export type UpdateGoalCategoryFormData = z.infer<
 	typeof updateGoalCategoryFormSchema
@@ -79,11 +73,6 @@ export const editGoalCategoryFormSchema = z.object({
 		.string()
 		.min(1, "Title is required")
 		.max(255, "Title must be 255 characters or less"),
-	xp_per_goal: z
-		.number({ error: "XP must be a number" })
-		.positive("XP must be positive")
-		.min(1, "XP must be at least 1")
-		.max(100, "XP must be 100 or less"),
 });
 export type EditGoalCategoryFormData = z.infer<
 	typeof editGoalCategoryFormSchema

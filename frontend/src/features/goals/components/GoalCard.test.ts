@@ -11,7 +11,6 @@ function mountComponent() {
 	return mountWithPlugins(GoalCard, {
 		props: {
 			goal: goal,
-			xpPerGoal: 50,
 		},
 	});
 }
@@ -84,7 +83,7 @@ describe("GoalCard tests", () => {
 		]);
 
 		wrapper = mountWithPlugins(GoalCard, {
-			props: { goal: completedGoal, xpPerGoal: 50 },
+			props: { goal: completedGoal },
 		});
 
 		const checkIcon = wrapper.find("svg");

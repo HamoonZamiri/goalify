@@ -14,15 +14,13 @@ import (
 )
 
 type UpdateGoalCategoryParams struct {
-	Title     options.Option[string]
-	XpPerGoal options.Option[int]
+	Title options.Option[string]
 }
 
 type (
 	GoalCategoryStore interface {
 		CreateGoalCategory(
 			title string,
-			xpPerGoal int,
 			userID uuid.UUID,
 		) (*entities.GoalCategory, error)
 		GetGoalCategoriesByUserID(userID uuid.UUID) ([]*entities.GoalCategory, error)
@@ -43,7 +41,6 @@ func pgxGoalCategoryToEntity(gc sqlcdb.GoalCategory) *entities.GoalCategory {
 	return &entities.GoalCategory{
 		ID:        uuid.UUID(gc.ID.Bytes),
 		Title:     gc.Title,
-		XPPerGoal: int(gc.XpPerGoal),
 		UserID:    uuid.UUID(gc.UserID.Bytes),
 		CreatedAt: gc.CreatedAt.Time,
 		UpdatedAt: gc.UpdatedAt.Time,
@@ -66,7 +63,6 @@ func mapGoalCategoryWithGoalsRows(
 			gc := &entities.GoalCategory{
 				ID:        categoryID,
 				Title:     row.Title,
-				XPPerGoal: int(row.XpPerGoal),
 				UserID:    uuid.UUID(row.UserID.Bytes),
 				CreatedAt: row.CreatedAt.Time,
 				UpdatedAt: row.UpdatedAt.Time,
@@ -107,7 +103,6 @@ func mapGoalCategoryWithGoalsSingleRow(
 	gc := &entities.GoalCategory{
 		ID:        uuid.UUID(firstRow.ID.Bytes),
 		Title:     firstRow.Title,
-		XPPerGoal: int(firstRow.XpPerGoal),
 		UserID:    uuid.UUID(firstRow.UserID.Bytes),
 		CreatedAt: firstRow.CreatedAt.Time,
 		UpdatedAt: firstRow.UpdatedAt.Time,
@@ -141,13 +136,11 @@ func NewGoalCategoryStore(queries *sqlcdb.Queries) GoalCategoryStore {
 
 func (s *goalCategoryStore) CreateGoalCategory(
 	title string,
-	xpPerGoal int,
 	userID uuid.UUID,
 ) (*entities.GoalCategory, error) {
 	params := sqlcdb.CreateGoalCategoryParams{
-		Title:     title,
-		XpPerGoal: int32(xpPerGoal),
-		UserID:    db.UUIDToPgxUUID(userID),
+		Title:  title,
+		UserID: db.UUIDToPgxUUID(userID),
 	}
 
 	gc, err := s.queries.CreateGoalCategory(context.Background(), params)
@@ -198,12 +191,6 @@ func (s *goalCategoryStore) UpdateGoalCategoryByID(
 	}
 
 	sqlcParams.Title = db.OptionStringToPgxText(params.Title)
-
-	xpInt4, err := db.OptionIntToPgxInt4(params.XpPerGoal)
-	if err != nil {
-		return nil, err
-	}
-	sqlcParams.XpPerGoal = xpInt4
 
 	gc, err := s.queries.UpdateGoalCategoryById(context.Background(), sqlcParams)
 	if err != nil {

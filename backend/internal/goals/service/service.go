@@ -16,10 +16,6 @@ import (
 	"github.com/google/uuid"
 )
 
-const (
-	XPPerGoalMax int = 100
-)
-
 var subscribedEvents = []string{events.GoalCategoryCreated, events.UserCreated}
 
 type GoalService interface {
@@ -38,7 +34,6 @@ type GoalService interface {
 	// categories
 	CreateGoalCategory(
 		title string,
-		xpPerGoal int,
 		userID uuid.UUID,
 	) (*entities.GoalCategory, error)
 	GetGoalCategoriesByUserID(userID uuid.UUID) ([]*entities.GoalCategory, error)
@@ -145,12 +140,11 @@ func (gs *goalService) GetGoalByID(goalID, userID uuid.UUID) (*entities.Goal, er
 
 func (gs *goalService) CreateGoalCategory(
 	title string,
-	xpPerGoal int,
 	userID uuid.UUID,
 ) (*entities.GoalCategory, error) {
 	funcStr := gs.traceLogger.GetTrace("service.CreateGoalCategory")
 
-	cat, err := gs.goalCategoryStore.CreateGoalCategory(title, xpPerGoal, userID)
+	cat, err := gs.goalCategoryStore.CreateGoalCategory(title, userID)
 	if err != nil {
 		slog.Error(fmt.Sprintf("%s: store.CreateGoalCategory:", funcStr), "err", err)
 		return nil, fmt.Errorf("%w: error creating goal category", responses.ErrInternalServer)
@@ -266,24 +260,13 @@ func (gs *goalService) UpdateGoalByID(
 		return nil, fmt.Errorf("%w: error updating goal", responses.ErrInternalServer)
 	}
 
-	cat, err := gs.goalCategoryStore.GetGoalCategoryByID(updatedGoal.CategoryID, userID)
-	skipEvent := false
+	eventData := &events.GoalUpdatedData{
+		OldGoal: goal,
+		NewGoal: updatedGoal,
+	}
+	event := events.NewEventWithUserID(events.GoalUpdated, eventData, userID.String())
+	gs.eventPublisher.Publish(event)
 
-	// if we can't fetch the goal category we don't know the correct xp per goal
-	// skip publishing the event
-	if err != nil {
-		slog.Error(fmt.Sprintf("%s: store.GetGoalCategoryById:", funcStr), "err", err)
-		skipEvent = true
-	}
-	if !skipEvent {
-		eventData := &events.GoalUpdatedData{
-			OldGoal: goal,
-			NewGoal: updatedGoal,
-			Xp:      cat.XPPerGoal,
-		}
-		event := events.NewEventWithUserID(events.GoalUpdated, eventData, userID.String())
-		gs.eventPublisher.Publish(event)
-	}
 	return updatedGoal, nil
 }
 

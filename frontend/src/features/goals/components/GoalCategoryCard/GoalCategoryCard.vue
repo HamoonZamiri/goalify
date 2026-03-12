@@ -154,7 +154,7 @@ async function handleResetCategory() {
 					</DisclosureButton>
 					<DisclosurePanel class="transition w-full mt-4">
 						<Box flex-direction="col" v-for="goal in goalCategory.goals">
-							<GoalCard :goal="goal" :xp-per-goal="goalCategory.xp_per_goal" />
+							<GoalCard :goal="goal" />
 						</Box>
 					</DisclosurePanel>
 				</Box>

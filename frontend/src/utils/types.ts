@@ -12,7 +12,6 @@ export type TGoal = {
 export type TGoalCategory = {
 	title: string;
 	goals: TGoal[];
-	xp_per_goal: number;
 	id: string;
 	user_id: string;
 	updated_at: Date;
@@ -33,7 +32,6 @@ export const mockGoal: TGoal = {
 export const mockGoalCategory: TGoalCategory = {
 	title: "Daily",
 	goals: [mockGoal, mockGoal, mockGoal],
-	xp_per_goal: 10,
 	id: "1",
 	user_id: "1",
 	updated_at: new Date(),

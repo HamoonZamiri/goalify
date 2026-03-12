@@ -94,7 +94,6 @@ Table user_chests {
 Table goal_categories {
   id uuid [pk, default: `gen_random_uuid()`]
   title varchar [not null]
-  xp_per_goal integer [not null]
   user_id uuid [ref: > users.id]
   created_at timestamp [default: `now()`]
   updated_at timestamp [default: `now()`]
