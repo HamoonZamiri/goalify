@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { RouterLink } from "vue-router";
-import { Box, Text, Button } from "@/shared/components/ui";
+import { Box, Button, Text } from "@/shared/components/ui";
 </script>
 
 <template>
@@ -8,9 +8,7 @@ import { Box, Text, Button } from "@/shared/components/ui";
 		<Text as="h1" size="3xl" weight="bold">404</Text>
 		<Text as="p" size="xl">Page not found.</Text>
 		<RouterLink to="/">
-			<Button variant="primary">
-				<Text>Go home</Text>
-			</Button>
+			<Button variant="primary"> <Text>Go home</Text> </Button>
 		</RouterLink>
 	</Box>
 </template>
