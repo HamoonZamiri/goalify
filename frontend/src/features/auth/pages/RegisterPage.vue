@@ -61,9 +61,7 @@ const form = useForm({
             }"
 						@blur="field.handleBlur"
 					>
-						<template #label>
-							<Text>Email</Text>
-						</template>
+						<template #label> <Text>Email</Text> </template>
 						<template
 							#error
 							v-if="field.state.meta.isTouched && field.state.meta.errors.length > 0"
@@ -94,9 +92,7 @@ const form = useForm({
             }"
 						@blur="field.handleBlur"
 					>
-						<template #label>
-							<Text>Password</Text>
-						</template>
+						<template #label> <Text>Password</Text> </template>
 						<template
 							#error
 							v-if="field.state.meta.isTouched && field.state.meta.errors.length > 0"
@@ -127,9 +123,7 @@ const form = useForm({
             }"
 						@blur="field.handleBlur"
 					>
-						<template #label>
-							<Text>Confirm Password</Text>
-						</template>
+						<template #label> <Text>Confirm Password</Text> </template>
 						<template
 							#error
 							v-if="field.state.meta.isTouched && field.state.meta.errors.length > 0"

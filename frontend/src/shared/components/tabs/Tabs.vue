@@ -35,8 +35,6 @@ const tabListClasses = computed(() => [
 			<slot name="tabs" />
 		</TabList>
 
-		<TabPanels v-if="$slots.panels">
-			<slot name="panels" />
-		</TabPanels>
+		<TabPanels v-if="$slots.panels"> <slot name="panels" /> </TabPanels>
 	</TabGroup>
 </template>

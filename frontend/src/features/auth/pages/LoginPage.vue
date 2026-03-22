@@ -57,9 +57,7 @@ const form = useForm({
             }"
 						@blur="field.handleBlur"
 					>
-						<template #label>
-							<Text>Email</Text>
-						</template>
+						<template #label> <Text>Email</Text> </template>
 						<template
 							#error
 							v-if="
@@ -92,9 +90,7 @@ const form = useForm({
             }"
 						@blur="field.handleBlur"
 					>
-						<template #label>
-							<Text>Password</Text>
-						</template>
+						<template #label> <Text>Password</Text> </template>
 						<template
 							#error
 							v-if="
