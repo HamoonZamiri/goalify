@@ -120,12 +120,12 @@ describe("GoalCard tests", () => {
 		]);
 		wrapper = mountComponent();
 
-		const cardHeader = wrapper.find('[data-testid="goal-card"]');
+		const editButton = wrapper.find('[aria-label="Edit goal"]');
 		expect(wrapper.findComponent({ name: "EditGoalForm" }).exists()).toBe(
 			false,
 		);
 
-		await cardHeader.trigger("click");
+		await editButton.trigger("click");
 		await flushPromises();
 
 		expect(wrapper.findComponent({ name: "EditGoalForm" }).exists()).toBe(true);
