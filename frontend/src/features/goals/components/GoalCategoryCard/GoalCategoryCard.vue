@@ -11,7 +11,7 @@ import {
 } from "@/features/goals/queries";
 import type { GoalCategory } from "@/features/goals/schemas/goal.schema";
 import { Icon, IconButton } from "@/shared/components/icons";
-import { Box, Text, Button } from "@/shared/components/ui";
+import { Box, Text, Button, ClickSurface } from "@/shared/components/ui";
 
 const props = defineProps<{
 	goalCategory: GoalCategory;
@@ -71,7 +71,7 @@ const { distanceX, isSwiping } = usePointerSwipe(swipeTarget, {
  * Use distanceX directly - it persists after swipe ends
  */
 function handleDisclosureClick(e: MouseEvent) {
-	// If any drag movement occurred (>5px to ignore micro-movements), prevent toggle
+	// If any drag movement occurred, prevent toggle
 	if (didSwipe.value) {
 		e.preventDefault();
 		e.stopPropagation();
@@ -91,7 +91,7 @@ async function handleResetCategory() {
 </script>
 
 <template>
-	<Disclosure as="div" v-slot="{ open }">
+	<Disclosure v-slot="{ open }">
 		<!-- Swipe container -->
 		<div class="relative overflow-hidden rounded-lg">
 			<!-- Red background layer (only show when disclosure is closed) -->
@@ -122,13 +122,23 @@ async function handleResetCategory() {
 					padding="p-4"
 					class="transition-colors rounded-lg"
 				>
-					<DisclosureButton
-						as="div"
-						class="w-full text-left hover:bg-gray-800 rounded-lg transition-colors hover:cursor-pointer"
-						@click="(e: MouseEvent) => handleDisclosureClick(e)"
+					<ClickSurface
+						class="flex flex-row justify-between w-full items-center rounded-lg hover:bg-gray-800 transition-colors"
 					>
-						<header class="flex justify-between w-full items-center">
+						<template #overlay>
+							<DisclosureButton
+								class="absolute inset-0 z-[1] rounded-[inherit] hover:cursor-pointer"
+								@click="(e: MouseEvent) => handleDisclosureClick(e)"
+							/>
+						</template>
+						<div class="flex items-center gap-2">
 							<Text as="h3" weight="semibold">{{ goalCategory.title }}</Text>
+							<Icon
+								name="chevron-up"
+								:class="open ? 'rotate-180 transform' : ''"
+							/>
+						</div>
+						<template #actions>
 							<Box class="items-center gap-2" flex-direction="row">
 								<Button
 									variant="ghost"
@@ -145,13 +155,9 @@ async function handleResetCategory() {
 									:class="isPendingReset ? 'animate-spin' : ''"
 									@click.stop="handleResetCategory"
 								/>
-								<Icon
-									name="chevron-up"
-									:class="open ? 'rotate-180 transform' : ''"
-								/>
 							</Box>
-						</header>
-					</DisclosureButton>
+						</template>
+					</ClickSurface>
 					<DisclosurePanel class="transition w-full mt-4">
 						<Box flex-direction="col" v-for="goal in goalCategory.goals">
 							<GoalCard :goal="goal" />

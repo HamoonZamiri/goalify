@@ -4,7 +4,7 @@ import { toast } from "vue3-toastify";
 import EditGoalDialog from "@/features/goals/components/EditGoalDialog.vue";
 import type { Goal } from "@/features/goals/schemas/goal.schema";
 import { useUpdateGoal } from "@/features/goals/queries";
-import { Text, Box } from "@/shared/components/ui";
+import { Text, ClickSurface, OverlayButton } from "@/shared/components/ui";
 import { IconButton } from "@/shared/components/icons";
 
 const props = defineProps<{
@@ -44,29 +44,29 @@ watch(
 );
 </script>
 <template>
-	<Box
+	<ClickSurface
 		data-testid="goal-card"
-		flex-direction="row"
-		gap="gap-4"
-		@click.stop="isEditing = true"
-		class="hover:cursor-pointer hover:bg-gray-700 items-center justify-between p-1 rounded-xl"
+		class="flex flex-row items-center justify-between gap-4 p-1 rounded-xl hover:bg-gray-700"
 	>
-		<Box flex-direction="row" class="gap-x-2 items-center" bg="inherit">
+		<template #overlay>
+			<OverlayButton aria-label="Edit goal" @click.stop="isEditing = true" />
+		</template>
+		<Text
+			as="span"
+			size="sm"
+			weight="normal"
+			:class="currentStatus === 'complete' ? 'line-through opacity-50' : ''"
+		>
+			{{ props.goal.title }}
+		</Text>
+		<template #actions>
 			<IconButton
 				icon="check-outline"
 				ariaLabel="Toggle goal completion"
 				:icon-fill="currentStatus === 'complete' ? 'green' : 'none'"
 				@click.stop="handleCheckClick"
 			/>
-			<Text
-				as="span"
-				size="sm"
-				weight="normal"
-				:class="currentStatus === 'complete' ? 'line-through opacity-50' : ''"
-			>
-				{{ props.goal.title }}
-			</Text>
-		</Box>
-	</Box>
+		</template>
+	</ClickSurface>
 	<EditGoalDialog v-model="isEditing" :goal="props.goal" />
 </template>

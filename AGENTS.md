@@ -264,6 +264,40 @@ All configuration keys use consistent naming and MUST be documented.
 
 ## Frontend Patterns & Best Practices
 
+### ClickSurface + OverlayButton (Full-Area Click Pattern)
+
+Use `ClickSurface` + `OverlayButton` whenever an entire card or row should be clickable as a primary action, but also contains secondary interactive elements (buttons, checkboxes) that must retain their own click behavior.
+
+**Never use a `<div @click>` or `<Box as="button">` for full-area clickable containers** — they are invisible to Vimium and inaccessible to keyboard users.
+
+```vue
+<ClickSurface class="flex flex-row items-center p-2 rounded-xl hover:bg-gray-700">
+  <template #overlay>
+    <!-- OverlayButton covers the entire surface — this is the primary action -->
+    <OverlayButton aria-label="Edit goal" @click.stop="openEditDialog" />
+  </template>
+
+  <!-- Secondary interactive children MUST have class="relative z-10"
+       so they sit above the overlay and intercept their own clicks. -->
+  <IconButton class="relative z-10" @click.stop="toggleComplete" />
+
+  <!-- Non-interactive content needs no special treatment.
+       Clicks on it fall through to the OverlayButton (correct behavior). -->
+  <Text>{{ goal.title }}</Text>
+</ClickSurface>
+```
+
+**Rules:**
+- `ClickSurface` establishes `position: relative` — do not add it manually on the parent
+- `OverlayButton` goes in the `#overlay` slot — it renders as `absolute inset-0`
+- Secondary **interactive** children (buttons, inputs) → add `class="relative z-10"`
+- Secondary **non-interactive** children (text, icons) → no extra classes needed; clicks fall through to the overlay, which is intentional
+- When the primary action is a Headless UI component (e.g. `DisclosureButton`), pass it in `#overlay` with `class="absolute inset-0 rounded-[inherit] cursor-pointer"` instead of using `OverlayButton`
+
+**Both primitives live in `shared/components/ui/` and are exported from its barrel.**
+
+---
+
 ### TanStack Query Usage (Unified Pattern with QueryFunction)
 
 **All queries MUST use the `QueryFunction` type pattern for consistency and type safety.**

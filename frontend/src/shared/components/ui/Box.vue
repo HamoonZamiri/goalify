@@ -22,6 +22,7 @@ const bgClasses = {
 
 const props = withDefaults(
 	defineProps<{
+		as?: string;
 		padding?: Padding;
 		rounded?: Rounding;
 		shadow?: Shadow;
@@ -34,6 +35,7 @@ const props = withDefaults(
 		bg?: keyof typeof bgClasses;
 	}>(),
 	{
+		as: "div",
 		rounded: "rounded-none",
 		shadow: "shadow-xs",
 		bordered: false,
@@ -45,7 +47,8 @@ const props = withDefaults(
 </script>
 
 <template>
-	<div
+	<component
+		:is="props.as"
 		:class="[
       'text-gray-300 flex',
       flexDirectionClasses[flexDirection],
@@ -62,5 +65,5 @@ const props = withDefaults(
 		v-bind="$attrs"
 	>
 		<slot />
-	</div>
+	</component>
 </template>
