@@ -29,7 +29,6 @@ export function useSSE() {
 		if (eventSource.value) {
 			eventSource.value.close();
 			eventSource.value = undefined;
-			reconnectAttempts.value = 0;
 		}
 	};
 
@@ -37,17 +36,18 @@ export function useSSE() {
 	 * Sets up all event listeners on an EventSource instance
 	 */
 	const setupEventListeners = (es: EventSource) => {
-		es.onerror = () => {
-			closeConnection();
+		es.onopen = () => {
+			reconnectAttempts.value = 0;
+		};
 
-			if (reconnectAttempts.value < MAX_RECONNECT_ATTEMPTS) {
-				reconnectAttempts.value++;
-				setTimeout(() => {
-					connect(`${API_BASE}/events?token=${getUser()?.access_token}`);
-				}, 1000 * reconnectAttempts.value);
-				return;
+		es.onerror = () => {
+			reconnectAttempts.value++;
+			if (reconnectAttempts.value >= MAX_RECONNECT_ATTEMPTS) {
+				closeConnection();
+				toast.error(
+					"Failed to connect to the server. Please refresh the page.",
+				);
 			}
-			toast.error("Failed to connect to the server. Please refresh the page.");
 		};
 
 		es.addEventListener(events.DEFAULT_GOAL_CREATED, () => {

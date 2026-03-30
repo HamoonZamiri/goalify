@@ -6,7 +6,7 @@ import { useGoalCategories } from "@/features/goals/queries";
 import { ProgressBar } from "@/features/levels";
 import { Box, Text, Button } from "@/shared/components/ui";
 import useAuth from "@/shared/hooks/auth/useAuth";
-import { useSSE } from "@/shared/hooks/events/useSse";
+import { useSSE } from "@/shared/hooks/events/useSSE";
 import { API_BASE } from "@/utils/constants";
 
 const isCreateCategoryDialogOpen = ref(false);
