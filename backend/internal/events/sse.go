@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -65,19 +66,30 @@ func (em *EventManager) SSEHandler(w http.ResponseWriter, r *http.Request) {
 	em.SubscribeToUserEvents(conn.userID, conn)
 	defer em.UnsubscribeFromUserEvents(conn.userID, conn)
 
-	// send an initial event for browser connection
-	err := conn.writeEvent(NewEventWithUserID(SSEConnected, nil, conn.userID))
-	if err != nil {
-		slog.Error("SSEHandler: conn.WriteEvent:", "err", err)
-		return
-	}
-
 	flusher, ok := w.(http.Flusher)
 	if !ok {
 		slog.Error("SSEHandler: http.ResponseWriter does not implement http.Flusher")
 		return
 	}
+
+	// tell the browser to reconnect after 3 seconds if the stream drops
+	var err error
+	_, err = fmt.Fprintf(w, "retry: 3000\n\n")
+	if err != nil {
+		slog.Error("SSEHandler: conn.WriteEvent:", "err", err)
+		return
+	}
+
+	// send an initial event for browser connection
+	err = conn.writeEvent(NewEventWithUserID(SSEConnected, nil, conn.userID))
+	if err != nil {
+		slog.Error("SSEHandler: conn.WriteEvent:", "err", err)
+		return
+	}
 	flusher.Flush()
+
+	heartbeat := time.NewTicker(30 * time.Second)
+	defer heartbeat.Stop()
 
 	for {
 		select {
@@ -88,9 +100,9 @@ func (em *EventManager) SSEHandler(w http.ResponseWriter, r *http.Request) {
 				slog.String("connUserId", conn.userID))
 			userID := event.UserID
 			if userID.ValueOrZero() == conn.userID {
-				err := conn.writeEvent(event)
-				if err != nil {
+				if err := conn.writeEvent(event); err != nil {
 					slog.Error("SSEHandler: conn.WriteEvent:", "err", err)
+					return
 				}
 				flusher.Flush()
 			} else {
@@ -98,6 +110,12 @@ func (em *EventManager) SSEHandler(w http.ResponseWriter, r *http.Request) {
 					slog.String("eventUserId", userID.ValueOrZero()),
 					slog.String("connUserId", conn.userID))
 			}
+		case <-heartbeat.C:
+			if _, err := fmt.Fprintf(w, ": heartbeat\n\n"); err != nil {
+				slog.Error("SSEHandler: heartbeat write failed", "err", err)
+				return
+			}
+			flusher.Flush()
 		case <-r.Context().Done():
 			return
 		}
