@@ -23,9 +23,9 @@ const route = useRoute();
 				<Navbar />
 			</Box>
 		</header>
-		<Box flex-direction="row" class="w-full h-full">
+		<Box flex-direction="row" class="w-full flex-1 min-h-0">
 			<Sidebar v-if="isLoggedIn()" class="rounded-none text-nowrap" />
-			<RouterView class="rounded-none w-full h-full" />
+			<RouterView class="rounded-none w-full h-full overflow-y-auto" />
 		</Box>
 	</Box>
 </template>
