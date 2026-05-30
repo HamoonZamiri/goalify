@@ -39,7 +39,7 @@ onUnmounted(() => {
 		v-else
 		height="h-full"
 		bg="darkest"
-		class="items-center sm:items-start px-6 w-full overflow-hidden"
+		class="items-center sm:items-start px-6 w-full"
 	>
 		<Box flex-direction="row" width="w-full" gap="gap-4">
 			<Box gap="gap-4" bg="darkest" flex-direction="col" width="w-full">

@@ -63,4 +63,24 @@ describe("App", () => {
 			expect(sidebar.exists()).toBe(false);
 		});
 	});
+
+	describe("Scroll container", () => {
+		it("wraps the route content in a bounded scrollable container", () => {
+			wrapper = mountWithPlugins(App, {
+				global: {
+					plugins: [createAppRouter(createMemoryHistory())],
+					stubs: { RouterLink: true, RouterView: true },
+				},
+			});
+
+			const routerView = wrapper.find("router-view-stub");
+			expect(routerView.classes()).toContain("overflow-y-auto");
+
+			// Parent must establish a bounded height (`flex-1 min-h-0`) so the
+			// scroll container actually has a fixed size to overflow within.
+			const parent = routerView.element.parentElement;
+			expect(parent?.className).toMatch(/\bflex-1\b/);
+			expect(parent?.className).toMatch(/\bmin-h-0\b/);
+		});
+	});
 });
