@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"goalify/pkg/lists"
 	"goalify/pkg/options"
-	"log/slog"
 	"reflect"
 	"sync"
 )
@@ -119,59 +118,40 @@ func (em *EventManager) Publish(event Event) {
 	em.eventQueue <- event
 }
 
-func (em *EventManager) broadcastByType(event Event) {
-	sublist, ok := em.subscribers[event.EventType]
-	if !ok {
-		return
-	}
-	underlyingList := sublist.GetList()
-	for e := underlyingList.Front(); e != nil; e = e.Next() {
-		sub, ok := e.Value.(Subscriber)
-		if !ok {
-			slog.Warn("EventManager.Publish: type assertion failed", "subscriber", e.Value)
-		}
-		sub.HandleEvent(event)
-	}
-}
+// snapshotSubscribers copies, under the lock, the subscribers that should
+// receive an event: those registered for its type (internal services) plus
+// those registered for its user (external SSE/WebSocket clients). Delivery then
+// happens off the lock so a slow or blocking subscriber can never freeze
+// publishing, subscribing, or disconnecting for everyone else.
+func (em *EventManager) snapshotSubscribers(event Event) []Subscriber {
+	em.mu.Lock()
+	defer em.mu.Unlock()
 
-func (em *EventManager) broadcastByUser(event Event) {
-	if !event.UserID.IsPresent() {
-		return
+	var subs []Subscriber
+	collect := func(list *lists.TypedList[Subscriber]) {
+		for e := list.GetList().Front(); e != nil; e = e.Next() {
+			if sub, ok := e.Value.(Subscriber); ok {
+				subs = append(subs, sub)
+			}
+		}
 	}
 
-	userID := event.UserID.ValueOrZero()
-	userSubList, ok := em.userSubs[userID]
-	if !ok {
-		return
+	if list, ok := em.subscribers[event.EventType]; ok {
+		collect(list)
 	}
-	underlyingList := userSubList.GetList()
-	for e := underlyingList.Front(); e != nil; e = e.Next() {
-		sub, ok := e.Value.(Subscriber)
-		if !ok {
-			slog.Warn("EventManager.Publish: type assertion failed", "subscriber", e.Value)
+	if event.UserID.IsPresent() {
+		if list, ok := em.userSubs[event.UserID.ValueOrZero()]; ok {
+			collect(list)
 		}
-		sub.HandleEvent(event)
 	}
+	return subs
 }
 
 func (em *EventManager) processEvents() {
 	for event := range em.eventQueue {
-		em.mu.Lock()
-		var wg sync.WaitGroup
-		wg.Add(2)
-
-		// publish events based on their event type (internal to the monolith)
-		go func() {
-			em.broadcastByType(event)
-			wg.Done()
-		}()
-		// publish events based on userId external clients such as the frontend
-		go func() {
-			em.broadcastByUser(event)
-			wg.Done()
-		}()
-		wg.Wait()
-		em.mu.Unlock()
+		for _, sub := range em.snapshotSubscribers(event) {
+			sub.HandleEvent(event)
+		}
 	}
 }
 
